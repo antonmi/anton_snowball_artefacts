@@ -1,0 +1,347 @@
+On Application of Learning to Rank for E-Commerce Search
+Shubhra Kanti Karmaker Santu
+University of Illinois
+Urbana-Champaign (UIUC) karmake2@illinois.edu
+Parikshit Sondhi
+WalmartLabs psondhi@walmartlabs.com
+ChengXiang Zhai
+University of Illinois
+Urbana-Champaign (UIUC) czhai@illinois.edu
+ABSTRACT
+E-Commerce (E-Com) search is an emerging important new application of information retrieval. Learning to Rank (LETOR) is a general efective strategy for optimizing search engines, and is thus also a key technology for E-Com search. While the use of LETOR for web search has been well studied, its use for E-Com search has not yet been well explored. In this paper, we discuss the practical challenges in applying learning to rank methods to E-Com search, including the challenges in feature representation, obtaining reliable relevance judgments, and optimally exploiting multiple user feedback signals such as click rates, add-to-cart ratios, order rates, and revenue. We study these new challenges using experiments on industry data sets and report several interesting fndings that can provide guidance on how to optimally apply LETOR to E-Com search: First, popularity-based features defned solely on product items are very useful and LETOR methods were able to efectively optimize their combination with relevance-based features. Second, query atribute sparsity raises challenges for LETOR, and selecting features to reduce/avoid sparsity is benefcial. Tird, while crowdsourcing is ofen useful for obtaining relevance judgments for Web search, it does not work as well for E-Com search due to difculty in eliciting sufciently fne grained relevance judgments. Finally, among the multiple feedback signals, the order rate is found to be the most robust training objective, followed by click rate, while add-to-cart ratio seems least robust, suggesting that an efective practical strategy may be to initially use click rates for training and gradually shif to using order rates as they become available.
+ACM Reference format:
+Shubhra Kanti Karmaker Santu, Parikshit Sondhi, and ChengXiang Zhai.
+2017. On Application of Learning to Rank for E-Commerce Search. In
+Proceedings of SIGIR '17, August 7–11, 2017, Shinjuku, Tokyo, Japan,, 11 pages.
+DOI: htp://dx.doi.org/10.1145/3077136.3080838
+INTRODUCTION
+E-Commerce (E-Com) search is an important emerging new application of information retrieval. Virtually all major retailers have their own product search engines, with popular engines processing millions of query requests per day. As E-shopping becomes increasingly popular, optimization of their search quality is increasingly
+Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for proft or commercial advantage and that copies bear this notice and the full citation on the frst page. Copyrights for components of this work owned by others than ACM must be honored. Abstracting with credit is permited. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specifc permission and/or a fee. Request permissions from permissions@acm.org.
+SIGIR '17, August 7–11, 2017, Shinjuku, Tokyo, Japan
+© 2017 ACM. 978-1-4503-5022-8/17/08...$15.00
+DOI: htp://dx.doi.org/10.1145/3077136.3080838 important since an improved E-Com search engine can potentially save all users' time while increasing their satisfaction.
+Due to its importance, E-Com search has recently atracted increasing atention and has been studied from multiple perspectives (See Section 5 for a more detailed review of all the major work). However, one of the most central questions in E-Com search: How to optimally apply learning to rank (LETOR) methods for ranking of products, has atracted litle atention.
+Over the past decade, Learning to Rank (LETOR) methods, which involve applying machine learning techniques on ranking problems, have proven to be very successful in optimizing search engines; specifcally, they have been extensively studied in the context of Web search to combine multiple features to optimize ranking. Tus, not surprisingly, learning to rank is also the backbone technique for optimizing the ranking of products in product search.
+While there has been much progress made in research on learning to rank and many LETOR methods have been proposed (see, e.g., ), applications of these methods to any search engine optimization would still face many practical challenges, notably how to defne features, how to convert the search log data into efective training sets, how to obtain relevance judgments including both explicit judgments by humans and implicit judgments based on search log, and what objective functions to optimize for specifc applications. Compared with the vast amount of work on improving algorithms and models for learning to rank, there has been litle work on studying these practical challenges; yet they must be tackled in order to efectively deploy a LETOR method for
+E-Com search applications.
+In this paper, we study these practical challenges in applying
+LETOR to E-Com search with a focus on addressing research questions related to 1) Efective feature representation; 2) Efectiveness of crowdsourcing relevance judgments; and 3) Exploitation of multiple feedback signals. As no previous work has reported results on comparing the major LETOR methods for E-Com search, we frst compare multiple representative major LETOR methods on an industry data set to see how well they perform for E-Com search; our results show that LambdaMART, one of the best performing methods for Web search, has also performed very well for E-Com search, outperforming all the other methods that we evaluated.
+Next, using LambdaMART as our LETOR method, we explore various issues related to feature representation, including particularly the efectiveness of popularity-based features and the issue of query atribute sparsity. Our results show that popularity-based features, despite their independence of queries, are clearly efective and LambdaMART is able to optimize their combination with relevancebased features. Te sparsity of query atribute features, however, arXiv:1903.04263v1 [cs.IR] 1 Mar 2019 poses challenges for LETOR methods, and avoiding to use sparse atributes via feature selection is found to be benefcial.
+Next, we study the reliability of using crowdsourcing to obtain relevance judgments for E-Com search. Since the power of LETOR mainly comes from high-quality training examples, how to obtain reliable relevance judgements is an important question.
+Crowdsourcing is a commonly used approach to obtain relevance judgments in an afordable way and has been working well for
+Web search, but due to the fact that the relevance criterion in E-Com search tends to be more complex than Web search (users of an E-Com search engine have very strict preferences for the products that they would eventually want to buy), it is questionable whether we can reliably obtain useful relevance judgments for E-Com search via crowdsourcing. To address this question, we analyze the quality of the relevance judgments created via crowdsourcing by leveraging the search log data. Te results indeed show that the quality of crowdsourced judgments is low with a signifcant number of the products of the highest-level relevance with zero or just one click according to the search log data, even though they have been presented to users many times, suggesting that although crowdsourcing has been useful for obtaining relevance judgments for training LETOR methods in Web search, it does not work as well for E-Com search.
+Finally, we study how to best exploit the diferent feedback signals that we discussed above for LETOR by using LambdaMart as the learning algorithm and varying the combinations of these feedback signals for training and testing. Our experiment results show that among all the user feedback signals, click rates appear to be the easiest to predict, while add-to-cart ratios the hardest. Training to optimize order rates is found to be most robust (followed by click through rates) in predicting various other objectives (i.e., click rates, add-to-cart-ratios, and revenues), ofen delivering the best or near-the-best performance indistinguishable from training on the target signal itself. Te closely related revenue, however, behaves less robustly. Tese fndings suggest that a reasonable simple strategy for an E-Com search engine is to use click rate based models for query segments where sufcient order data is not available, but switch to order rate based models once it is.
+In summary, our paper conducts the frst systematic study of challenges in applying LETOR methods to E-Com search and makes the following contributions:(1) We introduce and study multiple new challenges in applying LETOR to E-Com search, including relevance vs. popularity features, query atribute sparsity, difculty in accurately eliciting human relevance judgments, complexity in optimal exploitation of multiple feedback signals.(2) We show that popularity-based features are very efective despite their independence of queries and LETOR methods can efectively optimize their combination with other relevance-based features.(3) We show that the sparsity of query atributes poses challenges for LETOR and selecting features to avoid or alleviate sparsity is benefcial.(4) We show that while efective for Web search, crowdsourcing is not very efective for obtaining relevance judgments for E-Com search.(5) We show that among all the feedback signals, order rate is the most robust (followed by clickthroughs), suggesting that an efective practical strategy may be to initially use click rates for training (due to their availability) and gradually shif to using order rates as they become available.
+LEARNING TO RANK FOR E-COM SEARCH
+In this Section, we provide some background on learning to rank for E-Com search to motivate our work and provide a context for the research questions that we study in this paper. We frst give a general introduction to LETOR and then discuss multiple practical challenges in applying LETOR to E-Com search.
+Overview of LETOR
+Optimization of ranking of products is the primary goal of an E-Com search engine. As in other retrieval system applications, traditional retrieval models, such as BM25 and language modeling approaches, play an important role in E-Com search to enable matching of the queries from users with product descriptions in the product collection. However, content matching, while very important, is not the only signal for ranking products, and it is desirable to bring in many other potentially useful signals to improve ranking. Specifcally, an E-Com search engine would be able to naturally accumulate large amounts of user interaction data, including particularly user queries, clickthroughs, add-to-carts, order rates, revenue information, which can all be leveraged to improve ranking. Learning to rank methods provide a principled way to combine a large number of features optimally and have been proven very efective for Web search.
+Te basic idea of all these LETOR methods is to assume that given a query, the scoring of items to be ranked is a parameterized function of multiple features computed based on the query, the items and any other relevant information where the parameters are generally to control the weights (contributions) of diferent features. Tese parameters can then be learned by optimizing the performance of the parameterized ranking function on a training data set where we not only have queries and items, but also relevance judgments to indicate which items should have been ranked high for a query. Once the parameters are learned, the ranking function (now with parameter values that have been learned from a training set) can be applied to any future query to rank the items with respect the query. Te traditional retrieval functions such as
+BM25 are generally the most elementary building blocks (features) in these LETOR methods, but LETOR enables us to use many more diferent kinds of features.
+Application of LETOR to E-Com Search
+Successful application of learning to rank methods for E-Com search requires us to optimize multiple practical decisions. Te frst is to choose a good LETOR model. Given the same data, is it beter to learn a single model across the board, or train multiple models for diferent segments? How do well known learning to rank models perform for the task? In particular, are LambdaMART models, which perform very well for Web search, still the best?
+Next there are important decisions regarding training dataset creation (e.g. feature representation, source of relevance judgments etc.) and model learning (e.g. objective to be optimized, model to use etc.). In particular the trained models should be capable of generalizing to:(1) Previously unseen queries not in the training set(2) Previously unseen documents to be ranked for queries seen in the training set
+Note that, we use the term document/product interchangeably throughout the paper. Below we discuss the various challenges associated with achieving these modes of generalization, and highlight the relevant research questions that we will focus in our study.
+Feature Representation: Successful application of LETOR methods ofen depend upon the construction of useful features. We can organize ranking features into three groups:(1) Qery Features: Tese features are purely query properties.
+Eg. Qery length, expected product category etc.(2) Document Features: Tese features are purely document properties. Eg. Title length, User Ratings, Total sales, department etc.(3) Qery-Document Features: Tese features are properties of a query-document pair. Eg. BM25F text match score, Whether document belongs to the department predicted for the query etc.
+Figure 1: Features in an E-com query
+A key aspect of E-Com search is the presence of a large number of product and query atributes, around which ranking features need to be constructed. Product atributes are properties of products such as Brand, Rating, Category etc. present in the catalog either manually provided by the merchant or automatically extracted from the description. Qery atributes are defned as the atributes expected by the query in the products. Macdonald et. al. investigated which types of query atributes are useful to improve learned models.
+Tese query features are typically obtained by either parsing the query directly, analyzing search log data, or training an atribute predictor for the query. For example a query like blue iPhone 6 case expects products with atribute "Color: Blue" and "Category:
+Phone Cases". We refer to these as query atributes. Tese are then matched with document atributes to generate query-document features. An example is shown in Figure 1.
+Tere are three specifc challenges related to feature representation as we will discuss below.
+1. Balancing of Relevance and Popularity: Figure 1 highlights two scenarios of challenges in optimizing the combination of features related to the balancing of relevance and popularity:(1) Catalog has several "blue" iPhone cases. In which case the ranker should be able to rank more popular matching products higher. Popularity/ratings/sales etc. are purely document properties which now become important.(2) Catalog has several "black" iPhone cases which are more popular than the "blue" iPhone cases. Apart from popularity, the black and blue iPhone cases difer only in 1 feature, i.e., the color. Document specifc features which are primarily meant to resolve among equally relevant products, should not be allowed to promote irrelevant products.
+More importantly certain query atributes may be more critical than others. Te user may be open to buying a more popular "black" iPhone case even on a "blue iPhone case" query, but certainly would not be willing to buy an iPhone. Tus while in some cases allowing popularity to dominate over color match related features may be acceptable, leting it dominate over category match is certainly unacceptable.
+Tus an interesting question here is whether LETOR methods can optimize the balancing of relevance and popularity and whether the popularity-based features are efective for E-Com search. Te relevance vs popularity problem is especially severe in linear rankers, and we study whether a non-linear ranker such as LambdaMART can do beter.
+2. Qery attribute sparsity: While a given product will typically have < 100 atributes associated with it, due to substantial diversity in the types of products in an E-Com catalog, one can easily expect 1000s of unique atributes to be present in the catalog. Te number of atributes predicted for a query tend to be even smaller.
+Tis can cause problems for unseen queries. It is quite possible that an unseen query has a set of atributes rarely observed in the training set. To what extent does the sparsity negatively impact the performance? How can we train our models to still work well for these queries? One option is to try to gather more data on these queries, but this is generally expensive. More importantly there are always going to be unseen queries. An alternate option is to train a separate segmented ranker for such queries on a subset of overlapping features. We explore the conditions under which such a segmentation would make sense. We compare whether its beter to use the same ranker or train a diferent one based on the intersection of atributes.
+3. Engagement features: Engagement signals such as clicks, cartadds, orders etc. are computed based on user interactions. As we discuss in the next section, they also serve as surrogates of relevance judgments. Due to this strong correlation, they tend to cause overfting, and therefore we do not use them as features in our experiments.
+Relevance judgments: One common challenge in applying LETOR is to obtain reliable relevance judgments so that one can create high-quality training data sets for training a LETOR method. Te efectiveness of LETOR clearly depends on the quality of training data. Standardized web search test collections are based on query-document relevance ratings elicited from human experts and crowdsourcing. Tis is not a viable option in the E-Com domain, where the relevance ratings need to refect the utility of a product to the user rather than merely text relevance or intent match with the query. Utility is typically a complex function of a product not only matching the query intent, but also the product's brand, price, quality, value for money, associated warranty, availability etc. For example for a query like 14 inch laptop, there are typically 100s of matching laptops which are all equally relevant from a human rater's perspective. However the likelihood of a user purchasing them varies signifcantly from one to the other, based on brand, quality, hardware specs, operating system, reviews, batery life, price, warranty etc, making it challenging to make relevance judgments; indeed, in such cases human judgments are not sufcient to provide a fne grained ground truth ordering of products for the query unless we have users to make judgements for their own queries.
+In the absence of human judgements, we must turn to relevance feedback signals available from search logs for ground truth creation. In contrast with web search which only has clicks, E-Com search logs contain four prominent relevance feedback signals: clicks, cart-adds, orders and revenue. Tey represent potentially diferent training objectives as explained below. Formal equations for their computation are provided in section 3.1.(1) Perceived utility of search results (Click through rate):
+Function of users' perceived utility of a product, assessed based on the resulting snippet, typically title, image, price and ratings etc.
+Computed as the ratio of clicks a product receives for a query and its impressions (number of times shown to the user) for the query.
+Tis is closest to a typical web search seting. It especially makes sense for E-Com search engines which are relatively nascent or when churn in product or query distributions is high, so sufcient order/add-to-cart data is not available.(2) Perceived utility of the product page (Add-to-cart ratio):
+A function of users' perceived utility of a product, assessed based on the product's webpage containing comprehensive information such as detailed description, atributes, multiple images/videos and availability etc. Computed as the ratio of add-to-carts a product receives for a query and its number of clicks for the query. In case of high spam especially in online market places, this is a more suitable objective.(3) Overall user satisfaction (Order rate): A function of users' overall satisfaction with a product. Computed as the ratio of orders a product receives for a query and its impressions for the query. It encompasses users' perceived utility based on both result page and item page information. Order data while being a stronger signal of user satisfaction, tends to be sparser compared to clicks and add-to-carts.(4) Business value (Revenue rate): Based not only on user satisfaction metrics like the previous three, but also the revenue obtained from a product's purchases. Computed as the ratio of revenue generated by a product for a query and its impressions for the query.
+It has the same level of sparsity as order rate.
+Choosing the right objective however is non-trivial. Clearly increasing available training data improves model quality, but highquality signals tend to be sparse, leading to a tradeof between the quantity and quality of training data. Understanding this tradeof is crucial to generating training datasets. To the best of our knowledge, no prior works have studied this question in E-Com domain.
+One can also choose arbitrary combinations of these engagement metrics to defne a target. Tis is non-trivial and is ofen done based on several online experiments. For this work, we will focus more on the relationship between these objectives. We will systematically examine these diferent types of feedback signals and experimentally study how to best use them.
+EXPERIMENT DESIGN
+Te main goal of our experiments is to study the new challenges in applying LETOR to E-Com search as we discussed in section 2.2.
+Below we will describe the data set we used, the implementation of LETOR methods, and our experiment procedure for each of the research questions we study.
+Dataset
+Our E-Com data set consists of 2.8K randomly selected product search queries, and a catalog of 5M product/documents1. For each query, we retrieved top 120 products using a BM25F based retrieval algorithm. For each query-document pair (q,d), we then collected statistics on impressions2 (imp(q,d)), clicks (clicks(q,d)), add-to-carts (atc(q,d)), orders (orders(q,d)) and revenue (rev(q,d)) from search logs. Based on these statistics, we then assigned relevance ratings as follows.
+For each query, we eliminated products for which less than 100 impressions were observed in the search log, to reduce variance in rate estimates. One can also use alternate smoothing strategies here, but since these have not previously been tested on ECom data and we had sufcient data available, we decided to simply drop the low impression products/documents. Post the fltering step, we had on average 94.2 documents per query. Each <query, document> pair is considered as a single training instance to the LETOR methods.
+Let Dq be the set of documents selected for a query q afer the frst step. Ten the click/order/revenue rates and add-to-cart ratios for q and d ∈ Dq were computed as follows: ctr(q,d) = clicks(q,d) imp(q,d), or(q,d) = orders(q,d) imp(q,d) revr(q,d) = revenue(q,d) imp(q,d), atcr(q,d) = atc(q,d) clicks(q,d)
+Finally, ground truth relevance ratings based on the above objectives were computed for all products in Dq by normalizing and discretizing to a 5 point integer scale (0 − 4). For example, the formula for the ground truth relevance ratings in case of objective click rate, i.e., ctr, is presented below: relctr (q,d) = ceil
+�
+4. ctr(q,d) maxd ∈Dq ctr(q,d)
+�
+For each query, documents with the highest ctr always received a rating of 4, while documents with no clicks received 0. Ground truth
+1A subset obtained from www.walmart.com product catalog. We use the term "product"/"document" interchangeably throughout the paper.
+2Number of times a product was shown to the user for a query relevance ratings based on other objectives (relatcr,relor,relrevr ) were computed similarly.
+Note that atcr unlike other rates is obtained by normalizing with clicks instead of impressions. Consistent with our second objective of product page utility, it represents the empirical probability of a user being satisfed by a product afer the user has clicked on it and reviewed its product page.
+Te resulting distribution of relevance labels per query for the objective "click rate" is shown in Figure 2. Other relevance distributions look similar and have been omited in the interest of space.
+One observes from the fgure that there is a signifcant drop in the number of documents as we move from relevance rating 0 to 4.
+It suggests that most queries have a small number of best selling products which dominate in terms of clicks, cart-adds, orders etc.
+Tis characteristic can result from several reasons such as query specifcity, competitive pricing, faster/free shipping, higher/beter number of reviews and ratings, beter value for money, brand loyalty etc. However, one does observe sufcient number of products associated with each relevance bucket implying that while some products tend to atract the most atention, there are indeed several products that users engage with and purchase.
+Figure 2: Relevance label distribution for the objective "click rate". Relevance labels are on a scale of 0-4. Average number of products per query was 94.2. Frequencies are normalized in the scale for each query and the average of 2.8K queries are reported in the fgure.
+Our feature set consists of 562 features comprising various query specifc, product specifc and both query-product specifc features.
+Below we highlight some of the prominent feature groups. We avoid a full list of features due to lack of space.
+Text match: query - product BM25F score, computed by matching the query with various text felds (eg. Brand, Title, Description, Department etc.) present in a semi-structured product specifcation document.
+Product attributes: Overall product sales, rating, number of reviews, expected demand, brand, price etc.
+Qery-Document attribute match: Whether an atribute that takes a non-null value for the query, also takes a non-null value in the document. Similar to the frst sample feature shown in Figure 1.
+Qery-Document attribute value match: Whether the predicted query atribute value matches the document atribute value.
+Similar to the second and third sample features shown in Figure 1.
+One feature for each type of atribute (eg. Category, Brand, Price, Color, Size etc.) available in the product catalog.
+Note that both atribute match and atribute value match features were real valued. Te value of the feature was the same as the prediction probability of the query atribute or atribute-value.
+Figure 3: Feature Info-Gain Distribution
+To give a deeper insight into the informativeness of our features, Figure 3 provides a histogram of information gain values w.r.t click rate based relevance rating (relctr ). It is evident that most of our features provide a moderate to low information gain w.r.t. the objective click rate, however, a few of them provide a high information gain w.r.t. the same objective. Te relationships between these features and the other objectives are also similar and hence, omited due to the lack of space. Note that we did not use any click, cart-add or order based features, in order to ensure our models generalize to previously unseen query-document pairs.
+Implementation of LETOR methods
+Algorithm
+Short form
+RankNet 
+RNet
+RankBoost 
+RBoost
+AdaRank 
+ARank
+Random Forest 
+RF
+LambdaMART 
+LMART
+Logistic Regression (L1 regularized) 
+L1LR
+Logistic Regression (L2 regularized) 
+L2LR
+SVM Classifer (L1 regularized, L2 Loss) 
+L1L2SVMC
+SVM Classifer (L2 regularized, L1 Loss) 
+L2L1SVMC
+SVM Regressor (L2 regularized, L2 Loss) 
+L2L2SVMR
+SVM Regressor (L2 regularized, L1 Loss) 
+L2L1SVMR
+Table 1: Popular learning to rank algorithms
+Tere are many LETOR methods proposed. Table 1 lists the popular LETOR approaches along with popular classifcation and regression methods that have also been used for ranking applications. For notational convenience, we assign abbreviations to each method which is used throughout the rest of the paper.
+Our study is more focused on studying some unique new challenges in applying any LETOR method to E-Com search, thus in our experiments, we have primarily used LambdaMART as our learning-to-rank model because it has been shown to work very well in Web search. However, since there does not yet exist any comparison of these popular LETOR methods on an E-Com data set, we also compare all the popular LETOR methods that we discussed above, mostly as a sanity check to see whether LambdaMART is also the best performing method for E-Com search. (As will be shown later, LambdaMART indeed outperforms all the other methods.) In these experiments, we used three diferent toolkits to experiment with learning to rank algorithms. For RankNet, Random Forest, AdaRank and RankBoost we used the RankLib toolkit 3 with default parameter setings. For LambdaMART, we used the jForests toolkit
+4. All LambdaMART models were trained using the jforests confg properties shown in table 2. For Logistic regression and Support
+Vector Machines we used the LibLinear toolkit with default parameter setings. In each case, we report average NDCG@10
+ computed using 5 fold cross validation, as the performance metric. parameter name value trees.num-leaves
+7 trees.min-instance-percentage-per-leaf
+0.25 boosting.learning-rate
+0.05 boosting.sub-sampling
+0.3 trees.feature-sampling
+0.3 boosting.num-trees
+2000 learning.algorithm
+LambdaMARTRegressionTree learning.evaluation-metric
+NDCG params.print-intermediate-valid-measurements true
+Table 2: Parameter settings for LambdaMART
+Research Qestions and Experiment
+Procedure
+We will study the following research questions in this paper; for each question, we briefy describe the experiment procedure.(1) How well can LETOR methods optimize the combination of relevance-scoring features and static document-based features such as popularity features? Are popularity features useful? We can address these questions by experimenting with using only relevance-scoring features and using both relevance features and popularity features.(2) How well can LETOR methods handle sparse query attributes? Would it be benefcial to select features to avoid sparse atributes? We can address these questions by varying the features used and comparing using all the features(more features, but causing sparsity) and using fewer features (losing some information, but avoiding sparsity).
+3htp://www.lemurproject.org/
+4htps://github.com/yasserg/jforests(3) How reliable is crowdsourcing relevance judgments for
+E-Com search? How is the utility of such relevance judgments compared with using naturally available user feedback signals such as clicking data, add-to-cart ratio, and order rates? We address these questions by obtaining relevance judgements through crowdsourcing and analyzing it against the user behavior signals from the activity log data.(4) What's the best way to exploit the multiple feedback signals? Increasing available training data improves model quality, but high-quality signals tend to be sparse, leading to a trade-of between the quantity and quality of training data. How does this tradeof impact performance? Can we train a model to optimize one objective, e.g., click rate, for which sufcient data is available easily and then apply the model to predict some diferent objective, e.g., order rate? We address these questions by combining diferent feedback signals for training and testing respectively.
+EXPERIMENT RESULTS
+In this section, we discuss our experiment results.
+Comparison of LETOR methods
+As no previous work has compared the major LETOR methods for E-Com search, we frst make such a comparison to help us determine the best-performing method for further study of other research questions that we discussed earlier.
+Table 3 presents the summary of the results of applying diferent state-of-the-art LETOR algorithms on the E-com data set. We hypothesized that LambdaMART would be the best based on its superior performance in Web search, and the results indeed confrm this hypothesis; it achieves the highest test performance for each target objective, followed by AdaRank and RankNet. Tis observation is consistent with prior benchmark studies on web search dataset. Linear classifcation based approaches such as L1 regularized Logistic Regression (L1LR) and L1 Regularized L2 loss SVM
+Classifer (L1L2SVM) also perform well. Tis is explained by the fact that these methods do a good job of separating the irrelevant (0 rated) from relevant (1-4 rated) products, but may not be very good with correctly ordering the relevant documents among themselves.
+Still, since a large percentage of documents in E-com dataset are 0 rated (Figure 2) and our raw features are sufciently informative, the "simple" linear models are able to achieve reasonable ranking performance. Finally, we observe that if a method does well on one objective, it tends to do well on others as well.
+Feature Representation
+With LambdaMART selected as the LETOR method for further experiments, we now turn to the questions about feature representation, particularly the efectiveness of popularity-based atributes as features and the impact of query atribute sparsity, to be discussed below, respectively.
+Results on popularity based atributes: As discussed earlier, due to the risk of the potential dominance of popularity-based features over relevance features, we cannot assume that popularitybased features are defnitely efective. We thus setup an experiment
+Click Rate
+Cart Add Rate
+Order Rate
+Revenue
+Algorithm
+Train
+Test
+Train
+Test
+Train
+Test
+Train
+Test
+RNet
+RBoost
+ARank
+RF
+LMART
+L1LR
+L2LR
+L1L2SVMC
+L2L1SVMC
+L2L2SVMR
+L2L1SVMR
+Table 3: Comparison of ranking algorithms in terms of NDCG@10 for target variable "Click Rate", "Cart Add Rate", "Order
+Rate" and "Revenue" to verify the usefulness of popularity based atributes in capturing the target objective. Without loss of generality, we set "order rate", which is also the highest quality feedback available form the user activity logs, as the optimization objective. We created two diferent sets of training sets which vary only in the set of features that they contain. Te frst training set contains all the 562 features available in the dataset, while the second one discards the popularity based features from the frst training set. For each training set, we then trained a separate LambdaMART model and tested over the same testing set for both trained models. Tis whole process constitutes one out of the 5 folds in 5-fold cross validation, thus, we repeated this process four more times with diferent partitions of the data as testing data. We report the average results of the 5-fold cross validation experiment in Table 4. Tis table highlights that product popularity related features which are purely document atributes are indeed useful for ranking and suggests that LambdaMART was able to learn appropriate weights to balance relevance-based and popularity-based features. Both training and testing NDCG@10 drops signifcantly when we remove popularity features such as total sales, reviews, ratings etc.
+Feature Set
+Training
+Testing
+Without Popularity
+With Popularity
+Table 4: Efect of popularity attributes in predicting the target: "order rate"
+Results on query atribute sparsity: We now examine the impact of query atribute sparsity on LETOR results and test the idea of selectively using only features that help avoiding the sparsity. Specifcally, for this experiment, we randomly sampled 10 departments out of a total of 26 in the dataset. For each department, we did the following: we frst removed all queries belonging to that department and used them to create a test set. Of the remaining queries in the dataset, we created a training set frst by a) using all available atribute features and b) using only atribute features that appear in the test set i.e. the intersection set. We again chose
+"order rate" as the target objective as this is the highest quality feedback available from the user activity logs. For each training set, Dept.
+Training
+Testing
+NDCG@10
+NDCG@10
+<q,d>
+<q,d>
+All
+Intersected increase pairs pairs features
+Features
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+Table 5: Results on Attribute Sparsity we trained a separate LambdaMART model and tested it on the testing set created as described above. Table 5 presents the summary of these results 5. It clearly shows that using the intersection set leads to improved results. For example, using the intersection set of features improves LambdaMART testing NDCG@10 by almost 12% for the queries of department "C", around 13.4% for the queries of department "F" etc. Te number of query-document pairs available in the test and train sets are also listed. Tese results suggest that there is great potential to apply transfer learning and domain adaptation to LETOR for E-Com search, which should be a very interesting future direction for further study.
+Results on crowdsourcing
+In this experiment, we study the reliability of the relevance judgements provided by the crowd workers for e-commerce queries. We frst randomly selected a query. For this query, workers were shown a product image, title and price along with the query. Diferent products were shown to the workers for the same query. Tey were then asked to rate the relevance of the product on a 0-4 rating scale.
+Tere were well defned guidelines on what each level means with
+4 being ideal and 0 being non-relevant.
+Afer the workers have provided their relevance judgements; for each query, we fltered out the products that were rated as 4, i.e., 5Departments refer to typical departments found on a generic eCommerce site. Actual names have been removed for confdentiality. query
+No of No of Impressions (top 2 ranks) clicks items mean median max
+Neutrogena
+5 or more
+Vacuum
+Cleaner
+5 or more
+Monster
+High Dolls
+5 or more
+Water
+Botles
+5 or more
+Outdoor
+Furnitures
+5 or more
+Table 6: Variation in relevance judgments obtained from click data for products rated as 4 (ideal) by the crowd. ideal, by the workers. Next, for all these products that were marked as ideal by the workers, we looked at the user activity log to fnd out their actual number of clicks and impressions for that query.
+What we found out is that even though the crowd-workers rated all these products with the ideal rating, i.e., 4, the actual number of clicks the products received varied widely given that each item had a sufciently large number of impressions in top 2 ranks.
+Table 6 shows our fndings for fve example queries, i.e., "Neutrogena", "Vacuum Cleaner", "Monster High Dolls", "Water Botles" and "Outdoor Furnitures". For each query, Table 6 bins products with respect to the actual number of clicks they received. For example, the frst row of Table 6 shows that 44 items that were rated as ideal by crowd-workers with respect to query "Neutrogena" received no clicks from real users. To easily distinguish the wide variance in the number of clicks that these products received, we report the results for the two bins, i.e., 1) products with zero clicks and 2) products with fve or more clicks. To demonstrate that all these items received sufcient impressions, we show the mean, median and maximum of the number of impressions (only in top
+2 ranks) that the products in each bucket received. Tis indeed shows that, even if the crowd-workers judged all these items to be ideal with respect to the query, user click counts suggests the actual utility of the product varied signifcantly across diferent products. Tus we conclude that crowdsourcing fails to provide reliable relevance judgements for E-commerce queries. Tis also supports the fndings of the study by Alonso et. al. where they suggested that when users are interested in buying products, they apply diferent criteria when deciding relevance. Tis is ofen hard to judge by the crowd workers.
+Cross Objective Learning Experiments
+According to, the target metric is not always the best (most informative) metric for training a LETOR method. We thus would like to experimentally understand how to best exploit the multiple training objectives available in E-Com search. To achieve this goal, we evaluated the performance of LambdaMART models trained using one training objective on test datasets based on other objectives.
+Te results are shown in Table 7, where each row corresponds to training with a diferent objective (e.g., the frst row with numerical values is training on click rate), and each column corresponds to testing with a diferent objective (e.g., the frst column with numerical values is testing with click rate as the objective).
+We observe that the best performance on a given test objective is indeed not always achieved by models trained on the same objective.
+Specifcally, Table 8 highlights optimal training objectives that lead to statistically signifcantly beter models for a given test objective, compared to the sub-optimal objectives. For example, both ctr and or based models were found to perform signifcantly beter in predicting click rates than atcr and revr based models. Also in each case, we did not observe any statistically signifcant improvements when comparing the optimal objectives among themselves.
+Overall, for each test objective, order rate or turned out to be consistently optimal, while atcr turns out to be consistently suboptimal. Tis highlights the importance of using order rate as a robust training objective. In general for any given query segment, one can initially build models trained on ctr (which is optimal for objectives or,ctr and is available easily in a signifcant amount) since order rates are prety sparse on initial stages and then switch to or based models once sufcient order data is available.
+RELATED WORK
+E-Com search has recently atracted increasing atention and has been studied from multiple perspectives, including e.g., economic theory-based model, adaptation of traditional retrieval models for product search, applying representation learning to product search, facet selection for product search, beyond relevance ranking and diversifcation of product search results.
+Several methods have been proposed to solve the Learning to
+Rank problem for web search. Te best-performing methods include
+RankNet, LambdaMART, AdaRank and RankBoost etc..
+Researchers have conducted comprehensive studies to compare the performance of popular LETOR approaches on benchmark web data-sets. In particular, LambdaMART and RankNet are known to perform particularly well. In our work, we also compared many of these methods and confrmed that LambdaMART is very efective, outperforming all the other methods that we compared with.
+Macdonald et. al. proposed general guidelines on best practices for deploying LETOR methods. Specifcally, they provided three important general observations critical to the deployment of LETOR models. First, the smallest efective sample for LETOR varies according to several factors: the information need, the evaluation measure used to test the models, and the presence of anchor text in the document representation used for sampling. Second, the choice of the learning evaluation measure can indeed have an impact upon the efectiveness of the resulting learned model. Tird, the importance of diferent classes of features within a learned model are dependent on both the sample size and the rank cutof of the learning evaluation measure. Our work extends this line of contributions by adding additional fndings related to unique challenges in using LETOR for E-Com search, especially the efectiveness of popularity-based features, the efectiveness of selecting features to avoid query atribute sparsity, and fndings about how to best exploit the multiple feedback signals. In other related works, Chapelle et. al. lay out open challenges in Learning to rank
+Test data objective
+Training data
+Click
+Order
+Revenue
+Cart
+Add objective rate rate rate ratio click rate
+Order Rate
+Revenue
+Cart Add Ratio
+Table 7: Results for Cross Target Learning
+Test
+Optimal
+Sub-optimal objective training training objective objectives objectives
+Click Rate ctr,or atcr,revr
+Order Rate or,revr,ctr atcr
+Revenue revr,or ctr,atcr
+Cart Add Ratio actr,or ctr,revr
+Table 8: Suitable training objectives based on stat. signifcant improvements (Wilcoxon's signed rank test at level 0.05) for web search. Some prominent open challenges they mentioned include sample selection bias in training, efciency and scalability of large scale learning to rank, transfer learning to rank, online learning to rank etc. Our results on query atribute sparsity clearly suggest the importance of some of these techniques, particularly transfer learning to rank.
+Our exploration of crowdsourcing is related to the previous work on this topic which discussed the diferent relevance criteria in E-Com, which may provide an explanation of our fnding that crowdsourcing is not reliable for E-Com search.
+CONCLUSIONS AND FUTURE WORK
+Learning to rank for E-Commerce (E-Com) search is an emerging important problem whose study is still in its infancy with many interesting new challenges to be solved. Tis paper presents a systematic experimental study of the application of state of the art
+LETOR methods to E-Com search using an industry data set. Below we summarize our experimental fndings and discuss multiple interesting future research directions related to LETOR for E-Com search motivated by our study and observations.
+First, the relative performance of diferent learning to rank methods on our product search data set is mostly consistent with past observations on web data sets, confrming that LambdaMART is the best performing method, and can thus be recommended for use in E-Com application systems and as a reasonable baseline for further research on learning to rank for E-Com search.
+Second, the popularity-based features are very efective; despite the potential risk of imbalanced weighting of popularity-based features and relevance-based features, LETOR methods can learn to balance this weighting appropriately. However, query atribute sparsity raises challenges for LambdaMART and selectively using a subset of features to avoid sparsity is benefcial.
+Tird, while useful for annotating Web search data sets, crowdsourcing is shown to generate mostly unreliable judgments for
+E-Com search.
+Finally, when using LambdaMART, among all the user feedback signals, click rates appear to be the easiest to predict, while the add-to-cart ratios the hardest. Training to optimize order rates is found to be most robust (followed by click through rates) in predicting various other objectives (i.e., click rates, add-to-cartratios, and revenues), ofen delivering the best or near-the-best performance indistinguishable from training on the target signal itself. Te closely related revenue, however, behaves less robustly.
+Tese fndings suggest that a reasonable simple strategy for an
+E-Com search engine is to use click rate based models for query segments where sufcient order data is not available, but switch to order rate based models once it is.
+As in the case of all experimental studies of retrieval systems, it is important to use more test collections to further verify our fndings, which would be an important future work. It is also very interesting to further study what is the best way to use diferent feedback signals, a unique challenge specifc to product search(not present in Web search). For example, given that training on the same signal as the target of prediction may not be as good as training on another correlated signal, can we intelligently combine various feedback signals to obtain a more robust efective ranker?
+How can we optimally combine them? Tere are clearly multiple possibilities, such as combining them as features vs. using each to train a diferent model and then combining multiple models. It would really be interesting to develop a method that can switch from click-rate to order-rate, or even beter, a model that can combine both and adapt based on the amount of data that is available.
+Another interesting direction is the following: since a lot of queries in E-com domain are category-related queries, e.g., show me "tv sets" or "sofas", this hints that there is a general tendency of exploratory-like search behavior in E-com. With this in mind, it would make sense to separate/classify queries into diferent classes, e.g., "product" and "category". Each class may require a diferent model and/or diferent evaluation measures. nDCG may be good for
+"focused" queries because these are more precision-oriented, but recall (or other measures) may be beter for more abstract queries, like "tv sets" or "sofas". Finally, the unique challenges we identifed in Section 2 can serve as a roadmap to help us identify potentially many interesting new research problems about using LETOR for
+E-Com search for future research. In particular, exploration of adaptive cutof in NDCG that is sensitive to a query would be interesting given the high variance in browsing depth in E-Com search.
+Our work has also revealed a number of interesting novel challenges for future research on LETOR in general which we briefy discuss below:(1) Presence of Uncertain (engagement related) features: sales/ ratings/ reviews etc. related features are heavily dependent upon the age of the product in the catalog and the number of impressions a product has received. Products newly added in the catalog, typically have zero values associated with these features, and consequently get artifcially penalized by the ranker. In future we intend to explore learning to rank methods capable of handling such uncertainties in feature values.(2) Correlated features: clicks, cart-adds and orders are clearly understood to be closely related and hence ignored from the feature set. Hidden relationships may however still exist between these engagement signals and other features. Especially in context of industry seting where several engineers may be generating 1000s of features and the data scientists training the models may not know how exactly each was generated. Existence of such hidden relationships can lead to artifcially high performance on the train/test set being used. Tus their detection is an important challenge.(3) Data quality issues: Since the data is ofen entered by vendors or inferred automatically, there are always issues with data quality in terms of missing atributes or incorrect atributes etc.(4) Qery sparsity: Transfer learning to rank problems become particularly important when the goal is to generalize to unseen queries and solve some of the atribute sparsity challenges mentioned in the paper. Specially, having thousands of atribute values in products poses challenges in learning. How can we reduce the dimensionality and how much data do we need for this, is an interesting open problem. Ideas from deep neural networks may be useful here.(5) Qery-specifc variable cutof for NDCG measure to accommodate variable browsing depth of users: It is worth elaborating this point further. Typical web search studies have reported NDCG@10.
+We have very diferent K requirements for diferent queries in product search since there tend to be high variances in the browsing depth. Indeed, generic product queries such as tv, desk, ofce chair etc. constitute a substantial fraction of product search trafc. Such queries usually represent exploratory intents with 1000s of relevant products in the catalog. Depending upon the expenditure involved, a user may want to review several products, well beyond the top 10, before making a purchase decision. From a search quality perspective, this requires the search engine to maintain a high NDCG@K for K >> 10. Tus while in Web search, people generally only pay atention to the frst page of results, users have much higher variances in their browsing depth in E-Com search, making it questionable whether optimizing a metric such as NDCG at a fxed cutof of 10 remains an appropriate strategy. We hypothesize that it might be benefcial to use query-specifc variable cutofs when computing NDCG (which afects the objective functions used for training LETOR methods), which would be a very interesting future research direction.
+ACKNOWLEDGMENTS
+We thank WalmartLabs search team, particularly Esteban Arcaute and Pranam Kolari, for providing the necessary funding and support for this work. We also thank the anonymous reviewers for their useful comments, which helped improving the quality of the paper signifcantly.
+REFERENCES
+ Omar Alonso and Stefano Mizzaro. 2009. Relevance criteria for e-commerce: a crowdsourcing-based experimental analysis. In Proceedings of the 32nd international ACM SIGIR conference on Research and development in information retrieval.
+ACM, 760–761.
+ Omar Alonso, Daniel E Rose, and Benjamin Stewart. 2008. Crowdsourcing for relevance evaluation. In ACM SigIR Forum, Vol. 42. ACM, 9–15.
+ Leif Azzopardi and Guido Zuccon. 2016. Advances in Formal Models of Search and Search Behaviour. In Proceedings of the 2016 ACM on International Conference on the Teory of Information Retrieval. ACM, 1–4.
+ Leo Breiman. 2001. Random forests. Machine learning 45, 1 (2001), 5–32.
+ Chris Burges, Tal Shaked, Erin Renshaw, Ari Lazier, Mat Deeds, Nicole Hamilton, and Greg Hullender. 2005. Learning to rank using gradient descent. In Proceedings of the 22nd international conference on Machine learning. ACM, 89–96.
+ Christopher JC Burges. 2010. From ranknet to lambdarank to lambdamart: An overview. Learning 11 (2010), 23–581.
+ Olivier Chapelle and Yi Chang. 2011. Yahoo! Learning to Rank Challenge
+Overview.. In Yahoo! Learning to Rank Challenge. 1–24.
+ Olivier Chapelle, Yi Chang, and Tie-Yan Liu. 2011. Future directions in learning to rank.. In Yahoo! Learning to Rank Challenge. 91–100.
+ Xiangru Chen, Haofen Wang, Xinruo Sun, Junfeng Pan, and Yong Yu. 2011.
+Diversifying Product Search Results. In Proceedings of the 34th International ACM
+SIGIR Conference on Research and Development in Information Retrieval (SIGIR
+'11). ACM, New York, NY, USA, 1093–1094.
+ Huizhong Duan, ChengXiang Zhai, Jinxing Cheng, and Abhishek Gatani. 2013.
+Supporting Keyword Search in Product Database: A Probabilistic Approach. Proc.
+VLDB Endow. 6, 14 (Sept. 2013), 1786–1797.
+ Rong-En Fan, Kai-Wei Chang, Cho-Jui Hsieh, Xiang-Rui Wang, and Chih-Jen
+Lin. 2008. LIBLINEAR: A library for large linear classifcation. Te Journal of Machine Learning Research 9 (2008), 1871–1874.
+ Yoav Freund, Raj Iyer, Robert E Schapire, and Yoram Singer. 2003. An efcient boosting algorithm for combining preferences. Te Journal of machine learning research 4 (2003), 933–969.
+ Wolfgang H¨ardle. 2012. Smoothing techniques: with implementation in S. Springer
+Science & Business Media.
+ Kalervo J¨arvelin and Jaana Kek¨al¨ainen. 2002. Cumulated gain-based evaluation of IR techniques. ACM Transactions on Information Systems (TOIS) 20, 4 (2002), 422–446.
+ John Le, Andy Edmonds, Vaughn Hester, and Lukas Biewald. 2010. Ensuring quality in crowdsourced search relevance evaluation: Te efects of training question distribution. In SIGIR 2010 workshop on crowdsourcing for search evaluation.
+21–26.
+ Su-In Lee, Honglak Lee, Pieter Abbeel, and Andrew Y Ng. 2006. Efcient l1 regularized logistic regression. In Proceedings of the National Conference on
+Artifcial Intelligence, Vol. 21. 401.
+ Beibei Li, Anindya Ghose, and Panagiotis G. Ipeirotis. 2011. Towards a Teory
+Model for Product Search. In Proceedings of the 20th International Conference on
+World Wide Web (WWW '11). ACM, New York, NY, USA, 327–336.
+ Hang Li. 2014. Learning to rank for information retrieval and natural language processing. Synthesis Lectures on Human Language Technologies 7, 3 (2014), 1–121.
+ Chih-Jen Lin, Ruby C Weng, and S Sathiya Keerthi. 2008. Trust region newton method for logistic regression. Te Journal of Machine Learning Research 9 (2008), 627–650.
+ Tie-Yan Liu. 2009. Learning to rank for information retrieval. Foundations and Trends in Information Retrieval 3, 3 (2009), 225–331.
+ Bo Long, Jiang Bian, Anlei Dong, and Yi Chang. 2012. Enhancing Product Search by Best-selling Prediction in e-Commerce. In CIKM '12 (CIKM '12). ACM, New
+York, NY, USA, 2479–2482. DOI:htp://dx.doi.org/10.1145/2396761.2398671
+ Craig Macdonald, Rodrygo LT Santos, and Iadh Ounis. 2012. On the usefulness of query features for learning to rank. In Proceedings of the 21st ACM international conference on Information and knowledge management. ACM, 2559–2562.
+ Craig Macdonald, Rodrygo LT Santos, and Iadh Ounis. 2013. Te whens and hows of learning to rank for web search. Information Retrieval 16, 5 (2013), 584–628.
+ Jos´e R P´erez-Ag¨uera, Javier Arroyo, Jane Greenberg, Joaquin Perez Iglesias, and Victor Fresno. 2010. Using BM25F for semantic search. In Proceedings of the 3rd international semantic search workshop. ACM, 2.
+ Tao Qin and Tie-Yan Liu. 2013.
+Introducing LETOR 4.0 Datasets.
+CoRR abs/1306.2597 (2013). htp://arxiv.org/abs/1306.2597
+ Stephen E Robertson, Steve Walker, Susan Jones, Micheline M Hancock-Beaulieu, Mike Gatford, and others. 1995. Okapi at TREC-3. NIST SPECIAL PUBLICATION
+SP 109 (1995), 109.
+ Alex Smola and Vladimir Vapnik. 1997. Support vector regression machines.
+Advances in neural information processing systems 9 (1997), 155–161.
+ Johan AK Suykens and Joos Vandewalle. 1999. Least squares support vector machine classifers. Neural processing leters 9, 3 (1999), 293–300.
+ Liang Tang, Bo Long, Bee-Chung Chen, and Deepak Agarwal. 2016. An Empirical
+Study on Recommendation with Multiple Types of Feedback. In Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining. ACM, 283–292.
+ Niek Tax, Sander Bockting, and Djoerd Hiemstra. 2015. A cross-benchmark comparison of 87 learning to rank methods. Information processing & management
+51, 6 (2015), 757–772.
+ Christophe Van Gysel, Maarten de Rijke, and Evangelos Kanoulas. 2016. Learning
+Latent Vector Spaces for Product Search. In Proceedings of the 25th ACM CIKM
+'16. ACM, New York, NY, USA, 165–174.
+ Damir Vandic, Flavius Frasincar, and Uzay Kaymak. 2013. Facet Selection Algorithms for Web Product Search. In Proceedings of the 22Nd ACM International
+Conference on Information & Knowledge Management (CIKM '13). ACM, New
+York, NY, USA, 2327–2332. DOI:htp://dx.doi.org/10.1145/2505515.2505664
+ Frank Wilcoxon. 1945. Individual comparisons by ranking methods. Biometrics bulletin 1, 6 (1945), 80–83.
+ Jun Xu and Hang Li. 2007. Adarank: a boosting algorithm for information retrieval. In ACM SIGIR. ACM, 391–398.
+ Emine Yilmaz and Stephen Robertson. 2010. On the Choice of Efectiveness
+Measures for Learning to Rank. Inf. Retr. 13, 3 (June 2010), 271–290.
+ Jun Yu, Sunil Mohan, Duangmanee (Pew) Puthividhya, and Weng-Keen Wong.
+2014. Latent Dirichlet Allocation Based Diversifed Retrieval for e-Commerce
+Search. In WSDM '14. New York, NY, USA, 463–472.

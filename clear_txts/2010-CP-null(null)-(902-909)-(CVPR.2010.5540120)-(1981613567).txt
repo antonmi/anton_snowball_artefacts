@@ -1,0 +1,127 @@
+Multimodal semi-supervised learning for image classification
+Matthieu Guillaumin, Jakob Verbeek, Cordelia Schmid
+LEAR team, INRIA Grenoble, France
+Motivation and goal
+Images often come with additional textual info.
+Videos with scripts and subtitles,...
+Goal of this work
+Visual object category recognition, Leveraging user tags available on
+Tags wow
+San Fransisco
+Golden Gate Bridge
+SBP2005 top-f50 fog
+SF Chronicle 96 hours
+Overview of the talk(A) Data sets and features(B) Learning scenarios using images with tags(1) Supervised multimodal classification(2) Multimodal semi-supervised scenario(3) Weakly supervised learning
+Data sets of images with tags
+PASCAL VOC 07, ≈10000 images, 804 Flickr tags, 20 classes.
+Flickr tags: india aviation, airplane, airport
+Class labels: cow aeroplane
+MIR Flickr, 25000 images, 457 Flickr tags, 38 classes.
+Flickr tags: desert, nature, landscape, sky rose, pink
+Class labels: clouds, plant life, sky, tree flower, plant life
+Flickr tags as textual features
+Restrict to the most frequent tags.
+Sorted tag index
+Tag frequency
+PASCAL VOC'07 tags
+Binary vector of tag presence/absence.
+Linear kernel counts the number of shared tags.
+Combination of several visual features
+RBF kernel on average distance between 15 image representations:
+Bag-of-features histograms:
+Harris interest points and dense grid, SIFT [Lowe, 2004] and Hue [van de Weijer & Schmid, 2006], K-means quantization.
+Color histograms:
+RGB, HSV and Lab colorspaces, 16 bins per channel.
+GIST [Oliva & Torralba, 2001], 2 spatial layouts
+Global, 3 horizontal regions [Lazebnik et al., 2006], Only global for GIST.
+Learning scenarios using images with tags
+Supervised multimodal classification
+Multimodal semi-supervised scenario
+Weakly supervised learning
+Supervised multimodal classification
+Flickr tags = additional features for classification.
+Tags also available at test time, MKL to combine visual and textual kernels.
+DOG (+1) not DOG (−1)
+DOG? greyhound running athlete sport horse vermont cars racing dog rottweiler pets computer dual monitor
+→ yacht canine pet locomotive black puppy cute dog
+Results of multimodal classification on
+PASCAL VOC 2007
+1 aeroplane bicycle bird boat bottle bus car cat chair cow diningtable dog horse motorbike person pottedplant sheep sofa train tvmonitor
+Mean
+PASCAL VOC'07
+Average Precision tags image image+tags
+Tags (0.43) < Image (0.53) < Image+tags (0.67)
+Winner of PASCAL VOC'07: 0.59.
+Similar observation for MIR Flickr.
+Learning scenarios using images with tags
+Supervised multimodal classification
+Multimodal semi-supervised scenario
+Weakly supervised learning
+Multimodal semi-supervised scenario
+Large pool of additional unlabeled images with tags.
+Tags NOT available at test time: visual categorization.
+DOG (+1)
+Unlabeled
+DOG? greyhound running athlete sport vermont horse dog rottweiler pets canine pet
+→ not DOG (−1) puppy dog computer dual monitor railroads train locomotive car auto
+Three-step learning process
+In a nutshell, predict labels for the unlabeled images:
+1 Train an MKL classifier on labeled images and tags.
+2 Score unlabeled data.
+3 Train an image-only classifier. 2 options:
+SVM:
+Use unlabeled data with label from sign of MKL score, Using only the sign, we dismiss the confidence of classification.
+LSR:
+Least-squares regression of MKL scores using the visual kernel, Regularized using KPCA projection.
+Experimental comparison
+Baselines:
+1 Supervised, image-only: SVM, 2 Semi-supervised, image-only: SVM+SVM, 3 Semi-supervised, multimodal: Co-training, with SVM on images and SVM on tags. [Blum & Mitchell, 98]
+Our three-step learning approach (semi-supervised, multimodal):
+1 MKL learned on labeled images with tags, followed by visual-only SVM trained on labeled and unlabeled images: MKL+SVM, 2 MKL, followed by LSR: MKL+LSR.
+Results of semi-supervised learning
+PASCAL VOC'07
+MIR Flickr
+Mean AP
+Number of labeled training examples
+SVM
+SVM+SVM
+Co-training
+MKL+SVM
+MKL+LSR
+SVM+SVM worse than baseline.
+With little supervision, MKL+LSR is significantly better.
+With more supervision, differences shrink.
+Learning scenarios using images with tags
+Supervised multimodal classification
+Multimodal semi-supervised scenario
+Weakly supervised learning
+Weakly supervised scenario
+For learning: no manual annotation, but Flickr tags, Other tags used as additional features.
+For evaluation: ground-truth labels.
+DOG? greyhound running athlete sport vermont horse dog rottweiler pets canine pet
+→ locomotive puppy dog computer dual monitor railroads train
+Weakly supervised setting
+Tags are noisy annotations:
+Tag presence is relatively clean (82.0% precision)
+Tag absence is relatively uninformative (17.8% recall)
+Our approach, modified:
+Learn a multimodal MKL with tag annotations, Rank training images and remove the images that yield highest
+MKL scores but do not have the tag, Fit LSR.
+Baseline: visual-only SVM learned on images with tag annotations.
+Results on 18 classes of MIR Flickr
+Mean AP
+Baseline
+MKL+LSR
+Number of removed training negatives mAP on 18 MIR Flickr classes.
+On average, MKL+LSR outperforms SVM baseline:
+SVM baseline better for 4 classes (up to +5.6%), MKL+LSR better for 14 classes (up to +9.8%).
+Conclusion
+We considered using Flickr tags for 3 scenarios:
+Supervised classification, Semi-supervised learning of visual classifiers, Weakly supervised learning of visual classifiers.
+We proposed a three-step learning process:
+Training of a multimodal classifier on labeled data, Classification of the unlabeled data, Regression of the multimodal classifier.
+Our multimodal approach using Flickr tags improves over:
+Visual-only SVM on all three scenarios, Co-training for semi-supervised learning.
+Multimodal semi-supervised learning for image classification
+Matthieu Guillaumin, Jakob Verbeek, Cordelia Schmid
+LEAR team, INRIA Grenoble, France

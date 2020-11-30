@@ -1,0 +1,535 @@
+Bayesian Compression for Deep Learning
+Christos Louizos
+University of Amsterdam
+TNO Intelligent Imaging c.louizos@uva.nl
+Karen Ullrich
+University of Amsterdam k.ullrich@uva.nl
+Max Welling
+University of Amsterdam
+CIFAR∗ m.welling@uva.nl
+Abstract
+Compression and computational efficiency in deep learning have become a problem of great significance. In this work, we argue that the most principled and effective way to attack this problem is by adopting a Bayesian point of view, where through sparsity inducing priors we prune large parts of the network. We introduce two novelties in this paper: 1) we use hierarchical priors to prune nodes instead of individual weights, and 2) we use the posterior uncertainties to determine the optimal fixed point precision to encode the weights. Both factors significantly contribute to achieving the state of the art in terms of compression rates, while still staying competitive with methods designed to optimize for speed or energy efficiency.
+Introduction
+While deep neural networks have become extremely successful in in a wide range of applications, often exceeding human performance, they remain difficult to apply in many real world scenarios. For instance, making billions of predictions per day comes with substantial energy costs given the energy consumption of common Graphical Processing Units (GPUs). Also, real-time predictions are often about a factor 100 away in terms of speed from what deep NNs can deliver, and sending NNs with millions of parameters through band limited channels is still impractical. As a result, running them on hardware limited devices such as smart phones, robots or cars requires substantial improvements on all of these issues. For all those reasons, compression and efficiency have become a topic of interest in the deep learning community.
+While all of these issues are certainly related, compression and performance optimizing procedures might not always be aligned. As an illustration, consider the convolutional layers of Alexnet, which account for only 4% of the parameters but 91% of the computation. Compressing these layers will not contribute much to the overall memory footprint.
+There is a variety of approaches to address these problem settings. However, most methods have the common strategy of reducing both the neural network structure and the effective fixed point precision for each weight. A justification for the former is the finding that NNs suffer from significant parameter redundancy. Methods in this line of thought are network pruning, where unnecessary connections are being removed, or student-teacher learning where a large network is used to train a significantly smaller network.
+From a Bayesian perspective network pruning and reducing bit precision for the weights is aligned with achieving high accuracy, because Bayesian methods search for the optimal model structure(which leads to pruning with sparsity inducing priors), and reward uncertain posteriors over parameters through the bits back argument (which leads to removing insignificant bits). This relation is made explicit in the MDL principle which is known to be related to Bayesian inference.
+∗Canadian Institute For Advanced Research.
+31st Conference on Neural Information Processing Systems (NIPS 2017), Long Beach, CA, USA. arXiv:1705.08665v4 [stat.ML] 6 Nov 2017
+In this paper we will use the variational Bayesian approximation for Bayesian inference which has also been explicitly interpreted in terms of model compression. By employing sparsity inducing priors for hidden units (and not individual weights) we can prune neurons including all their ingoing and outgoing weights. This avoids more complicated and inefficient coding schemes needed for pruning or vector quantizing individual weights. As an additional Bayesian bonus we can use the variational posterior uncertainty to assess which bits are significant and remove the ones which fluctuate too much under approximate posterior sampling. From this we derive the optimal fixed point precision per layer, which is still practical on chip.
+Variational Bayes and Minimum Description Length
+A fundamental theorem in information theory is the minimum description length (MDL) principle.
+It relates to compression directly in that it defines the best hypothesis to be the one that communicates the sum of the model (complexity cost LC) and the data misfit (error cost LE) with the minimum number of bits. It is well understood that variational inference can be reinterpreted from an
+MDL point of view. More specifically, assume that we are presented with a dataset
+D that consists from N input-output pairs {(x1, y1),..., (xn, yn)}. Let p(D|w) = �N i=1 p(yi|xi, w) be a parametric model, e.g. a deep neural network, that maps inputs x to their corresponding outputs y using parameters w governed by a prior distribution p(w). In this scenario, we wish to approximate the intractable posterior distribution p(w|D) = p(D|w)p(w)/p(D) with a fixed form approximate posterior qφ(w) by optimizing the variational parameters φ according to:
+L(φ) = Eqφ(w)[log p(D|w)]
+�
+��
+�
+LE
++ Eqφ(w)[log p(w)] + H(qφ(w))
+�
+��
+�
+LC, (1) where H(·) denotes the entropy and L(φ) is known as the evidence-lower-bound (ELBO) or negative variational free energy. As indicated in eq. 1, L(φ) naturally decomposes into a minimum cost for communicating the targets {yn}N n=1 under the assumption that the sender and receiver agreed on a prior p(w) and that the receiver knows the inputs {xn}N n=1 and form of the parametric model.
+By using sparsity inducing priors for groups of weights that feed into a neuron the Bayesian mechanism will start pruning hidden units that are not strictly necessary for prediction and thus achieving compression. But there is also a second mechanism by which Bayes can help us compress. By explicitly entertaining noisy weight encodings through qφ(w) we can benefit from the bits-back argument due to the entropy term; this is in contrast to infinitely precise weights that lead to
+H(δ(w)) = −∞2. Nevertheless in practice, the data misfit term LE is intractable for neural network models under a noisy weight encoding, so as a solution Monte Carlo integration is usually employed.
+Continuous qφ(w) allow for the reparametrization trick. Here, we replace sampling from qφ(w) by a deterministic function of the variational parameters φ and random samples from some noise variables ϵ:
+L(φ) = Ep(ϵ)[log p(D|f(φ, ϵ))] + Eqφ(w)[log p(w)] + H(qφ(w)), (2) where w = f(φ, ϵ). By applying this trick, we obtain unbiased stochastic gradients of the ELBO with respect to the variational parameters φ, thus resulting in a standard optimization problem that is fit for stochastic gradient ascent. The efficiency of the gradient estimator resulting from eq. 2 can be further improved for neural networks by utilizing local reparametrizations (which we will use in our experiments); they provide variance reduction in an efficient way by locally marginalizing the weights at each layer and instead sampling the distribution of the pre-activations.
+Related Work
+One of the earliest ideas and most direct approaches to tackle efficiency is pruning. Originally introduced by, pruning has recently been demonstrated to be applicable to modern architectures. It had been demonstrated that an overwhelming amount of up to 99,5% of parameters can be pruned in common architectures. There have been quite a few encouraging results obtained by (empirical) Bayesian approaches that employ weight pruning. Nevertheless, 2In practice this term is a large constant determined by the weight precision.
+2 weight pruning is in general inefficient for compression since the matrix format of the weights is not taken into consideration, therefore the Compressed Sparse Column (CSC) format has to be employed.
+Moreover, note that in conventional CNNs most flops are used by the convolution operation. Inspired by this observation, several authors proposed pruning schemes that take these considerations into account or even go as far as efficiency aware architectures to begin with. From the Bayesian viewpoint, similar pruning schemes have been explored at.
+Given optimal architecture, NNs can further be compressed by quantization. More precisely, there are two common techniques. First, the set of accessible weights can be reduced drastically. As an extreme example, and trained NN to use only binary or tertiary weights with floating point gradients. This approach however is in need of significantly more parameters than their ordinary counterparts. Work by explores various techniques beyond binary quantization: k-means quantization, product quantization and residual quantization. Later studies extent this set to optimal fixed point and hashing quantization. apply k-means clustering and consequent center training. From a practical point of view, however, all these are fairly unpractical during test time. For the computation of each feature map in a net, the original weight matrix must be reconstructed from the indexes in the matrix and a codebook that contains all the original weights.
+This is an expensive operation and this is why some studies propose a different approach than set quantization. Precision quantization simply reduces the bit size per weight. This has a great advantage over set quantization at inference time since feature maps can simply be computed with less precision weights. Several studies show that this has little to no effect on network accuracy when using 16bit weights. Somewhat orthogonal to the above discussion but certainly relevant are approaches that customize the implementation of CNNs for hardware limited devices.
+Bayesian compression with scale mixtures of normals
+Consider the following prior over a parameter w where its scale z is governed by a distribution p(z): z ∼ p(z); w ∼ N(w; 0, z2), (3) with z2 serving as the variance of the zero-mean normal distribution over w. By treating the scales of w as random variables we can recover marginal prior distributions over the parameters that have heavier tails and more mass at zero; this subsequently biases the posterior distribution over w to be sparse. This family of distributions is known as scale-mixtures of normals and it is quite general, as a lot of well known sparsity inducing distributions are special cases.
+One example of the aforementioned framework is the spike-and-slab distribution, the golden standard for sparse Bayesian inference. Under the spike-and-slab, the mixing density of the scales is a Bernoulli distribution, thus the marginal p(w) has a delta "spike" at zero and a continuous "slab" over the real line. Unfortunately, this prior leads to a computationally expensive inference since we have to explore a space of 2M models, where M is the number of the model parameters. Dropout, one of the most popular regularization techniques for neural networks, can be interpreted as positing a spike and slab distribution over the weights where the variance of the "slab" is zero. Another example is the Laplace distribution which arises by considering p(z2) = Exp(λ). The mode of the posterior distribution under a Laplace prior is known as the Lasso estimator and has been previously used for sparsifying neural networks at. While computationally simple, the Lasso estimator is prone to "shrinking" large signals and only provides point estimates about the parameters. As a result it does not provide uncertainty estimates, it can potentially overfit and, according to the bits-back argument, is inefficient for compression.
+For these reasons, in this paper we will tackle the problem of compression and efficiency in neural networks by adopting a Bayesian treatment and inferring an approximate posterior distribution over the parameters under a scale mixture prior. We will consider two choices for the prior over the scales p(z); the hyperparameter free log-uniform prior and the half-Cauchy prior, which results into a horseshoe distribution. Both of these distributions correspond to a continuous relaxation of the spike-and-slab prior and we provide a brief discussion on their shrinkage properties at Appendix C.
+Reparametrizing variational dropout for group sparsity
+One potential choice for p(z) is the improper log-uniform prior : p(z) ∝ |z|−1. It turns out that we can recover the log-uniform prior over the weights w if we marginalize over the scales z: p(w) ∝
+�
+|z|N(w|0, z2)dz = 1
+|w|.
+This alternative parametrization of the log uniform prior is known in the statistics literature as the normal-Jeffreys prior and has been introduced by. This formulation allows to "couple" the scales of weights that belong to the same group (e.g. neuron or feature map), by simply sharing the corresponding scale variable z in the joint prior3: p(W, z) ∝
+A
+� i
+|zi|
+A,B
+� ij
+N(wij|0, z2 i ), (5) where W is the weight matrix of a fully connected neural network layer with A being the dimensionality of the input and B the dimensionality of the output. Now consider performing variational inference with a joint approximate posterior parametrized as follows: qφ(W, z) =
+A
+� i=1
+N(zi|µzi, µ2 ziαi)
+A,B
+� i,j
+N(wij|ziµij, z2 i σ2 ij), (6) where αi is the dropout rate of the given group. As explained at, the multiplicative parametrization of the approximate posterior over z suffers from high variance gradients; therefore we will follow and re-parametrize it in terms of σ2 zi = µ2 ziαi, hence optimize w.r.t. σ2 zi. The lower bound under this prior and approximate posterior becomes:
+L(φ) = Eqφ(z)qφ(W|z)[log p(D|W)] − Eqφ(z)[KL(qφ(W|z)||p(W|z))] − KL(qφ(z)||p(z)). (7)
+Under this particular variational posterior parametrization the negative KL-divergence from the conditional prior p(W|z) to the approximate posterior qφ(W|z) is independent of z:
+KL(qφ(W|z)||p(W|z)) = 1
+A,B
+� i,j
+� logz2 iz2 i σ2 ij
++ z2 i σ2 ijz2 i
++ z2 i µ2 ijz2 i
+− 1
+�
+This independence can be better understood if we consider a non-centered parametrization of the prior. More specifically, consider reparametrizing the weights as ˜wij = wij zi ; this will then result into p(W|z)p(z) = p( ˜
+W)p(z), where p( ˜
+W) = � i,j N( ˜wij|0, 1) and W = diag(z) ˜
+W. Now if we perform variational inference under the p( ˜
+W)p(z) prior with an approximate posterior that has the form of qφ( ˜
+W, z) = qφ( ˜
+W)qφ(z), with qφ( ˜
+W) = � i,j N( ˜wij|µij, σ2 ij), then we see that we arrive at the same expressions for the negative KL-divergence from the prior to the approximate posterior. Finally, the negative KL-divergence from the normal-Jeffreys scale prior p(z) to the Gaussian variational posterior qφ(z) depends only on the "implied" dropout rate, αi = σ2 zi/µ2 zi, and takes the following form :
+− KL(qφ(z)||p(z)) ≈
+A
+� i
+� k1σ(k2 + k3 log αi) − 0.5m(− log αi) − k1
+�, (9) where σ(·), m(·) are the sigmoid and softplus functions respectively4 and k1 = 0.63576, k2 =
+1.87320, k3 = 1.48695. We can now prune entire groups of parameters by simply specifying a threshold for the variational dropout rate of the corresponding group, e.g. log αi = (log σ2 zi − log µ2 zi) ≥ t.
+It should be mentioned that this prior parametrization readily allows for a more flexible marginal posterior over the weights as we now have a compound distribution, qφ(W) =
+� qφ(W|z)qφ(z)dz; this is in contrast to the original parametrization and the Gaussian approximations employed by.
+3Stricly speaking the result of eq. 4 only holds when each weight has its own scale and not when that scale is shared across multiple weights. Nevertheless, in practice we obtain a prior that behaves in a similar way, i.e. it biases the variational posterior to be sparse.
+4σ(x) = (1 + exp(−x))−1, m(x) = log(1 + exp(x))
+Furthermore, this approach generalizes the low variance additive parametrization of variational dropout proposed for weight sparsity at to group sparsity (which was left as an open question at ) in a principled way.
+At test time, in order to have a single feedforward pass we replace the distribution over W at each layer with a single weight matrix, the masked variational posterior mean:
+ˆ
+W = diag(m) Eq(z)q( ˜
+W)[diag(z) ˜
+W] = diag
+� m ⊙ µz
+�
+MW, (10) where m is a binary mask determined according to the group variational dropout rate and MW are the means of qφ( ˜
+W). We further use the variational posterior marginal variances5 for this particular posterior approximation:
+V(wij)NJ = σ2 zi
+� σ2 ij + µ2 ij
+�
++ σ2 ijµ2 zi, (11) to asess the bit precision of each weight in the weight matrix. More specifically, we employed the mean variance across the weight matrix ˆ
+W to compute the unit round off necessary to represent the weights. This method will give us the amount significant bits, and by adding 3 exponent and 1 sign bits we arrive at the final bit precision for the entire weight matrix ˆ
+W6. We provide more details at
+Appendix B.
+Group horseshoe with half-Cauchy scale priors
+Another choice for p(z) is a proper half-Cauchy distribution: C+(0, s) = 2(sπ(1 + (z/s)2))−1; it induces a horseshoe prior distribution over the weights, which is a well known sparsity inducing prior in the statistics literature. More formally, the prior hierarchy over the weights is expressed as(in a non-centered parametrization): s ∼ C+(0, τ0);
+˜zi ∼ C+(0, 1);
+˜wij ∼ N(0, 1); wij = ˜wij ˜zis, (12) where τ0 is the free parameter that can be tuned for specific desiderata. The idea behind the horseshoe is that of the "global-local" shrinkage; the global scale variable s pulls all of the variables towards zero whereas the heavy tailed local variables zi can compensate and allow for some weights to escape.
+Instead of directly working with the half-Cauchy priors we will employ a decomposition of the half-Cauchy that relies upon (inverse) gamma distributions as this will allow us to compute the negative KL-divergence from the scale prior p(z) to an approximate log-normal scale posterior qφ(z) in closed form (the derivation is given in Appendix D). More specifically, we have that the half-Cauchy prior can be expressed in a non-centered parametrization as: p(˜β) = IG(0.5, 1); p(˜α) = G(0.5, k2); z2 = ˜α˜β, (13) where IG(·, ·), G(·, ·) correspond to the inverse Gamma and Gamma distributions in the scale parametrization, and z follows a half-Cauchy distribution with scale k. Therefore we will re-express the whole hierarchy as: sb ∼ IG(0.5, 1); sa ∼ G(0.5, τ 2
+˜βi ∼ IG(0.5, 1);
+˜αi ∼ G(0.5, 1);
+˜wij ∼ N(0, 1); wij = ˜wij
+� sasb˜αi ˜βi.
+It should be mentioned that the improper log-uniform prior is the limiting case of the horseshoe prior when the shapes of the (inverse) Gamma hyperpriors on ˜αi, ˜βi go to zero. In fact, several well known shrinkage priors can be expressed in this form by altering the shapes of the (inverse) Gamma hyperpriors. For the variational posterior we will employ the following mean field approximation: qφ(sb, sa, ˜β) = LN(sb|µsb, σ2 sb)LN(sa|µsa, σ2 sa)
+A
+� i
+LN(˜βi|µ ˜βi, σ2
+˜βi)(15) qφ(˜α, ˜
+W) =
+A
+� i
+LN(˜αi|µ˜αi, σ2
+˜αi)
+A,B
+� i,j
+N( ˜wij|µ ˜ wij, σ2
+˜ wij), 5V(wij) = V(zi ˜wij) = V(zi)
+�
+E[ ˜wij]2 + V( ˜wij)
+�
++ V( ˜wij) E[zi]2.
+6Notice that the fact that we are using mean-field variational approximations (which we chose for simplicity) can potentially underestimate the variance, thus lead to higher bit precisions for the weights. We leave the exploration of more involved posteriors for future work.
+5 where LN(·, ·) is a log-normal distribution. It should be mentioned that a similar form of noncentered variational inference for the horseshoe has been also successfully employed for undirected models at. Notice that we can also apply local reparametrizations when we are sampling
+�
+˜αi ˜βi and √sasb by exploiting properties of the log-normal distribution7 and thus forming the implied:
+˜zi =
+�
+˜αi ˜βi ∼ LN(µ˜zi, σ2
+˜zi); s = √sasb ∼ LN(µs, σ2 s)(17) µ˜zi = 1
+2(µ˜αi + µ ˜βi); σ2
+˜zi = 1
+4(σ2
+˜αi + σ2
+˜βi); µs = 1
+2(µsa + µsb); σ2 s = 1
+4(σ2 sa + σ2 sb). (18)
+As a threshold rule for group pruning we will use the negative log-mode8 of the local log-normal r.v. zi = s˜zi, i.e. prune when (σ2 zi − µzi) ≥ t, with µzi = µ˜zi + µs and σ2 zi = σ2
+˜zi + σ2 s.This ignores dependencies among the zi elements induced by the common scale s, but nonetheless we found that it works well in practice. Similarly with the group normal-Jeffreys prior, we will replace the distribution over W at each layer with the masked variational posterior mean during test time:
+ˆ
+W = diag(m) Eq(z)q( ˜
+W)[diag(z) ˜
+W] = diag
+� m ⊙ exp(µz + 1
+2σ2 z)
+�
+MW, (19) where m is a binary mask determined according to the aforementioned threshold, MW are the means of q( ˜
+W) and µz, σ2 z are the means and variances of the local log-normals over zi. Furthermore, similarly to the group normal-Jeffreys approach, we will use the variational posterior marginal variances:
+V(wij)HS = (exp(σ2 zi) − 1) exp(2µzi + σ2 zi)
+� σ2 ij + µ2 ij
+�
++ σ2 ij exp(2µzi + σ2 zi), (20) to compute the final bit precision for the entire weight matrix ˆ
+W.
+Experiments
+We validated the compression and speed-up capabilities of our models on the well-known architectures of LeNet-300-100, LeNet-5-Caffe9 on MNIST and, similarly with, VGG 10 on
+CIFAR 10. The groups of parameters were constructed by coupling the scale variables for each filter for the convolutional layers and for each input neuron for the fully connected layers. We provide the algorithms that describe the forward pass using local reparametrizations for fully connected and convolutional layers with each of the employed approximate posteriors at appendix F. For the horseshoe prior we set the scale τ0 of the global half-Cauchy prior to a reasonably small value, e.g. τ0 = 1e − 5. This further increases the prior mass at zero, which is essential for sparse estimation and compression. We also found that constraining the standard deviations as described at and "warm-up" helps in avoiding bad local optima of the variational objective. Further details about the experimental setup can be found at Appendix A. Determining the threshold for pruning can be easily done with manual inspection as usually there are two well separated clusters (signal and noise).
+We provide a sample visualization at Appendix E.
+Architecture learning & bit precisions
+We will first demonstrate the group sparsity capabilities of our methods by illustrating the learned architectures at Table 1, along with the inferred bit precision per layer. As we can observe, our methods infer significantly smaller architectures for the LeNet-300-100 and LeNet-5-Caffe, compared to Sparse Variational Dropout, Generalized Dropout and Group Lasso. Interestingly, we observe that for the VGG network almost all of big 512 feature map layers are drastically reduced to around
+10 feature maps whereas the initial layers are mostly kept intact. Furthermore, all of the Bayesian methods considered require far fewer than the standard 32 bits per-layer to represent the weights, sometimes even allowing for 5 bit precisions.
+7The product of log-normal r.v.s is another log-normal and a power of a log-normal r.v. is another log-normal.
+8Empirically, it slightly better separates the scales compared to the negative log-mean −(µzi + 0.5σ2 zi).
+9https://github.com/BVLC/caffe/tree/master/examples/mnist
+10The adapted CIFAR 10 version described at http://torch.ch/blog/2015/07/30/cifar.html.
+Table 1: Learned architectures with Sparse VD, Generalized Dropout (GD) and Group
+Lasso (GL). Bayesian Compression (BC) with group normal-Jeffreys (BC-GNJ) and group horseshoe (BC-GHS) priors correspond to the proposed models. We show the amount of neurons left after pruning along with the average bit precisions for the weights at each layer.
+Network & size
+Method
+Pruned architecture
+Bit-precision
+LeNet-300-100
+Sparse VD
+512-114-72
+8-11-14
+784-300-100
+BC-GNJ
+278-98-13
+8-9-14
+BC-GHS
+311-86-14
+13-11-10
+LeNet-5-Caffe
+Sparse VD
+14-19-242-131
+13-10-8-12
+GD
+7-13-208-1620-50-800-500
+GL
+3-12-192-500BC-GNJ
+8-13-88-13
+18-10-7-9
+BC-GHS
+5-10-76-16
+10-10–14-13
+VGG
+BC-GNJ
+63-64-128-128-245-155-6310-10-10-10-8-8-8-26-24-20-14-12-11-11-15
+-5-5-5-5-5-6-7-11(2× 64)-(2× 128)BC-GHS
+51-62-125-128-228-129-3811-12-9-14-10-8-5-(3×256)-(8× 512)
+-13-9-6-5-6-6-6-20
+-5-6-6-6-8-11-17-10
+Compression Rates
+For the actual compression task we compare our method to current work in three different scenarios:(i) compression achieved only by pruning, here, for non-group methods we use the CSC format to store parameters; (ii) compression based on the former but with reduced bit precision per layer(only for the weights); and (iii) the maximum compression rate as proposed by. We believe
+Table 2: Compression results for our methods. "DC" corresponds to Deep Compression method introduced at, "DNS" to the method of and "SWS" to the Soft-Weight Sharing of.
+Numbers marked with * are best case guesses.
+Compression Rates (Error %)
+Model
+Fast
+Maximum
+Original Error %
+Method
+|w̸=0|
+|w| %
+Pruning
+Prediction
+Compression
+LeNet-300-100
+DCDNS
+28* (2.0)SWS
+12* (1.9)Sparse VD
+BC-GNJ
+BC-GHS
+LeNet-5-Caffe
+DC
+6*(0.7)DNS
+55*(0.9)SWS
+100*(1.0)Sparse VD
+BC-GNJ
+BC-GHS
+VGG
+BC-GNJ
+BC-GHS
+116(9.2) these to be relevant scenarios because (i) can be applied with already existing frameworks such as
+Tensorflow, (ii) is a practical scheme given upcoming GPUs and frameworks will be designed to work with low and mixed precision arithmetics. For (iii), we perform k-means clustering on the weights with k=32 and consequently store a weight index that points to a codebook of available
+7 weights. Note that the latter achieves highest compression rate but it is however fairly unpractical at test time since the original matrix needs to be restored for each layer. As we can observe at Table 2, our methods are competitive with the state-of-the art for LeNet-300-100 while offering significantly better compression rates on the LeNet-5-Caffe architecture, without any loss in accuracy. Do note that group sparsity and weight sparsity can be combined so as to further prune some weights when a particular group is not removed, thus we can potentially further boost compression performance at e.g. LeNet-300-100. For the VGG network we observe that training from a random initialization yielded consistently less accuracy (around 1%-2% less) compared to initializing the means of the approximate posterior from a pretrained network, similarly with, thus we only report the latter results11. After initialization we trained the VGG network regularly for 200 epochs using Adam with the default hyperparameters. We observe a small drop in accuracy for the final models when using the deterministic version of the network for prediction, but nevertheless averaging across multiple samples restores the original accuracy. Note, that in general we can maintain the original accuracy on
+VGG without sampling by simply finetuning with a small learning rate, as done at. This will still induce (less) sparsity but unfortunately it does not lead to good compression as the bit precision remains very high due to not appropriately increasing the marginal variances of the weights.
+Speed and energy consumption
+We demonstrate that our method is competitive with, denoted as GL, a method that explicitly prunes convolutional kernels to reduce compute time. We measure the time and energy consumption of one forward pass of a mini-batch with batch size 8192 through LeNet-5-Caffe. We average over 104 forward passes and all experiments were run with Tensorflow 1.0.1, cuda 8.0 and respective cuDNN.
+We apply 16 CPUs run in parallel (CPU) or a Titan X (GPU). Note that we only use the pruned architecture as lower bit precision would further increase the speed-up but is not implementable in any common framework. Further, all methods we compare to in the latter experiments would barely show an improvement at all since they do not learn to prune groups but only parameters. In figure 1 we present our results. As to be expected the largest effect on the speed up is caused by GPU usage.
+However, both our models and best competing models reach a speed up factor of around 8×. We can further save about 3 × energy costs by applying our architecture instead of the original one on a GPU. For larger networks the speed-up is even higher: for the VGG experiments with batch size 256 we have a speed-up factor of 51×.
+Figure 1: Left: Avg. Time a batch of 8192 samples takes to pass through LeNet-5-Caffe. Numbers on top of the bars represent speed-up factor relative to the CPU implementation of the original network.
+Right: Energy consumption of the GPU of the same process (when run on GPU).
+Conclusion
+We introduced Bayesian compression, a way to tackle efficiency and compression in deep neural networks in a unified and principled way. Our proposed methods allow for theoretically principled compression of neural networks, improved energy efficiency with reduced computation while naturally learning the bit precisions for each weight. This serves as a strong argument in favor of Bayesian methods for neural networks, when we are concerned with compression and speed up.
+11We also tried to finetune the same network with Sparse VD, but unfortunately it increased the error considerably (around 3% extra error), therefore we do not report those results.
+Acknowledgments
+We would like to thank Dmitry Molchanov, Dmitry Vetrov, Klamer Schutte and Dennis Koelma for valuable discussions and feedback. This research was supported by TNO, NWO and Google.
+References
+ M. Abadi, A. Agarwal, P. Barham, E. Brevdo, Z. Chen, C. Citro, G. S. Corrado, A. Davis, J. Dean, M. Devin, et al. Tensorflow: Large-scale machine learning on heterogeneous distributed systems. arXiv preprint arXiv:1603.04467, 2016.
+ D. F. Andrews and C. L. Mallows. Scale mixtures of normal distributions. Journal of the Royal Statistical
+Society. Series B (Methodological), pages 99–102, 1974.
+ A. Armagan, M. Clyde, and D. B. Dunson. Generalized beta mixtures of gaussians. In Advances in neural information processing systems, pages 523–531, 2011.
+ E. Azarkhish, D. Rossi, I. Loi, and L. Benini. Neurostream: Scalable and energy efficient deep learning with smart memory cubes. arXiv preprint arXiv:1701.06420, 2017.
+ J. Ba and R. Caruana. Do deep nets really need to be deep? In Advances in neural information processing systems, pages 2654–2662, 2014.
+ E. Beale, C. Mallows, et al. Scale mixing of symmetric distributions with zero means. The Annals of Mathematical Statistics, 30(4):1145–1151, 1959.
+ C. Blundell, J. Cornebise, K. Kavukcuoglu, and D. Wierstra. Weight uncertainty in neural networks.
+Proceedings of the 32nd International Conference on Machine Learning, ICML 2015, Lille, France, 6-11
+July 2015, 2015.
+ C. M. Carvalho, N. G. Polson, and J. G. Scott. The horseshoe estimator for sparse signals. Biometrika, 97(2):465–480, 2010.
+ S. Chai, A. Raghavan, D. Zhang, M. Amer, and T. Shields. Low precision neural networks using subband decomposition. arXiv preprint arXiv:1703.08595, 2017.
+ W. Chen, J. T. Wilson, S. Tyree, K. Q. Weinberger, and Y. Chen. Compressing convolutional neural networks. arXiv preprint arXiv:1506.04449, 2015.
+ M. Courbariaux and Y. Bengio. Binarynet: Training deep neural networks with weights and activations constrained to +1 or −1. arXiv preprint arXiv:1602.02830, 2016.
+ M. Courbariaux, J.-P. David, and Y. Bengio. Training deep neural networks with low precision multiplications. arXiv preprint arXiv:1412.7024, 2014.
+ M. Courbariaux, Y. Bengio, and J.-P. David. Binaryconnect: Training deep neural networks with binary weights during propagations. In Advances in Neural Information Processing Systems, pages 3105–3113, M. Denil, B. Shakibi, L. Dinh, N. de Freitas, et al. Predicting parameters in deep learning. In Advances in Neural Information Processing Systems, pages 2148–2156, 2013.
+ X. Dong, J. Huang, Y. Yang, and S. Yan. More is less: A more complicated network with less inference complexity. arXiv preprint arXiv:1703.08651, 2017.
+ M. A. Figueiredo. Adaptive sparseness using jeffreys' prior. Advances in neural information processing systems, 1:697–704, 2002.
+ Y. Gal and Z. Ghahramani. Dropout as a bayesian approximation: Representing model uncertainty in deep learning. ICML, 2016.
+ Y. Gong, L. Liu, M. Yang, and L. Bourdev. Compressing deep convolutional networks using vector quantization. ICLR, 2015.
+ A. Graves. Practical variational inference for neural networks. In Advances in Neural Information
+Processing Systems, pages 2348–2356, 2011.
+ P. D. Grünwald. The minimum description length principle. MIT press, 2007.
+ Y. Guo, A. Yao, and Y. Chen. Dynamic network surgery for efficient dnns. In Advances In Neural
+Information Processing Systems, pages 1379–1387, 2016.
+ S. Gupta, A. Agrawal, K. Gopalakrishnan, and P. Narayanan. Deep learning with limited numerical precision. CoRR, abs/1502.02551, 392, 2015.
+ P. Gysel. Ristretto: Hardware-oriented approximation of convolutional neural networks. Master's thesis, University of California, 2016.
+ S. Han, J. Pool, J. Tran, and W. Dally. Learning both weights and connections for efficient neural networks.
+In Advances in Neural Information Processing Systems, pages 1135–1143, 2015.
+ S. Han, H. Mao, and W. J. Dally. Deep compression: Compressing deep neural networks with pruning, trained quantization and huffman coding. ICLR, 2016.
+ K. He, X. Zhang, S. Ren, and J. Sun. Delving deep into rectifiers: Surpassing human-level performance on imagenet classification. In Proceedings of the IEEE International Conference on Computer Vision, pages
+1026–1034, 2015.
+ G. Hinton, O. Vinyals, and J. Dean. Distilling the knowledge in a neural network. arXiv preprint arXiv:1503.02531, 2015.
+ G. E. Hinton and D. Van Camp. Keeping the neural networks simple by minimizing the description length of the weights. In Proceedings of the sixth annual conference on Computational learning theory, pages
+5–13. ACM, 1993.
+ G. E. Hinton, N. Srivastava, A. Krizhevsky, I. Sutskever, and R. R. Salakhutdinov. Improving neural networks by preventing co-adaptation of feature detectors. arXiv preprint arXiv:1207.0580, 2012.
+ A. Honkela and H. Valpola. Variational learning and bits-back coding: an information-theoretic view to bayesian learning. IEEE Transactions on Neural Networks, 15(4):800–810, 2004.
+ A. G. Howard, M. Zhu, B. Chen, D. Kalenichenko, W. Wang, T. Weyand, M. Andreetto, and H. Adam.
+Mobilenets: Efficient convolutional neural networks for mobile vision applications. arXiv preprint arXiv:1704.04861, 2017.
+ F. N. Iandola, S. Han, M. W. Moskewicz, K. Ashraf, W. J. Dally, and K. Keutzer. Squeezenet: Alexnet-level accuracy with 50x fewer parameters and< 0.5 mb model size. ICLR, 2017.
+ J. B. Ingraham and D. S. Marks.
+Bayesian sparsity for intractable distributions. arXiv preprint arXiv:1602.03807, 2016.
+ T. Karaletsos and G. Rätsch. Automatic relevance determination for deep generative models. arXiv preprint arXiv:1505.07765, 2015.
+ D. Kingma and J. Ba. Adam: A method for stochastic optimization. International Conference on Learning
+Representations (ICLR), San Diego, 2015.
+ D. P. Kingma and M. Welling. Auto-encoding variational bayes. International Conference on Learning
+Representations (ICLR), 2014.
+ D. P. Kingma, T. Salimans, and M. Welling. Variational dropout and the local reparametrization trick.
+Advances in Neural Information Processing Systems, 2015.
+ A. Krizhevsky and G. Hinton. Learning multiple layers of features from tiny images, 2009.
+ N. D. Lawrence. Note relevance determination. In Neural Nets WIRN Vietri-01, pages 128–133. Springer, Y. LeCun, J. S. Denker, S. A. Solla, R. E. Howard, and L. D. Jackel. Optimal brain damage. In NIPs, volume 2, pages 598–605, 1989.
+ Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner. Gradient-based learning applied to document recognition.
+Proceedings of the IEEE, 86(11):2278–2324, 1998.
+ Y. LeCun, C. Cortes, and C. J. Burges. The mnist database of handwritten digits, 1998.
+ D. D. Lin and S. S. Talathi. Overcoming challenges in fixed point training of deep convolutional networks.
+Workshop ICML, 2016.
+ D. D. Lin, S. S. Talathi, and V. S. Annapureddy. Fixed point quantization of deep convolutional networks. arXiv preprint arXiv:1511.06393, 2015.
+ C. Louizos. Smart regularization of deep architectures. Master's thesis, University of Amsterdam, 2015.
+ C. Louizos and M. Welling. Multiplicative Normalizing Flows for Variational Bayesian Neural Networks.
+ArXiv e-prints, Mar. 2017.
+ D. J. MacKay. Probable networks and plausible predictions—a review of practical bayesian methods for supervised neural networks. Network: Computation in Neural Systems, 6(3):469–505, 1995.
+ N. Mellempudi, A. Kundu, D. Mudigere, D. Das, B. Kaul, and P. Dubey. Ternary neural networks with fine-grained quantization. arXiv preprint arXiv:1705.01462, 2017.
+ P. Merolla, R. Appuswamy, J. Arthur, S. K. Esser, and D. Modha. Deep neural networks are robust to weight binarization and other non-linear distortions. arXiv preprint arXiv:1606.01981, 2016.
+ T. J. Mitchell and J. J. Beauchamp. Bayesian variable selection in linear regression. Journal of the American Statistical Association, 83(404):1023–1032, 1988.
+ D. Molchanov, A. Ashukha, and D. Vetrov. Variational dropout sparsifies deep neural networks. arXiv preprint arXiv:1701.05369, 2017.
+ E. Nalisnick, A. Anandkumar, and P. Smyth. A scale mixture perspective of multiplicative noise in neural networks. arXiv preprint arXiv:1506.03208, 2015.
+ R. M. Neal. Bayesian learning for neural networks. PhD thesis, Citeseer, 1995.
+ S. E. Neville, J. T. Ormerod, M. Wand, et al. Mean field variational bayes for continuous sparse signal shrinkage: pitfalls and remedies. Electronic Journal of Statistics, 8(1):1113–1151, 2014.
+ O. Papaspiliopoulos, G. O. Roberts, and M. Sköld. A general framework for the parametrization of hierarchical models. Statistical Science, pages 59–73, 2007.
+ C. Peterson. A mean field theory learning algorithm for neural networks. Complex systems, 1:995–1019, M. Rastegari, V. Ordonez, J. Redmon, and A. Farhadi. Xnor-net: Imagenet classification using binary convolutional neural networks. In European Conference on Computer Vision, pages 525–542. Springer, D. J. Rezende, S. Mohamed, and D. Wierstra. Stochastic backpropagation and approximate inference in deep generative models. In Proceedings of the 31th International Conference on Machine Learning, ICML
+2014, Beijing, China, 21-26 June 2014, pages 1278–1286, 2014.
+ J. Rissanen. Modeling by shortest data description. Automatica, 14(5):465–471, 1978.
+ J. Rissanen. Stochastic complexity and modeling. The annals of statistics, pages 1080–1100, 1986.
+ S. Scardapane, D. Comminiello, A. Hussain, and A. Uncini. Group sparse regularization for deep neural networks. arXiv preprint arXiv:1607.00485, 2016.
+ S. Shi and X. Chu. Speeding up convolutional neural networks by exploiting the sparsity of rectifier units. arXiv preprint arXiv:1704.07724, 2017.
+ K. Simonyan and A. Zisserman. Very deep convolutional networks for large-scale image recognition.
+ICLR, 2015.
+ M. Sites. Ieee standard for floating-point arithmetic. 2008.
+ C. K. Sønderby, T. Raiko, L. Maaløe, S. K. Sønderby, and O. Winther. Ladder variational autoencoders. arXiv preprint arXiv:1602.02282, 2016.
+ S. Srinivas and R. V. Babu. Generalized dropout. arXiv preprint arXiv:1611.06791, 2016.
+ N. Srivastava, G. Hinton, A. Krizhevsky, I. Sutskever, and R. Salakhutdinov. Dropout: A simple way to prevent neural networks from overfitting. The Journal of Machine Learning Research, 15(1):1929–1958, V. Sze, Y.-H. Chen, T.-J. Yang, and J. Emer. Efficient processing of deep neural networks: A tutorial and survey. arXiv preprint arXiv:1703.09039, 2017.
+ R. Tibshirani. Regression shrinkage and selection via the lasso. Journal of the Royal Statistical Society.
+Series B (Methodological), pages 267–288, 1996.
+ K. Ullrich, E. Meeds, and M. Welling. Soft weight-sharing for neural network compression. ICLR, 2017.
+ G. Venkatesh, E. Nurvitadhi, and D. Marr. Accelerating deep convolutional networks using low-precision and sparsity. arXiv preprint arXiv:1610.00324, 2016.
+ C. S. Wallace. Classification by minimum-message-length inference. In International Conference on
+Computing and Information, pages 72–81. Springer, 1990.
+ W. Wen, C. Wu, Y. Wang, Y. Chen, and H. Li. Learning structured sparsity in deep neural networks. In
+Advances In Neural Information Processing Systems, pages 2074–2082, 2016.
+ T.-J. Yang, Y.-H. Chen, and V. Sze. Designing energy-efficient convolutional neural networks using energy-aware pruning. CVPR, 2017.
+ S. Zagoruyko and N. Komodakis. Wide residual networks. arXiv preprint arXiv:1605.07146, 2016.
+ C. Zhu, S. Han, H. Mao, and W. J. Dally. Trained ternary quantization. ICLR, 2017.
+Appendix
+A. Detailed experimental setup
+We implemented our methods in Tensorflow and optimized the variational parameters using
+Adam with the default hyperparameters. The means of the conditional Gaussian qφ(W|z)
+Table 3: Floating point formats
+Bits per
+Exponent
+Significand underflow overflow unit
+Float width [bit] precision [bit] level level roundoff
+2.22 × 10−308
+1.79×10308
+2.22 × 10−16
+1.17 × 10−38
+3.40×1038
+1.19 × 10−7
+6.10 × 10−05
+6.54×104
+9.76 × 10−4 were initialized with the scheme proposed at, whereas the log of the standard deviations were initialized by sampling from N(−9, 1e − 4). The parameters of qφ(z) were initialized such that the overall mean of z is ≈ 1 and the overall variance is very low (≈ 1e − 8); this ensures that all of the groups are active during the initial training iterations.
+As for the standard deviation constraints; for the LeNet-300-100 architecture we constrained the standard deviation of the first layer to be ≤ 0.2 whereas for the LeNet-5-Caffe we constrained the standard deviation of the first layer to be ≤ 0.5. The remaining standard deviations were left unconstrained. For the VGG network we constrained the standard deviations of the 64 and 128 feature map layers to be ≤ 0.1, the standard deviations of the 256 feature map layers to be ≤ 0.2 and left the rest of the standard deviations unconstrained. We also found beneficial the incorporation of "warm-up", i.e we annealed the negative KL-divergence from the prior to the approximate posterior with a linear schedule for the first 100 epochs. We initialized the means of the approximate posterior by the weights and biases obtained from a VGG network trained with batch normalization and dropout on CIFAR 10. For our method we disabled batch-normalization during training.
+As for preprocessing the data; for MNIST the only preprocessing we did was to rescale the digits to lie at the [−1, 1] range and for CIFAR 10 we used the preprocessed dataset provided by.
+Furthermore, do note that by pruning a given filter at a particular convolutional layer we can also prune the parameters corresponding to that feature map for the next layer. This similarly holds for fully connected layers; if we drop a given input neuron then the weights corresponding to that node from the previous layer can also be pruned.
+B. Standards for Floating-Point Arithmetic
+Floating points values eventually need to be represented in a binary basis in a computer. The most common standard today is the IEEE 754-2008 convention. It defines x-bit base-2 formats, officially referred to as binaryx, with x ∈ {16, 32, 64, 128}. The formats are also widely known as half, single, double and quadruple precision floats, respectively and used in almost all programming languages as a standard. The format considers 3 kinds of bits: one sign bit, w exponent bits and p precision bits.
+Figure 2: A symbolic representation of the binaryx format.
+The Sign bit determines the sign of the number to be represented. The exponent E is an w-bit signed integer, e.g. for single precision w = 8 and thus E ∈ [−127, 128]. In practice, exponents range from is smaller since the first and the last number are reserved for special numbers. The true significand or mantissa includes t bits on the right of the binary point. There is an implicit leading bit with value one. A values is consequently decomposed as follows mantissa = 1 + t
+� i=1 bi2−i(21) value = (−1)sign bit × 2E × mantissa.
+In table 3, we summarize common and less common floating point formats.
+There is however the possibility to design a self defined format. There are 3 important quantities when choosing the right specification: overflow, underflow and unit round off also known as machine precision. Each one can be computed knowing the number of exponent and significant bits. in our work for example we consider a format that uses significantly less exponent bits since network parameters usually vary between [-10,10]. We set the unit round off equal to the precision and thus can compute the significant bits necessary to represent a specific weight.
+Beyond designing a tailored floating point format for deep learning, recent work also explored the possibility of deep learning with mixed formats. For example, imagine the activations having high precision while weights can be low precision.
+C. Shrinkage properties of the normal-Jeffreys and horseshoe priors(a) Empirical CDF(b) Prior on shrinkage coefficient
+Figure 3: Comparison of the behavior of the log-uniform / normal-Jeffreys (NJ) prior and the horseshoe (HS) prior (where s = 1). Both priors behave similarly at zero but the normal-Jeffreys has an extremely heavy tail (thus making it non-normalizable).
+In this section we will provide some insights about the behavior of each of the priors we employ by following the excellent analysis of ; we can perform a change of variables and express the scale mixture distribution of eq.3 in the main paper in terms of a shrinkage coefficient, λ =
+1+z2 : λ ∼ p(λ); w ∼ N
+�
+0, 1 − λ λ
+�
+It is easy to observe that eq. 23 corresponds to a continuous relaxation of the spike-and-slab prior: when λ = 0 we have that p(w|λ = 0) = U(−∞, ∞), i.e. no shrinkage/regularization for w, when λ = 1 we have that p(w|λ = 1) = δ(w = 0), i.e. w is exactly zero, and when λ = 1
+2 we have that p(w|λ = 1
+2) = N(0, 1). Now by examining the implied prior on the shrinkage coefficient λ for both the log-uniform and the horseshoe priors we can better study their behavior. As it is explained at, the half-Cauchy prior on z corresponds to a beta prior on the shrinkage coefficient, p(λ) = B( 1
+2), whereas the normal-Jeffreys / log-uniform prior on z corresponds to p(λ) = B(ϵ, ϵ) with ϵ ≈ 0.
+The densities of both of these distributions can be seen at Figure 3b. As we can observe, the loguniform prior posits a distribution that concentrates almost all of its mass at either λ ≈ 0 or λ ≈ 1, essentially either pruning the parameter or keeping it close to the maximum likelihood estimate due to p(w|λ ≈ 1) = U(−∞, ∞). In contrast the horseshoe prior maintains enough probability mass for the in-between values of λ and thus can, potentially, offer better regularization and generalization.
+D. Negative KL-divergences for log-normal approximating posteriors
+Let q(z) = LN(µ, σ2) be a log-normal approximating posterior. Here we will derive the negative
+KL-divergences to q(z) from inverse gamma, gamma and half-normal distributions.
+Let p(z) be an inverse gamma distribution, i.e. p(z) = IG(α, β). The negative KL-divergence can be expressed as follows:
+−KL(q(z)||p(z)) =
+� q(z) log p(z)dz −
+� q(z) log q(z)dz.
+The second term is the entropy of the log-normal distribution which has the following form:
+Hq = −
+� q(z) log q(z)dz = 1
+2 log σ2 + µ + 1
+2 log(2π).
+The first term is the negative cross-entropy of the log-normal approximate posterior from the inverseGamma prior:
+−CEqp =
+� q(z)
+� α log β − log Γ(α) − (α + 1) log z) − β z
+� dz
+= α log β − log Γ(α) − (α + 1) Eq(z)[log z] − β Eq(z)[z−1].
+Since the natural logarithm of a log-normal distribution LN(µ, σ2) follows a normal distribution
+N(µ, σ2) we have that Eq(z)[log z] = µ. Furthermore we have that if x ∼ LN(µ, σ2) then 1 x ∼
+LN(−µ, σ2), therefore Eq(z)[z−1] = exp(−µ + σ2
+2 ). Putting everything together we have that:
+−CEqp = α log β − log Γ(α) − (α + 1)µ − β exp(−µ + σ2
+Therefore the negative KL-divergence is:
+−KL(q(z)||p(z)) = α log β − log Γ(α) − αµ − β exp(−µ + 0.5σ2)+
++ 0.5(log σ2 + 1 + log(2π)).
+Now let p(z) be a Gamma prior, i.e. p(z) = G(α, β). We have that the negative cross-entropy changes to:
+−CEqp =
+� q(z)
+�
+− α log β − log Γ(α) − z β + (α − 1) log z
+� dz
+= −α log β − log Γ(α) − β−1 Eq(z)[z] + (α − 1) Eq(z)[log z]
+= −α log β − log Γ(α) − β−1 exp(µ + σ2
+2 ) + (α − 1)µ.
+Therefore the negative KL-divergence is:
+−KL(q(z)||p(z)) = −α log β − log Γ(α) + αµ − β−1 exp(µ + 0.5σ2)+
++ 0.5(log σ2 + 1 + log(2π)).
+Now, by employing the aforementioned we can express the negative KL-divergence from p(sa, sb, ˜α, ˜β) to qφ(sa, sb, ˜α, ˜β) as follows:
+−KL(qφ(sa)||p(sa)) = log τ0 − τ −1
+0 exp
+� µsa + 1
+2σ2 sa
+�
+� µsa + log σ2 sa + 1 + log 2
+�
+−KL(qφ(sb)||p(sb)) = − exp
+�1
+2σ2 sb − µsb
+�
+�
+− µsb + log σ2 sb + 1 + log 2
+�
+−KL(qφ(˜α)||p(˜α)) =
+A
+� i
+�
+− exp
+� µ˜αi + 1
+2σ2
+˜αi
+�
+� µ˜αi + log σ2
+˜αi + 1 + log 2
+��
+−KL(qφ(˜β)||p(˜β)) =
+A
+� i
+�
+− exp
+�1
+2σ2
+˜βi − µ ˜βi
+�
+�
+− µ ˜βi + log σ2
+˜βi + 1 + log 2
+��, (37) with the KL-divergence for the weight distribution qφ( ˜
+W) given by eq.8 in the main paper.
+E. Visualizations(a)(b)(c)
+Figure 4: Distribution of the thresholds for the Sparse Variational Dropout 4a, Bayesian Compression with group normal-Jeffreys (BC-GNJ) 4b and group Horseshoe (BC-GHS) 4c priors for the three layer LeNet-300-100 architecture. It is easily observed that there are usually two well separable groups with BC-GNJ and BC-GHS, thus making the choice for the threshold easy. Smaller values indicate signal whereas larger values indicate noise (i.e. useless groups).(a)(b)(c)
+Figure 5: Distribution of the bit precisions for the Sparse Variational Dropout 5a, Bayesian Compression with group normal-Jeffreys (BC-GNJ) 5b and group Horseshoe (BC-GHS) 5c priors for the three layer LeNet-300-100 architecture. All of the methods usually require far fewer than 32bits for the weights.
+F. Algorithms for the feedforward pass
+Algorithms 1, 2, 3, 4 describe the forward pass using local reparametrizations for fully connected and convolutional layers with the approximate posteriors for the Bayesian Compression (BC) with group normal-Jeffreys (BC-GNJ) and group Horseshoe (BC-GHS) priors employed at the experiments. For the fully connected layers we coupled the scales for each input neuron whereas for the convolutional we couple the scales for each output feature map. Mw, Σw are the means and variances of each layer, H is a minibatch of activations of size K. For the first layer we have that H = X where X is the minibatch of inputs. For the convolutional layers Nf are the number of convolutional filters, ∗ is the convolution operator and we assume the [batch, height, width, feature maps] convention.
+Algorithm 1 Fully connected BC-GNJ layer h.
+Require: H, Mw, Σw
+1: ˆE ∼ N(0, 1)
+2: Z = µz + σz ⊙ ˆE
+3: ˆH = H ⊙ Z
+4: Mh = ˆHMw
+5: Vh = ˆH2Σw
+6: E ∼ N(0, 1)
+7: return Mh + √Vh ⊙ E
+Algorithm 2 Convolutional BC-GNJ layer h.
+Require: H, Mw, Σw
+1: Mh = H ∗ Mw
+2: Vh = H2 ∗ Σw
+3: ˆE ∼ N(0, 1)
+4: ˆµz = reshape(µz, [K, 1, 1, Nf])
+5: ˆσz = reshape(σz, [K, 1, 1, Nf])
+6: Z = ˆµz + ˆσz ⊙ ˆE
+7: E ∼ N(0, 1)
+8: return Mh ⊙ Z + √Vh ⊙ Z2 ⊙ E
+Algorithm 3 Fully connected BC-GHS layer h.
+Require: H, Mw, Σw
+1: ˆϵ ∼ N(0, 1)
+2: µs =.5µsa +.5µsb
+3: σs = �.25σ2sa +.25σ2sb
+4: log s = µs + σs ⊙ ˆϵ
+5: µ˜z =.5µ˜α +.5µ ˜β + log s
+6: σ˜z =
+�.25σ2
+˜α +.25σ2
+˜β
+7: ˆE ∼ N(0, 1)
+8: Z = exp(µ˜z + σ˜z ⊙ ˆE)
+9: ˆH = H ⊙ Z
+10: Mh = ˆHMw
+11: Vh = ˆH2Σw
+12: E ∼ N(0, 1)
+13: return Mh + √Vh ⊙ E
+Algorithm 4 Convolutional BC-GHS layer h.
+Require: H, Mw, Σw
+1: Mh = H ∗ Mw
+2: Vh = H2 ∗ Σw
+3: ˆϵ ∼ N(0, 1)
+4: µs =.5µsa +.5µsb
+5: σs = �.25σ2sa +.25σ2sb
+6: log s = reshape(µs + σs ⊙ ˆϵ, [K, 1, 1, 1])
+7: µ˜z = reshape(.5µ˜α +.5µ ˜β, [K, 1, 1, Nf])
+8: σ˜z = reshape(
+�.25σ2
+˜α +.25σ2
+˜β, [K, 1, 1, Nf])
+9: ˆE ∼ N(0, 1)
+10: Z = exp(µ˜z + log s + σ˜z ⊙ ˆE)
+11: E ∼ N(0, 1)
+12: return Mh ⊙ Z + √Vh ⊙ Z2 ⊙ E

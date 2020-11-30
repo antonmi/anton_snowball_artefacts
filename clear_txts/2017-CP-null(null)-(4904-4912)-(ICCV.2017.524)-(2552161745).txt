@@ -1,0 +1,323 @@
+Boosting Image Captioning with Attributes∗
+Ting Yao †, Yingwei Pan ‡, Yehao Li §, Zhaofan Qiu ‡, and Tao Mei †
+† Microsoft Research, Beijing, China
+‡ University of Science and Technology of China, Hefei, China
+§ Sun Yat-Sen University, Guangzhou, China
+{tiyao, tmei}@microsoft.com, {panyw.ustc, yehaoli.sysu, zhaofanqiu}@gmail.com
+Abstract
+Automatically describing an image with a natural language has been an emerging challenge in both fields of computer vision and natural language processing. In this paper, we present Long Short-Term Memory with Attributes(LSTM-A) - a novel architecture that integrates attributes into the successful Convolutional Neural Networks (CNNs) plus Recurrent Neural Networks (RNNs) image captioning framework, by training them in an end-to-end manner. Particularly, the learning of attributes is strengthened by integrating inter-attribute correlations into Multiple Instance
+Learning (MIL). To incorporate attributes into captioning, we construct variants of architectures by feeding image representations and attributes into RNNs in different ways to explore the mutual but also fuzzy relationship between them. Extensive experiments are conducted on COCO image captioning dataset and our framework shows clear improvements when compared to state-of-the-art deep models.
+More remarkably, we obtain METEOR/CIDEr-D of 25.5%/100.2% on testing data of widely used and publicly available splits in when extracting image representations by GoogleNet and achieve superior performance on
+COCO captioning Leaderboard.
+1. Introduction
+Accelerated by tremendous increase in Internet bandwidth and proliferation of sensor-rich mobile devices, image data has been generated, published and spread explosively, becoming an indispensable part of today's big data. This has encouraged the development of advanced techniques for a broad range of image understanding applications. A fundamental issue that underlies the success of these technological advances is the recognition.
+Recently, researchers have strived to automatically describe
+∗This work was performed when Yingwei Pan, Yehao Li and Zhaofan Qiu were visiting Microsoft Research as research interns. the content of an image with a complete and natural sentence, which has a great potential impact for instance on robotic vision or helping visually impaired people. Nevertheless, this problem is very challenging, as description generation model should capture not only the objects/scenes presented in the image, but also be capable of expressing how the objects/scenes relate to each other in a nature sentence.
+The main inspiration of recent attempts on this problem
+ are from the advances by using RNNs in machine translation, which is to translate a text from one language (e.g., English) to another (e.g., Chinese). The basic idea is to perform a sequence to sequence learning for translation, where an encoder RNN reads the input sequential sentence, one word at a time till the end of the sentence and then a decoder RNN is exploited to generate the sentence in target language, one word at each time step. Following this philosophy, it is natural to employ a CNN instead of the encoder RNN for image captioning, which is regarded as an image encoder to produce image representations.
+While encouraging performances are reported, these CNN plus RNN image captioning methods translate directly from image representations to language, without explicitly taking more high-level semantic information from images into account. On the other hand, attributes are properties observed in images with rich semantic cues and have been proved to be effective in visual recognition. Therefore, a valid question is how to incorporate high-level image attributes into CNN plus RNN image captioning architecture as complementary knowledge in addition to image representations. We investigate particularly in this paper the architectures by exploiting the mutual relationship between image representations and attributes for enhancing image description generation. Specifically, to better demonstrate the impact of simultaneously utilizing the two kinds of representations, we devise variants of architectures by feeding them into RNN in different placements and moments, e.g., leveraging only attributes, inserting image representations first and then attributes or vice versa, and inputting image representations/attributes once or at each time step. Moreover, considering attributes are vital to our proposal, we endow the Multiple Instance Learning (MIL) framework with more power of exploring inter-attribute correlations.
+The main contribution of this work is the proposal of attribute augmented architectures by integrating the attributes into CNN plus RNN image captioning framework, which is a problem not yet fully understood in the literature. By leveraging more knowledge for building richer representations and description models, our work takes a further step forward to enhance image captioning. More importantly, the utilization of attributes also has a great potential to be an elegant solution of generating open-vocabulary sentences, making image captioning system really practical.
+2. Related Work
+The research on image captioning has proceeded along three different dimensions: template-based methods, search-based approaches, and languagebased models.
+The template-based methods firstly align each sentence fragments (e.g., subject, verb, object) with detected words from image content and then generate the sentence with predefined language templates. Obviously, most of them highly depend on the templates of sentence and always generate sentences with syntactical structure. For example, Kulkarni et al. employ Conditional Random Field (CRF) model to predict labeling based on the detected objects, attributes and prepositions, and then generate sentence with a template by filling in slots with the most likely labeling. Similarly, Yang et al. utilize HMM to select the best objects, scenes, verbs, and prepositions with the highest log-likelihood ratio for template-based sentence generation in.
+Search-based approaches "generate" sentence for an image by selecting the most semantically similar sentences from sentence pool or directly copying sentences from other visually similar images. This direction indeed can achieve human-level descriptions as all sentences are from existing human-generated sentences. The need to collect humangenerated sentences, however, makes the sentence pool hard to be scaled up. Moreover, the approaches in this dimension cannot generate novel descriptions. For instance, in, an intermediate meaning space based on the triplet of object, action, and scene is proposed to measure the similarity between image and sentence, where the top sentences are regarded as the generated sentences for the target image.
+Recently, a simple k-nearest neighbor retrieval model is utilized in and the best or consensus caption is selected from the returned candidate captions, which even performs as well as several state-of-the-art language-based models.
+Different from template-based and search-based models, language-based models aim to learn the probability distribution in the common space of visual content and textual sentence to generate novel sentences with more flexible syntactical structures. In this direction, recent works explore such probability distribution mainly by using neural networks for image captioning. For instance, in, Vinyals et al. propose an end-to-end neural networks architecture by utilizing LSTM to generate sentence for an image, which is further incorporated with attention mechanism in to automatically focus on salient objects when generating corresponding words. More recently, in, high-level concepts/attributes are shown to obtain clear improvements on image captioning when injected into existing state-of-the-art
+RNN-based model and such attributes are further utilized as semantic attention to enhance image captioning. In another work by Yao et al., attribute/object detectors are developed and leveraged into image captioning to describe novel objects.
+In short, our work in this paper belongs to the languagebased models. Different from most of the aforementioned language-based models which mainly focus on sentence generation by solely depending on image representations
+ or attributes, our work contributes by studying not only jointly exploiting image representations and attributes for image captioning, but also how the architecture can be better devised by exploring mutual relationship in between. It is also worth noting that also involves attributes for image captioning. Ours is fundamentally different in the way that is as a result of utilizing attributes to model semantic attention to the locally previous words, as opposed to holistically employing attributes as a kind of complementary representations in this work.
+3. Boosting Image Captioning with Attributes
+In this paper, we devise our CNN plus RNN architectures to generate descriptions for images under the umbrella of additionally incorporating the detected high-level attributes.
+Specifically, we begin this section by presenting the problem formulation. Then, an attributes prediction method by further exploring inter-attribute correlations is provided. Finally, five variants of our image captioning frameworks with attributes are investigated and discussed.
+3.1. Problem Formulation
+Suppose we have an image I to be described by a textual sentence S, where S = {w1, w2,..., wNs} consisting of Ns words.
+Let I ∈ RDv and wt ∈ RDs denote the Dv-dimensional image representations of the image I and the Ds-dimensional textual features of the t-th word in sentence S, respectively. Furthermore, we have feature vector A ∈ RDa to represent the probability distribution over all the high-level attributes A for image I, where A = {a1, a2,..., aDa} consisting of Da attributes in the whole image captioning dataset. More details about how we mine and represent the attributes will be elaborated in Section 3.2. Taking inspiration from the recent successes of probabilistic sequence models leveraged in statistical machine translation and image/video captioning, we aim to formulate our image captioning models in an end-to-end fashion based on RNNs which encode the given image and/or its detected attributes into a fixed dimensional vector and then decode it to the target output sentence. Hence, the sentence generation problem we explore here can be formulated by minimizing the following energy loss function as
+E(I, A, S) = − log Pr (S|I, A), (1) which is the negative log probability of the correct textual sentence given the image and detected attributes.
+Since the model produces one word in the sentence at each time step, it is natural to apply chain rule to model the joint probability over the sequential words. Thus, the log probability of the sentence is given by the sum of the log probabilities over the word and can be expressed as log Pr (S|I, A) =
+Ns
+� t=1 log Pr ( wt| I, A, w0,..., wt−1).
+By minimizing this loss, the contextual relationship among the words in the sentence can be guaranteed given the image and its detected attributes.
+We formulate this task as a variable-length sequence to sequence problem and model the parametric distribution
+Pr (wt| I, A, w0,..., wt−1) in Eq.(2) with Long ShortTerm Memory (LSTM) network, which is a widely used type of RNN and can capture long-term information in the sequential data by mapping sequences to sequences.
+3.2. Attributes Prediction
+An image generally contains not only multiple semantic attributes but also the interactions between the attributes.
+To detect attributes from images, one way is to train Fully Convolutional Networks (FCNs) by using the weaklysupervised multi-label classification approach of Multiple
+Instance Learning (MIL) in. This method can easily predict the attributes probability distribution over massive attributes, but leaving the inherent semantic correlations between attributes unexploited as all the attributes detectors are learnt independently.
+To further explore the semantic correlations between attributes, a new MIL-based model with Inter-Attributes Correlations (MIL-IAC) is devised.
+Technically, for an attribute aj, one image I is regarded as a positive bag of regions (instances) if aj exists in image
+I's ground-truth sentences, and negative bag otherwise. By inputting all the bags into a noisy-OR MIL model, the probability of the bag bI which contains attribute aj is measured on the probabilities of all the regions in the bag:
+Pr aj
+I
+= 1 −
+� ri∈bI
+�
+1 − p aj i
+�, (3) where paj i is the probability of the attribute aj predicted by region ri. We calculate paj i through a sigmoid layer after the last convolutional layer in the fully convolutional network: p aj i
+=
+1 + e
+−T⊤ j ri, (4) where Tj ∈ RDt denotes the detection parameter matrix in sigmoid layer for measuring the prediction score of j-th attribute aj and ri is the corresponding representation for image region ri. In particular, the dimension of convolutional activations from the last convolutional layer is x × x × Dt and Dt represents the representation dimension of each region, resulting in x × x response map which preserves the spatial dependency of the image. Then, a cross entropy loss is calculated based on the probabilities of all the attributes at the top of the whole FCNs architecture as lc(I) = −
+Da
+� j=1
+�
+I(Cj =1) log
+�
+Pr aj
+I
+�
++ (1 − I(Cj =1)) log
+�
+1 − Pr aj
+I
+� �, (5) where Praj
+I is measured as in Eq.(3), the indicator function
+Icondition = 1 if condition is true; otherwise Icondition = 0, and Cj denotes the j-th element in attributes label vector
+C. Note that each element of the attributes label vector C ∈
+{0, 1}Da is an attribute indicator. The indicator is 1 if the image contains this attribute otherwise the indicator is 0.
+Inspired by the idea of structure preservation or manifold regularization in, the inter-attribute correlation here is integrated into the learning of attributes detector as a regularizer in the sigmoid layer to further explore the inherent semantic correlations between attributes. This regularizer indicates that the detectors, i.e., detection parameter matrices in sigmoid layer, of semantically relevant attributes should be similar. The estimation of the underlying semantic correlations can be measured by the appropriate pairwise similarity between attributes. Specifically, the regularization of inter-attribute correlations could be given by la(T) =
+Da
+� m,n=1
+Smn∥Tm − Tn∥2, (6) where S ∈ RDa×Da is the affinity matrix defined on the attributes, T ∈ RDt×Da is the whole detection parameter matrix in sigmoid layer, and Tm denotes the m-th column of T representing the detection parameter matrix for attribute am. It is reasonable to minimize Eq.(6), since it will incur a heavy penalty if the distance between two similar detection parameter matrices is very far. There are many ways of defining the affinity matrix S. Here, we calculate the elements through the normalized cosine similarity between two attributes:
+Smn = am · an
+∥am∥ ∥an∥, (7) where am is a 300-dimensional word representation generated from word2vector neural network for attribute am.
+Please note that each cosine similarity score Smn is further linearly normalized into the range of.
+Attributes
+Image
+LSTM
+LSTM
+Attributes
+Image
+LSTM
+LSTM
+Attributes
+LSTM w0
+LSTM w1 w1
+LSTM w2 wNs-1
+LSTM wNs
+Attributes
+LSTM
+Image w0
+LSTM w1 w1
+LSTM w2 wNs-1
+LSTM wNs
+LSTM
+Attributes
+Image w0
+LSTM w1 w1
+LSTM w2 wNs-1
+LSTM wNs
+Figure 1. Five variants of our LSTM-A framework (better viewed in color).
+By defining the graph Laplacian L = D − S, where D is a diagonal matrix with its elements defined as Dmm =
+� n Smn, Eq.(6) can be rewritten as la(T) = tr(TLT⊤).
+By minimizing this term, the inherent semantic corrections between attributes could be preserved in the learnt attributes detectors. The overall objective function integrates the cross entropy loss in Eq.(5) on the image set I and inter-attribute correlations regularization in Eq.(8). Hence, we obtain the following overall loss objective: l = λ
+�
+I∈I lc(I) + (1 − λ) la(T), (9) where λ is the tradeoff parameter. After optimizing the whole FCN architecture with the overall loss objective in Eq.(9), we complete the learning of our MIL-IAC attributes prediction model and treat its final prediction scores on all the attributes as A.
+3.3. Long Short-Term Memory with Attributes
+Unlike the existing image captioning models in which solely encode image representations for sentence generation, our proposed Long Short-Term Memory with
+Attributes (LSTM-A) model additionally integrates the detected high-level attributes into LSTM. We devise five variants of LSTM-A for involvement of two design purposes.
+The first purpose is about where to feed attributes into LSTM and three architectures, i.e., LSTM-A1 (leveraging only attributes), LSTM-A2 (inserting image representations first) and LSTM-A3 (feeding attributes first), are derived from this view. The second is about when to input attributes or image representations into LSTM and we design LSTMA4 (inputting image representations at each time step) and LSTM-A5 (inputting attributes at each time step) for this purpose. An overview of LSTM-A is depicted in Figure 1.
+LSTM-A1 (Leveraging only Attributes)
+Given the detected attributes, one natural way is to directly inject the attributes as representations at the initial time to inform the LSTM about the high-level attributes. This kind of architecture with only attributes input is named as LSTM-A1. It is also worth noting that the attributesbased model in is similar to LSTM-A1 and can be regarded as one special case of our LSTM-A. Given the attribute representations A and the corresponding sentence
+W ≡ [w0, w1,..., wNs], the LSTM updating procedure in LSTM-A1 is as x−1 = TaA, xt = Tswt, and ht = f
+� xt�, t ∈ {0,..., Ns − 1}, (10) where De is the dimensionality of LSTM input, Ta ∈
+RDe×Da and Ts ∈ RDe×Ds is the transformation matrix for attribute representations and textual features of word, respectively, f is the updating function within LSTM unit, and ht is the cell output of the LSTM unit. Please note that for the input sentence W ≡ [w0, w1,..., wNs], we take w0 as the start sign word to inform the beginning of sentence and wNs as the end sign word which indicates the end of sentence. Both of the special sign words are included in our vocabulary. Most specifically, at the initial time step, the attribute representations are transformed as the input to LSTM, and then in the next steps, word embedding xt will be input into the LSTM along with the previous step's hidden state ht−1. In each time step (except the initial step), we use the LSTM cell output ht to predict the next word through a softmax layer.
+LSTM-A2 (Inserting image first)
+To further leverage both image representations and highlevel attributes in the encoding stage of our LSTM-A, we design the second architecture LSTM-A2 by treating both of them as atoms in the input sequence to LSTM. Specifically, at the initial step, the image representations I are firstly transformed into LSTM to inform the LSTM about the image content, followed by the attribute representations
+A which are encoded into LSTM at the next time step to inform the high-level attributes. Then, LSTM decodes each output word based on previous word xt and previous step's hidden state ht−1, which is similar to the decoding stage in LSTM-A1. The LSTM updating procedure in LSTM-A2 is designed as x−2 = TvI and x−1 = TaA, xt = Tswt, and ht = f
+� xt�, t ∈ {0,..., Ns − 1}, (11) where Tv ∈ RDe×Dv is the transformation matrix for image representations.
+LSTM-A3 (Feeding attributes first)
+The third design LSTM-A3 is similar to LSTM-A2 as both designs utilize image representations and high-level attributes to form the input sequence to LSTM in the encoding stage, except that the orders of encoding are different. In LSTM-A3, the attribute representations are firstly encoded into LSTM and then the image representations are transformed into LSTM at the second time step. The whole
+LSTM updating procedure in LSTM-A3 is as x−2 = TaA and x−1 = TvI, xt = Tswt, and ht = f
+� xt�, t ∈ {0,..., Ns − 1}.
+LSTM-A4 (Inputting image each time step)
+Different from the former three designed architectures which mainly inject high-level attributes and image representations at the encoding stage of LSTM, we next modify the decoding stage in our LSTM-A by additionally incorporating image representations or high-level attributes. More specifically, in LSTM-A4, the attribute representations are injected once at the initial step to inform the LSTM about the high-level attributes, and then image representations are fed at each time step as an extra input to LSTM to emphasize the image content frequently among memory cells in LSTM. Hence, the LSTM updating procedure in LSTM-A4 is: x−1 = TaA, xt = Tswt + TvI, and ht = f
+� xt�, t ∈ {0,..., Ns − 1}. (13)
+LSTM-A5 (Inputting attributes each time step)
+The last design LSTM-A5 is similar to LSTM-A4 except that it firstly encodes image representations and then feeds attribute representations as an additional input to LSTM at each step in decoding stage to emphasize the high-level attributes frequently. Accordingly, the LSTM updating procedure in LSTM-A5 is as x−1 = TvI, xt = Tswt + TaA, and ht = f
+� xt�, t ∈ {0,..., Ns − 1}. (14)
+4. Experiments
+We conducted the experiments and evaluated our approaches on COCO captioning dataset (COCO).
+4.1. Dataset and Experimental Settings
+The dataset, COCO, is the most popular benchmark for image captioning, which contains 82,783 training images and 40,504 validation images. There are 5 human-annotated descriptions per image. As the annotations of the official testing set are not publicly available, we follow the widely used settings in and take 82,783 images for training, 5,000 for validation and 5,000 for testing.
+Data Preprocessing. Following, we convert all the descriptions in training set to lower case and discard rare words which occur less than 5 times, resulting in the final vocabulary with 8,791 unique words in COCO dataset.
+Features and Parameter Settings. Each word in the sentence is represented as "one-hot" vector (binary index vector in a vocabulary).
+For image representations, we take the output of 1,024-way pool5/7 × 7 s1 layer from
+GoogleNet pre-trained on Imagenet ILSVRC12 dataset. For attribute representations, we select 1,000 most common words on COCO as the high-level attributes and train our MIL-IAC attributes prediction model purely on the training data of COCO, resulting in the final 1,000-way vector of probabilities of attributes. The tradeoff parameter λ is empirically set as 0.8. The dimension of the input and hidden layers in LSTM of LSTM-A are both set to 1,024.
+Implementation Details. We mainly implement our image captioning models based on Caffe, which is one of widely adopted deep learning frameworks. Specifically, with an initial learning rate 0.01 and mini-batch size of 1,024, the objective value can decrease to 25% of the initial loss and reach a reasonable result after 50,000 iterations.
+Testing Strategies. For sentence generation in testing stage, we adopt the beam search strategy which selects the top-k best sentences at each time step and considers them as the candidates to generate new top-k best sentences at the next time step. The beam size k is empirically set to 3.
+Evaluation Metrics. For the evaluation of our proposed models, we adopt five types of metrics: BLEU@N, METEOR, ROUGE-L, CIDEr-D and SPICE. All the metrics are computed by using the codes1 released by COCO Evaluation Server.
+4.2. Compared Approaches
+To verify the merit of our LSTM-A models, we compared the following state-of-the-art methods.(1) NIC & LSTM : NIC is the standard RNN-based model which only injects image into LSTM at the initial time step. We directly extract results reported in and 1https://github.com/tylin/coco-caption
+Table 1. Performance of our proposed models and other state-of-the-art methods on COCO, where B@N, M, R, C and S are short for
+BLEU@N, METEOR, ROUGE-L, CIDEr-D and SPICE scores. All values are reported as percentage (%).
+Model
+B@1
+B@2
+B@3
+B@4
+M
+R
+C
+S
+NIC LRCN 
+HA SA ATT SC LSTM 
+LSTM-A1
+LSTM-A2
+LSTM-A3
+LSTM-A4
+LSTM-A5
+LSTM-A∗
+26.8 name this run as NIC. Moreover, for fair comparison, we also include our implementation of NIC, named as LSTM.(2) LRCN : LRCN inputs both image representations and previous word into LSTM at each time step.(3) Hard-Attention (HA) & Soft-Attention (SA) : Spatial attention on convolutional features of an image is incorporated into the encoder-decoder framework through two kinds of mechanisms: 1) "hard" stochastic attention equivalently by reinforce learning and 2) "soft" deterministic attention with standard back-propagation.(4) ATT : ATT utilizes attributes as semantic attention to combine image and attributes in RNN for captioning.(5) Sentence-Condition (SC) : Sentence-condition exploits text-conditional semantic attention to generate semantic guidance for sentence generation by conditioning image features on current text content.(6) MSR Captivator : MSR Captivator employs both
+Multimodal Recurrent Neural Network (MRNN) and Maximum Entropy Language Model (MELM) for sentence generation. Deep Multimodal Similarity Model (DMSM)
+ is further exploited for sentence re-ranking.(7) CaptionBot : CaptionBot is a publicly image captioning system2 which is mainly built on vision models by using Deep residual networks (ResNets) to detect visual concepts, MELM language model for sentence generation and DMSM for caption ranking.(8) LSTM-A: LSTM-A1 ∼ LSTM-A5 are five variants derived from our proposed LSTM-A framework. In addition, LSTM-A∗ is an oracle run that inputs ground-truth attributes into the LSTM-A3 architecture.
+4.3. Performance Comparison on COCO
+Table 1 shows the performances of different models on COCO image captioning dataset.
+It is worth noting that the performances of different approaches here
+2https://www.captionbot.ai are based on different image representations. Specifically, VGG architecture is utilized as image feature extractor in the methods of Hard-Attention & Soft-Attention and Sentence-Condition, while GoogleNet is exploited in NIC, LRCN, ATT, LSTM and our LSTM-A. In view that the GoogleNet and VGG features are comparable, we compare directly with results. Overall, the results across eight evaluation metrics consistently indicate that our proposed LSTM-A exhibits better performance than all the state-of-the-art techniques including non-attention models(NIC, LSTM, LRCN) and attention-based methods (HardAttention, Soft-Attention, ATT, Sentence-Condition).
+In particular, the CIDEr-D and SPICE can achieve 100.2% and 18.6%, respectively, when extracting image representations by GoogleNet. LSTM-A1 inputting only high-level attributes as representations makes the relative improvement over LSTM which feeds into image representations instead by 12.3%, 8.7%, 5.3%, 15.7% and 13.1% in BLEU@4, METEOR, ROUGR-L, CIDEr-D and SPICE, respectively.
+The results basically indicate the advantage of exploiting high-level attributes than image representations for image captioning. Furthermore, by additionally incorporating attributes to LSTM model, LSTM-A2, LSTM-A3 and LSTMA5 lead to a performance boost, indicating that image representations and attributes are complementary and thus have mutual reinforcement for image captioning. Similar in spirit, LSTM-A4 improves LRCN by further taking attributes into account. There is a significant performance gap between ATT and LSTM-A5. Though both runs involve the utilization of image representations and attributes, they are fundamentally different in the way that the performance of ATT is as a result of modulating the strength of attention on attributes to the previous words, and LSTM-A5 is by employing attributes as auxiliary knowledge to complement image representations. This somewhat reveals the weakness of semantic attention model, where the prediction errors will accumulate along the generated sequence.
+Table 2. Leaderboard of the published state-of-the-art image captioning models on the online COCO testing server, where B@N, M, R, and C are short for BLEU@N, METEOR, ROUGE-L, and CIDEr-D scores. All values are reported as percentage (%).
+Model
+B@1
+B@2
+B@3
+B@4
+M
+R
+C c5 c40 c5 c40 c5 c40 c5 c40 c5 c40 c5 c40 c5 c40
+LSTM-A3 (Ours)
+Watson Multimodal 
+G-RMI(PG-SPIDEr-TAG) 
+MetaMind/VT GT 
+105.9 reviewnet 
+ATT 
+Google 
+MSR Captivator 
+Table 3. BLEU@4, METEOR, ROUGE-L, CIDEr-D, and SPICE scores of our proposed LSTM-A3 with attributes learnt by different attributes prediction models on COCO.
+Model
+B@4
+M
+R
+C
+S
+Fine-tune
+MIL 
+MIL-IAC
+Compared to LSTM-A1, LSTM-A2 which is augmented by integrating image representations performs better, but the performances are lower than LSTM-A3. The results indicate that LSTM-A3, in comparison, benefits from the mechanism of first feeding high-level attributes into LSTM instead of starting from inserting image representations in LSTM-A2. The chance that a good start point can be attained and lead to performance gain is better. LSTM-A4 feeding the image representations at each time step yields inferior performances to LSTM-A3, which only inputs image representations once. We speculate that this may because the noise in the image can be explicitly accumulated and thus the network overfits more easily. In contrast, the performances of LSTM-A5 which feeds attributes at each time step show the improvements on LSTM-A3. The results demonstrate that the high-level attributes are more accurate and easily translated into human understandable sentence.
+Among the five proposed LSTM-A architectures, LSTMA3 achieves the best performances in terms of BLEU@1 and METEOR, while LSTM-A5 performs the best in other six evaluation metrics. The performances of the oracle run LSTM-A∗ could be regarded as the upper bound of employing attributes in our framework and lead to large performance gain against LSTM-A3. Such an upper bound enables us to obtain more insights on the factor accounting for the success of the current attribute augmented architecture and also provides guidance to future research in this direction. More specifically, the results, on one hand, indicate the advantage and great potential of leveraging attributes for boosting image captioning, and on the other, suggest that more efforts are further required towards mining and representing attributes more effectively.
+4.4. Evaluation of Attributes Prediction Model
+We further verify the effectiveness of our MIL-IAC attributes prediction model. We compared two baselines here.
+One is to directly fine-tune the VGG architecture with cross entropy loss for attributes prediction, named as Fine-tune, and the other, namely MIL, exploits a weakly supervised
+MIL model based on VGG to learn region-based detectors for attributes. Table 3 compares the sentence generation performances of our LSTM-A3 model with attributes learnt by different attributes prediction models on COCO dataset.
+Compared to Fine-tune, MIL method using region-based detectors consistently exhibits better performance across different evaluation metric. Moreover, by additionally exploring the inter-attribute correlations in MIL framework, our proposed MIL-IAC leads to larger performance gains.
+4.5. Performance on COCO Online Testing Server
+We also submitted our best run in terms of METEOR, i.e., LSTM-A3, to online COCO testing server and evaluated the performance on official testing set. Table 2 shows the performance Leaderboard on official testing image set with
+5 reference captions (c5) and 40 reference captions (c40).
+Please note that here we utilize the outputs of 2,048-way pool5 layer from ResNet-152 as image representations and train the attribute detectors by ResNet-152 in our final submission. Moreover, inspired by, we adopt the policy gradient optimization to specifically boost CIDEr-D performance. The latest top-8 performing methods which have been officially published are included in the table. Compared to the top performing methods on the leaderboard, our proposed LSTM-A3 achieves the best performances across all the evaluation metrics on both c5 and c40 testing sets.
+4.6. Human Evaluation
+To better understand how satisfactory are the sentences generated from different methods, we also conducted a human study to compare our LSTM-A3 against three approaches, i.e., CaptionBot, LRCN and LSTM. A total number of 12 evaluators (6 females and 6 males) from different education backgrounds, including computer science (4), business (2), linguistics (2) and engineering (4), are invited and a subset of 1K images is randomly selected from testing set for the subjective evaluation. The evaluation process is as follows. All the evaluators are organized into two groups.
+We show the first group all the four sentences generated by each approach plus five human-annotated sentences and ask
+Generated Sentences:
+LSTM: a man riding a skateboard down a street
+CaptionBot: I think it's a group of people walking down the road.
+LSTM-A3: a man walking down a street with a herd of sheep
+Ground Truth: a man walks while a large number of sheep follow a man leading a herd of sheep down the sheep the man is walking a herd of sheep on the road through a town
+Attributes: sheep: 0.976 herd: 0.778 street: 0.702 walking: 0.702 road: 0.635 man: 0.555 standing: 0.430 animals: 0.388
+Generated Sentences:
+LSTM: a group of people standing around a market
+CaptionBot: I think it's a bunch of yellow flowers.
+LSTM-A3: a group of people standing around a bunch of bananas
+Ground Truth: bunches of bananas for sale at an outdoor market a person at a table filled with bananas there are many bananas layer across this table at a farmers market
+Attributes: bananas: 1 people: 0.956 market: 0.708 standing: 0.612 outdoor: 0.558 blue: 0.514 large: 0.407 table: 0.381
+Generated Sentences:
+LSTM: a cell phone sitting on top of a table
+CaptionBot: I think it's a laptop that is on the phone.
+LSTM-A3: a person holding a cell phone in front of a laptop
+Ground Truth:a smart phone being held up in front of a lap topthe person is holding his cell phone while on his laptopsomeone holding a cell phone in front of a laptop
+Attributes: phone: 0.867 cell: 0.839 computer: 0.735 laptop: 0.641 keyboard: 0.581 screen: 0.546 holding: 0.505 person: 0.334
+Generated Sentences:
+LSTM: a group of people flying kites in the sky
+CaptionBot: I think it's a plane is flying over the water.
+LSTM-A3: a red and white plane flying over a body of water
+Ground Truth: a plane with water skies for landing gear coming in for a landing at a lakea plane flying through a sky above a lakea red and white plane is flying over some water
+Attributes: flying: 0.997 airplane: 0.957 plane: 0.941 water: 0.893 red: 0.837 lake: 0.751 white: 0.566 sky: 0.565
+Attributes: boat: 1 water: 0.838 man: 0.762 riding: 0.728 dog: 0.547 small: 0.485 person: 0.471 river: 0.461
+Generated Sentences:
+LSTM: a group of people on a boat in the water
+CaptionBot: I think it's a man with a small boat in a body of water.
+LSTM-A3: a man and a dog on a boat in the water
+Ground Truth:an image of a man in a boat with a doga person on a rowboat with a dalmatian dog on the boatold woman rowing a boat with a dog
+Figure 2. Attributes and sentences generation results on COCO. The attributes are detected by our attributes prediction model and the output sentences are generated by 1) LSTM, 2) CaptionBot2, 3) our LSTM-A3 and 4) Ground Truth: three ground truth sentences.
+Table 4. User study on two criteria: M1 - percentage of captions generated by different methods that are evaluated as better/equal to human caption; M2 - percentage of captions that pass Turing Test.
+Human
+LSTM-A3
+CaptionBot
+LSTM
+LRCN
+M1M2
+55.9 them the question: Do the systems produce captions resembling human-generated sentences? In contrast, we show the second group once only one sentence generated by different approach or human annotation and they are asked: Can you determine whether the given sentence has been generated by a system or by a human being? From evaluators' responses, we calculate two metrics: 1) M1: percentage of captions that are evaluated as better or equal to human caption; 2) M2: percentage of captions that pass the Turing
+Test. Table 4 lists the result of the user study. Overall, our
+LSTM-A3 is clearly the winner for all two criteria. In particular, the percentage achieves 64.9% and 75.3% in terms of M1 and M2, respectively, making the absolute improvement over the best competitor CaptionBot by 6.7% and 9%.
+4.7. Qualitative Analysis
+Figure 2 showcases a few sentence examples generated by different methods, the detected high-level attributes, and human-annotated ground truth sentences. From these exemplar results, it is easy to see that all of these automatic methods can generate somewhat relevant sentences, while our proposed LSTM-A3 can predict more relevant keywords by jointly exploiting high-level attributes and image representations for image captioning. For example, compared to subject term "a group of people" and "a man" in the sentence generated by LSTM and CaptionBot respectively, "a man and a dog" in our LSTM-A3 is more precise to describe the image content in the first image, since the keyword "dog" is one of the detected attributes and directly injected into LSTM to guide the sentence generation. Similarly, verb term "holding" which is also detected as one high-level attribute presents the fourth image more exactly. Moreover, our LSTM-A3 generate more descriptive sentence by enriching the semantics with high-level attributes.
+For instance, with the detected adjective "red," the generated sentence "a red and white plane flying over a body of water" of the fifth image depicts the image content more comprehensive. We refer the readers to supplementary materials for more examples.
+5. Discussions and Conclusions
+We have presented Long Short-Term Memory with Attributes (LSTM-A) architectures which explores both image representations and high-level attributes for image captioning. Particularly, we detect attributes by additionally exploring the inter-attribute correlations in the Multiple Instance
+Learning framework and study the problem of augmenting high-level attributes from images to complement image representations for enhancing sentence generation. To verify our claim, we have devised variants of architectures by modifying the placement and moment, where and when to feed into the two kinds of representations. Experiments conducted on COCO image captioning dataset validate our proposal and analysis. Performance improvements are observed when comparing to other captioning techniques.
+Our future works are as follows. First, more attributes will be learnt from large-scale image benchmarks, e.g., YFCC-100M dataset, and integrated into image captioning.
+Second, how to generate free-form and open-vocabulary sentences with the learnt attributes is also expected.
+References
+ P. Anderson, B. Fernando, M. Johnson, and S. Gould. Spice:
+Semantic propositional image caption evaluation. In ECCV, S. Banerjee and A. Lavie. Meteor: An automatic metric for mt evaluation with improved correlation with human judgments. In ACL workshop, 2005.
+ X. Chen, H. Fang, T.-Y. Lin, R. Vedantam, S. Gupta, P. Doll´ar, and C. L. Zitnick.
+Microsoft COCO captions: Data collection and evaluation server. arXiv preprint arXiv:1504.00325, 2015.
+ J. Devlin, H. Cheng, H. Fang, S. Gupta, L. Deng, X. He, G. Zweig, and M. Mitchell. Language models for image captioning: The quirks and what works. In ACL, 2015.
+ J.
+Donahue, L.
+Anne
+Hendricks, S.
+Guadarrama, M. Rohrbach, S. Venugopalan, K. Saenko, and T. Darrell. Long-term recurrent convolutional networks for visual recognition and description. In CVPR, 2015.
+ H. Fang, S. Gupta, et al. From captions to visual concepts and back. In CVPR, 2015.
+ A. Farhadi, M. Hejrati, M. A. Sadeghi, P. Young, C. Rashtchian, J. Hockenmaier, and D. Forsyth. Every picture tells a story: Generating sentences from images. In ECCV, 2010.
+ K. He, X. Zhang, S. Ren, and J. Sun. Deep residual learning for image recognition. In CVPR, 2016.
+ Y. Jia, E. Shelhamer, J. Donahue, S. Karayev, J. Long, R. Girshick, S. Guadarrama, and T. Darrell. Caffe: Convolutional architecture for fast feature embedding. In MM, 2014.
+ A. Karpathy and L. Fei-Fei.
+Deep visual-semantic alignments for generating image descriptions. In CVPR, 2015.
+ G. Kulkarni, V. Premraj, et al. Babytalk: Understanding and generating simple image descriptions. IEEE Trans. on PAMI, C.-Y. Lin. Rouge: A package for automatic evaluation of summaries. In ACL Workshop, 2004.
+ T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Doll´ar, and C. L. Zitnick. Microsoft coco: Common objects in context. In ECCV, 2014.
+ S. Liu, Z. Zhu, N. Ye, S. Guadarrama, and K. Murphy. Optimization of image description metrics using policy gradient methods. arXiv preprint arXiv:1612.00370, 2016.
+ J. Lu, C. Xiong, D. Parikh, and R. Socher. Knowing when to look: Adaptive attention via a visual sentinel for image captioning. In CVPR, 2017.
+ J. Mao, W. Xu, Y. Yang, J. Wang, and A. L. Yuille. Explain images with multimodal recurrent neural networks. In NIPS
+Workshop on Deep Learning, 2014.
+ T. Mikolov, K. Chen, G. Corrado, and J. Dean.
+Efficient estimation of word representations in vector space. In ICLR workshop, 2013.
+ M. Mitchell, X. Han, et al. Midge: Generating image descriptions from computer vision detections. In EACL, 2012.
+ Y. Pan, Y. Li, T. Yao, T. Mei, H. Li, and Y. Rui. Learning deep intrinsic video representation by exploring temporal coherence and graph structure. In IJCAI, 2016.
+ Y. Pan, T. Mei, T. Yao, H. Li, and Y. Rui. Jointly modeling embedding and translation to bridge video and language. In
+CVPR, 2016.
+ Y. Pan, T. Yao, H. Li, and T. Mei. Video captioning with transferred semantic attributes. In CVPR, 2017.
+ K. Papineni, S. Roukos, T. Ward, and W.-J. Zhu. Bleu: a method for automatic evaluation of machine translation. In
+ACL, 2002.
+ D. Parikh and K. Grauman. Relative attributes. In ICCV, S. J. Rennie, E. Marcheret, Y. Mroueh, J. Ross, and V. Goel.
+Self-critical sequence training for image captioning. arXiv preprint arXiv:1612.00563, 2016.
+ O. Russakovsky, J. Deng, H. Su, J. Krause, S. Satheesh, S. Ma, Z. Huang, A. Karpathy, A. Khosla, M. Bernstein, A. C. Berg, and L. Fei-Fei. ImageNet Large Scale Visual
+Recognition Challenge. IJCV, 2015.
+ K. Simonyan and A. Zisserman. Very deep convolutional networks for large-scale image recognition. In ICLR, 2015.
+ I. Sutskever, O. Vinyals, and Q. V. Le. Sequence to sequence learning with neural networks. In NIPS, 2014.
+ C. Szegedy, W. Liu, Y. Jia, P. Sermanet, S. Reed, D. Anguelov, D. Erhan, V. Vanhoucke, and A. Rabinovich.
+Going deeper with convolutions. In CVPR, 2015.
+ K. Tran, X. He, L. Zhang, J. Sun, C. Carapcea, C. Thrasher, C. Buehler, and C. Sienkiewicz. Rich image captioning in the wild. arXiv preprint arXiv:1603.09016, 2016.
+ R. Vedantam, C. Lawrence Zitnick, and D. Parikh. Cider:
+Consensus-based image description evaluation.
+In CVPR, O. Vinyals, A. Toshev, S. Bengio, and D. Erhan. Show and tell: A neural image caption generator. In CVPR, 2015.
+ Q. Wu, C. Shen, L. Liu, A. Dick, and A. v. d. Hengel. What value do explicit high level concepts have in vision to language problems? In CVPR, 2016.
+ K. Xu, J. Ba, R. Kiros, K. Cho, A. Courville, R. Salakhudinov, R. Zemel, and Y. Bengio. Show, attend and tell: Neural image caption generation with visual attention.
+In ICML, Y. Yang, C. L. Teo, H. Daum´e III, and Y. Aloimonos.
+Corpus-guided sentence generation of natural images.
+In
+EMNLP, 2011.
+ Z. Yang, Y. Yuan, Y. Wu, W. W. Cohen, and R. R. Salakhutdinov. Review networks for caption generation. In NIPS, T. Yao, Y. Pan, Y. Li, and T. Mei. Incorporating copying mechanism in image captioning for learning novel objects.
+In CVPR, 2017.
+ T. Yao, Y. Pan, C.-W. Ngo, H. Li, and T. Mei.
+Semisupervised domain adaptation with subspace learning for visual recognition. In CVPR, 2015.
+ Q. You, H. Jin, Z. Wang, C. Fang, and J. Luo. Image captioning with semantic attention. In CVPR, 2016.
+ L. Zhou, C. Xu, P. Koch, and J. J. Corso. Image caption generation with text-conditional semantic attention. arXiv preprint arXiv:1606.04621, 2016.

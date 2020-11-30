@@ -1,0 +1,8 @@
+["input", "../data/GAN/003_joint_probabilities.npy"]
+["output", "../data/GAN/004_stopwords_output.jsonl"]
+["dictfile", "../data/GAN/002_rarewords_reduceddict.jsonl"]
+["reduceddictfile", "../data/GAN/004_stopwords_reduceddict.jsonl"]
+["stopwords", {}]
+"finished"
+["time", 58.094496965408325]
+["used RAM(bytes)=", 1682952192]

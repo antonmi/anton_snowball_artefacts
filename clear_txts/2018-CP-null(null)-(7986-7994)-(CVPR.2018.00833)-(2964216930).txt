@@ -1,0 +1,598 @@
+Inferring Semantic Layout for Hierarchical Text-to-Image Synthesis
+Seunghoon Hong
+†
+Dingdong Yang
+†
+Jongwook Choi
+†
+Honglak Lee
+‡,†
+†University of Michigan
+‡Google Brain
+†{hongseu,didoyang,jwook,honglak}@umich.edu
+‡honglak@google.com
+Abstract
+We propose a novel hierarchical approach for text-toimage synthesis by inferring semantic layout. Instead of learning a direct mapping from text to image, our algorithm decomposes the generation process into multiple steps, in which it first constructs a semantic layout from the text by the layout generator and converts the layout to an image by the image generator. The proposed layout generator progressively constructs a semantic layout in a coarse-to-fine manner by generating object bounding boxes and refining each box by estimating object shapes inside the box. The image generator synthesizes an image conditioned on the inferred semantic layout, which provides a useful semantic structure of an image matching with the text description.
+Our model not only generates semantically more meaningful images, but also allows automatic annotation of generated images and user-controlled generation process by modifying the generated scene layout. We demonstrate the capability of the proposed model on challenging MS-COCO dataset and show that the model can substantially improve the image quality, interpretability of output and semantic alignment to input text over existing approaches.
+1. Introduction
+Generating images from text description has been an active research topic in computer vision. By allowing users to describe visual concepts in natural language, it provides a natural and flexible interface for conditioning image generation. Recently, approaches based on conditional Generative
+Adversarial Network (GAN) have shown promising results on text-to-image synthesis task. Conditioning both generator and discriminator on text, these approaches are able to generate realistic images that are both diverse and relevant to input text.
+Based on conditional GAN framework, recent approaches further improve the prediction quality by generating high-resolution images or augmenting text information.
+However, the success of existing approaches has been mainly limited to simple datasets such as birds and flowers, while generation of complicated, real-world box generation mask generation pixel generation real image
+StackGAN result
+Reed et al. result
+Input Text : People riding on elephants that are walking through a river.
+Figure 1. Overall framework of the proposed algorithm. Given a text description, our algorithm sequentially constructs a semantic structure of a scene and generates an image conditioned on the inferred layout and text. Best viewed in color. images such as MS-COCO remains an open challenge.
+As illustrated in Figure 1, generating image from a general sentence "people riding on elephants that are walking through a river" requires multiple reasonings on various visual concepts, such as object category (people and elephants), spatial configurations of objects (riding), scene context (walking through a river), etc., which is much more complicated than generating a single, large object as in simpler datasets. Existing approaches have not been successful in generating reasonable images for such complex text descriptions, because of the complexity of learning a direct text-to-pixel mapping from general images.
+Instead of learning a direct mapping from text to image, we propose an alternative approach that constructs semantic layout as an intermediate representation between text and image. Semantic layout defines a structure of scene based on object instances and provides fine-grained information of the scene, such as the number of objects, object category, location, size, shape, etc. (Figure 1). By introducing a mechanism that explicitly aligns the semantic structure of an image to text, the proposed method can generate complicated images that match complex text descriptions. In addition, conditioning the image generation on semantic structure al1 arXiv:1801.05091v2 [cs.CV] 26 Jul 2018 lows our model to generate semantically more meaningful images that are easy to recognize and interpret.
+Our model for hierarchical text-to-image synthesis consists of two parts: the layout generator that constructs a semantic label map from a text description, and the image generator that converts the estimated layout to an image using the text. Since learning a direct mapping from text to fine-grained semantic layout is still challenging, we further decompose the task into two manageable subtasks: we first estimate the bounding box layout of an image using the box generator, and then refine the shape of each object inside the box by the shape generator. The generated layout is then used to guide the image generator for pixel-level synthesis. The box generator, shape generator and image generator are implemented by independent neural networks, and trained in parallel with corresponding supervisions.
+Generating semantic layout not only improves quality of text-to-image synthesis, but also provides a number of potential benefits. First, the semantic layout provides instancewise annotations on generated images, which can be directly exploited for automated scene parsing and object retrieval. Second, it offers an interactive interface for controlling image generation process; users can modify the semantic layout to generate a desired image by removing/adding objects, changing size and location of objects, etc.
+The contributions of this paper are as follows:
+• We propose a novel approach for synthesizing images from complicated text descriptions. Our model explicitly constructs semantic layout from the text description, and guides image generation using the inferred semantic layout.
+• By conditioning image generation on explicit layout prediction, our method is able to generate images that are semantically meaningful and well-aligned with input descriptions.
+• We conduct extensive quantitative and qualitative evaluations on challenging MS-COCO dataset, and demonstrate substantial improvement on generation quality over existing works.
+The rest of the paper is organized as follows. We briefly review related work in Section 2, and provide an overview of the proposed approach in Section 3. Our model for layout and image generation is introduced in Section 4 and 5, respectively. We discuss the experimental results on the MSCOCO dataset in Section 6.
+2. Related Work
+Generating images from text descriptions has recently drawn a lot of attention from the research community. Formulating the task as a conditional image generation problem, various approaches have been proposed based on Variational Auto-Encoders (VAE), auto-regressive models, optimization techniques, etc. Recently, approaches based on conditional Generative Adversarial Network (GAN) have shown promising results in text-toimage synthesis. Reed et al. proposed to learn both generator and discriminator conditioned on text embedding. Zhang et al. improved the image quality by increasing image resolution with a two-stage GAN.
+Other approaches include improving conditional generation by augmenting text data with synthesized captions, or adding conditions on class labels. Although these approaches have demonstrated impressive generation results on datasets of specific categories (e.g., birds and flowers ), the perceptual quality of generation tends to substantially degrade on datasets with complicated images(e.g., MS-COCO ). We investigate a way to improve text-to-image synthesis on general images, by conditioning generation on inferred semantic layout.
+The problem of generating images from pixel-wise semantic labels has been explored recently.
+In these approaches, the task of image generation is formulated as translating semantic labels to pixels. Isola et al. proposed a pixel-to-pixel translation network that converts dense pixel-wise labels to image, and Chen et al. proposed a cascaded refinement network that generates highresolution output from dense semantic labels. Karacan et al. employed both dense layout and attribute vectors for image generation using conditional GAN. Notably, Reed et al. utilized sparse label maps like our method. Unlike previous approaches that require ground-truth layouts for generation, our method infers the semantic layout, and thus is more generally applicable to various generation tasks.
+Note that our main contribution is complementary to these approaches, and we can integrate existing segmentation-topixel generation methods to generate an image conditioned on a layout inferred by our method.
+The idea of inferring scene structure for image generation is not new, as it has been explored by some recent works in several domains. For example, Wang et al. proposed to infer a surface normal map as an intermediate structure to generate indoor scene images, and Villegas et al. predicted human joints for future frame prediction.
+The most relevant work to our method is Reed et al., which predicted local key-points of bird or human for textto-image synthesis. Contrary to the previous approaches that predict such specific types of structure for image generation, our proposed method aims to predict semantic label maps, which is a general representation of natural images.
+3. Overview
+The overall pipeline of the proposed framework is illustrated in Figure 2. Given a text description, our model progressively constructs a scene by refining semantic structure of an image using the following sequence of generators:
+Box Generator (§4.1)
+People riding on elephants that are walking through a river.
+BiLSTM
+M1
+M2
+· · · s p(Bt|B1:t−1)
+MT elephant
+B1:T
+LSTM elephant person chair
+Shape Generator (§4.2)
+Text Encoding
+Image Generator (§5)
+M s
+B1:T
+Figure 2. Overall pipeline of the proposed algorithm. Given a text embedding, our algorithm first generates a coarse layout of the image by placing a set of object bounding boxes using the box generator (Section 4.1), and further refines the object shape inside each box using the shape generator (Section 4.2). Combining outputs from the box and the shape generator leads to a semantic label map defining semantic structure of the scene. Conditioned on the inferred semantic layout and the text, a pixel-wise image is finally generated by the image generator (Section 5).
+• Box generator takes a text embedding s as input, and generates a coarse layout by composing object instances in an image. The output of the box generator is a set of bounding boxes B1:T = {B1,..., BT }, where each bounding box Bt defines the location, size and category label of the t-th object (Section 4.1).
+• Shape generator takes a set of bounding boxes generated from box generator, and predicts shapes of the object inside the boxes. The output of the shape generator is a set of binary masks M1:T = {M1,..., MT }, where each mask Mt defines the foreground shape of the t-th object (Section 4.2).
+• Image generator takes the semantic label map M obtained by aggregating instance-wise masks, and the text embedding as inputs, and generates an image by translating a semantic layout to pixels matching the text description (Section 5).
+By conditioning the image generation process on the semantic layouts that are explicitly inferred, our method is able to generate images that preserve detailed object shapes and therefore are easier to recognize semantic contents. In our experiments, we show that the images generated by our method are semantically more meaningful and well-aligned with the input text, compared to ones generated by previous approaches (Section 6).
+4. Inferring Semantic Layout from Text
+4.1. Bounding Box Generation
+Given an input text embedding s, we first generate a coarse layout of image in the form of object bounding boxes. We associate each bounding box Bt with a class label to define which class of object to place and where, which plays a critical role in determining the global layout of the scene. Specifically, we denote the labeled bounding box of the t-th object as Bt = (bt, lt), where bt =
+[bt,x, bt,y, bt,w, bt,h] ∈ R4 represents the location and size of the bounding box, and lt ∈ {0, 1}L+1 is a one-hot class label over L categories. We reserve the (L + 1)-th class as a special indicator for the end-of-sequence.
+The box generator Gbox defines a stochastic mapping from the input text s to a set of T object bounding boxes
+B1:T = {B1,..., BT }:
+�B1:T ∼ Gbox(s).
+Model.
+We employ an auto-regressive decoder for the box generator, by decomposing the conditional joint bounding box probability as p(B1:T | s) = �T t=1 p(Bt | B1:t−1, s), where the conditionals are approximated by LSTM. In the generative process, we first sample a class label lt for the t-th object and then generate the box coordinates bt conditioned on lt, i.e., p(Bt|·) = p(bt, lt|·) = p(lt|·) p(bt|lt, ·).
+The two conditionals are modeled by a Gaussian Mixture
+Model (GMM) and a categorical distribution, respectively: p(lt | B1:t−1, s) = Softmax(et), (2) p(bt | lt, B1:t−1, s) =
+K
+� k=1 πt,k N
+� bt; µt,k, Σt,k
+�, (3) where K is the number of mixture components. The softmax logit et in Eq.(2) and the parameters for the Gaussian mixtures πt,k ∈ R, µt,k ∈ R4 and Σt,k ∈ R4×4 in Eq.(3) are computed by the outputs from each LSTM step t. Please see Section A.1 in the appendix for details.
+Training.
+We train the box generator by minimizing the negative log-likelihood of ground-truth bounding boxes:
+Lbox = −λl
+T
+T
+� t=1 l∗ t log p(lt) − λb
+T
+T
+� t=1 log p(b∗ t ), (4) where T is the number of objects in an image, and λl, λb are balancing hyper-parameters, which are set to 4 and 1 in our experiment, respectively. b∗ t and l∗ t are ground-truth bounding box coordinates and label of the t-th object, respectively, which are ordered based on their bounding box locations from left to right. Note that we drop the conditioning in Eq. (4) for notational brevity.
+At test time, we generate bounding boxes via ancestral sampling of box coordinates and class label by Eq. (2) and(3), respectively. We terminate the sampling when the sampled class label corresponds to the termination indicator(L + 1), thus the number of objects are determined adaptively based on the text.
+4.2. Shape Generation
+Given a set of bounding boxes obtained by the box generator, the shape generator predicts more detailed image structure in the form of object masks.
+Specifically, for each object bounding box Bt obtained by Eq. (1), we generate a binary mask Mt ∈ RH×W that defines the shape of the object inside the box. To this end, we first convert the discrete bounding box outputs {Bt} to a binary tensor
+Bt ∈ {0, 1}H×W ×L, whose element is 1 if and only if it is contained in the corresponding class-labeled box. Using the notation M1:T = {M1,..., MT }, we define the shape generator Gmask as
+�
+M1:T = Gmask(B1:T, z1:T ), (5) where zt ∼ N(0, I) is a random noise vector.
+Generating an accurate object shape should meet two requirements: (i) First, each instance-wise mask Mt should match the location and class information of Bt, and be recognizable as an individual instance (instance-wise constraints). (ii) Second, each object shape must be aligned with its surrounding context (global constraints). To satisfy both, we design the shape generator as a recurrent neural network, which is trained with two conditional adversarial losses as described below.
+Model.
+We build the shape generator Gmask using a convolutional recurrent neural network, as illustrated in Figure 2. At each step t, the model takes Bt through encoder CNN, and encodes information of all object instances by bi-directional convolutional LSTM (Bi-convLSTM). On top of convLSTM output at t-th step, we add noise zt by spatial tiling and concatenation, and generate a mask Mt by forwarding it through a decoder CNN.
+Training.
+Training of the shape generator is based on the GAN framework, in which generator and discriminator are alternately trained. To enforce both the global and the instance-wise constraints discussed earlier, we employ two conditional adversarial losses with the instance-wise discriminator Dinst and the global discriminator Dglobal.
+First, we encourage each object mask to be compatible with class and location information encoded by object bounding box. We train an instance-wise discriminator Dinst by optimizing the following instance-wise adversarial loss:
+L(t) inst = E(Bt,Mt)
+� log Dinst
+�
+Bt, Mt
+��
++ EBt,zt
+� log
+�
+1 − Dinst
+�
+Bt, G(t) mask(B1:T, z1:T )
+���, where G(t) mask(B1:T, z1:T ) indicates the t-th output from mask generator. The instance-wise loss is applied for each of T instance-wise masks, and aggregated over all instances as Linst = (1/T) � t L(t) inst.
+On the other hand, the global loss encourages all the instance-wise masks form a globally coherent context.
+To consider relation between different objects, we aggregate them into a global mask1 Gglobal(B1:T, z1:T ) =
+� t G(t) mask(B1:t, z1:t), and compute an global adversarial loss analogous to Eq. (6) as
+Lglobal = E(B1:T,M1:T )
+� log Dglobal
+�
+Bglobal, Mglobal
+��
++ EB1:T,z1:T
+� log
+�
+1 − Dglobal
+�
+Bglobal, Gglobal(B1:T, z1:T )
+���, where Mglobal ∈ RH×W is an aggregated mask obtained by taking element-wise addition over M1:T, and Bglobal ∈
+RH×W ×L is an aggregated bounding box tensor obtained by taking element-wise maximum over B1:T.
+Finally, we additionally impose a reconstruction loss Lrec that encourages the predicted instance masks to be similar to the ground-truths. We implement this idea using perceptual loss, which measures the distance of real and fake images in the feature space of a pre-trained CNN by
+Lrec =
+� l
+��Φl(Gglobal) − Φl(Mglobal)
+��, (8) where Φl is the feature extracted from the l-th layer of a CNN. We use the VGG-19 network pre-trained on ImageNet in our experiments. Since our input to the pretrained network is a binary mask, we replicate masks to channel dimension and use the converted mask to compute
+Eq. (8). We found that using the perceptual loss significantly improves stability of GAN training and the quality of object shapes, as discussed in.
+Combining Eq.(6), (7) and (8), the overall training objective for the shape generator becomes
+Lshape = λiLinst + λgLglobal + λrLrec, (9) where λi, λg and λr are hyper-parameters that balance different losses, which are set to 1, 1 and 10 in the experiment, respectively. We provide more details of training and network architecture in the appendix (Section A.2).
+1Gglobal is computed by addition to model overlap between objects.
+{0, 1}
+People riding elephants in a body of water.
+Generator Network
+Spatial
+Tiling z ∼ N(0, 1)
+L
+Residual Blocks down-sample concatenation
+Cascaded
+Decoder Network
+People riding elephants in a body of water.
+Discriminator Network
+M
+M
+FC
+FC
+A
+FC
+●
+FC s s
+S
+Ag h × w × d h w h0 w0 σ down-sample
+X
+X
+Figure 3. Architecture of the image generator. Conditioned on the text description and the semantic layout generated by the layout generator, it generates an image that matches both inputs.
+5. Synthesizing Images from Text and Layout
+The outputs from the layout generator define location, size, shape and class information of objects, which provide semantic structure of a scene relevant to text. Given the semantic structure and text, the objective of the image generator is to generate an image that conforms to both conditions. To this end, we first aggregate binary object masks
+M1:T to a semantic label map M ∈ {0, 1}H×W ×L, such that Mijk = 1 if and only if there exists an object of class k whose mask Mt covers the pixel (i, j). Then, given the semantic layout M and the text s, the image generator is defined by
+�
+X = Gimg(M, s, z), (10) where z ∼ N(0, I) is a random noise. In the following, we describe the network architecture and training procedures of the image generator.
+Model.
+Figure 3 illustrates the overall architecture of the image generator. Our generator network is based on a convolutional encoder-decoder network with several modifications. It first encodes the semantic layout M through several down-sampling layers to construct a layout feature
+A ∈ Rh×w×d.
+We consider that the layout feature encodes various context information of the input layout along the channel dimension. To adaptively select a context relevant to the text, we apply attention on the layout feature. Specifically, we compute a d-dimensional vector from the text embedding, and spatially replicate it to construct
+S ∈ Rh×w×d. Then we apply gating on the layout feature by Ag = A ⊙ σ(S), where σ is the sigmoid nonlinearity, and ⊙ denotes element-wise multiplication. To further encode text information on background, we compute another text embedding with separate fully-connected layers and spatially replicate it to size h × w. The gated layout feature Ag, the text embedding and noises are then combined by concatenation along channel dimension, and subsequently fed into several residual blocks and decoder to be mapped to an image. We employ a cascaded network for decoder, which takes the semantic layout M as an additional input to every upsampling layer. We found that cascaded network enhances conditioning on layout structure and produces better object boundary.
+For the discriminator network Dimg, we first concatenate the generated image X and the semantic layout M. It is fed through a series of down-sampling blocks, resulting in a feature map of size h′ × w′. We concatenate it with a spatially tiled text embedding, from which we compute a decision score of the discriminator.
+Training.
+Conditioned on both the semantic layout M and the text embedding s, the image generator Gimg is jointly trained with the discriminator Dimg. We define the objective function by Limg = λaLadv + λrLrec, where Ladv = E(M,s,X)
+� log Dimg
+�
+M, s, X
+��
++ E(M,s),z
+� log
+�
+1 − Dimg
+�
+M, s, Gimg(M, s, z)
+���, Lrec =
+� l
+∥Φl(Gimg(M, s, z)) − Φl(X)∥, (12) where X is a ground-truth image associated with semantic layout M. As in the mask generator, we apply the same perceptual loss Lrec, which is found to be effective. We set the hyper-parameters λa = 1, λr = 10 in our experiment.
+More details on network architecture and training procedure is provided in appendix (Section A.3).
+6. Experiments
+6.1. Experimental Setup
+Dataset.
+We use the MS-COCO dataset to evaluate our model. It contains 164,000 training images over 80 semantic classes, where each image is associated with instance-wise annotations (i.e., object bounding boxes and segmentation masks) and 5 text descriptions. The dataset has complex scenes with many objects in a diverse context, which makes generation very challenging. We use the official train and validation splits from MS-COCO 2014 for training and evaluating our model, respectively.
+Evaluation metrics.
+We evaluate text-conditional image generation performance using various metrics: Inception score, caption generation, and human evaluation.
+Caption generation
+Inception
+ 
+Method
+Box
+Mask
+BLEU-1
+BLEU-2
+BLEU-3
+BLEU-4
+METEOR
+CIDEr
+Reed et al. 7.88 ± 0.07
+StackGAN 8.45 ± 0.03
+Ours
+Pred.
+Pred.
+11.46 ± 0.09
+Ours (control experiment)
+GT
+Pred.
+11.94 ± 0.09
+GT
+GT
+12.40 ± 0.08
+Real images (upper bound)Table 1. Quantitative evaluation results. Two evaluation metrics based on caption generation and the Inception score are presented. The second and third columns indicate types of bounding box or mask layout used in image generation, where "GT" indicates ground-truth and "Pred." indicates predicted one by our model. The last row presents the caption generation performance on real images, which corresponds to upper-bound of caption generation metric. Higher is better in all columns.
+Ground
+Truth(GT) A kid in wetsuit on surfboard in the ocean. generated image and caption
+StackGAN
+256x256 a person flying a kite on a beach.
+Reed et al.
+64x64 a man is flying a kite in the sky
+Ours
+128x128 a man is surfing in the ocean with a surfboard.(GT) a lady that is on some skies on some snow generated image and caption a man is walking on a beach with a surfboard. a person is riding a snowboard on a snowy slope. a man is skiing down a hill with a snowboard.(GT)
+A young man playing frisbee while people watch. generated image and caption a man is standing next to a cow. a group of people standing around a field with kites. a man is playing with a frisbee in a field.(GT) A bus that is sitting in the street. generated image and caption a city street with a traffic light and a green light. a large boat is in the water near a city. a red and white bus parked on a city street.
+Figure 4. Qualitative examples of generated images conditioned on text descriptions on the MS-COCO validation set, using our method and baselines (StackGAN and Reed et al. ). The input text and ground-truth image are shown in the first row. For each method, we provide a reconstructed caption conditioned on the generated image.
+Method ratio of ranking 1st vs. Ours
+StackGAN 
+Reed et al. 
+OursTable 2. Human evaluation results.
+Inception score — We compute the Inception score by applying pre-trained classifier on synthesized images and investigating statistics of their score distributions. It measures recognizability and diversity of generated images, and has been known to be correlated with human perceptions on visual quality. We use the Inception-v3 network pre-trained on ImageNet for evaluation, and measure the score for all validation images.
+Caption generation — In addition to the Inception score, assessing performance of text-conditional image generation necessitates measuring the relevance of generated image to the input text. To this end, we generate sentences from the synthesized image and measure the similarity between input text and predicted sentence. The underlying intuition is that if the generated image is relevant to input text and its contents are recognizable, one should be able to guess the original text from the synthesized image. We employ an image caption generator trained on MS-COCO to generate sentences, where one sentence is generated per image by greedy decoding. We report three standard language similarity metrics: BLEU, METEOR and CIDEr.
+Human evaluation — Evaluation based on caption generation is beneficial for large-scale evaluation but may introduce unintended bias by the caption generator. To verify the effectiveness of caption-based evaluation, we conduct human evaluation using Amazon Mechanical Turk.
+For each text randomly selected from MS-COCO validation set, we presented 5 images generated by different methods, and asked users to rank the methods based on the relevance of generated images to text. We collected results for 1000 sentences, each of which is annotated by 5 users. We report results based on the ratio of each method ranked as the best, and one-to-one comparison between ours and the baselines.
+6.2. Quantitative Analysis
+We compare our method with two state-of-the-art approaches based on conditional GANs. Table 1 and Table 2 summarizes the quantitative evaluation results.
+Comparisons to other methods.
+We first present systemic evaluation results based on Inception score and caption generation performance. The results are summarized(a) Predict box&mask(b) Use GT box, predict mask(c) Use GT box&mask input caption real image boxes mask pixel boxes mask pixel boxes mask pixel
+A group of people fly kites into the air on a large grassy field.
+A tower towering above a small city under a blue sky. a bench in the woods covered in snow this is two people skiing down a hill
+A rusted pink fire hydrant in the grass
+A large cow walks over a fox in the grass.
+A laptop computer sitting on a desk next to a desktop monitor.
+Figure 5. Image generation results of our method. Each column corresponds to generation results conditioned on (a) predicted box and mask layout, (b) ground-truth box and predicted mask layout and (c) ground-truth box and mask layout. Classes are color-coded for illustration purpose. See Figure 11 for more examples on the generated layouts and images. Best viewed in color. in Table 1. The proposed method substantially outperforms existing approaches based on both evaluation metrics. In terms of Inception score, our method outperforms the existing approaches with a substantial margin, presumably because our method generates more recognizable objects.
+Caption generation performance shows that captions generated from our synthesized images are more strongly correlated with the input text than the baselines. This shows that images generated by our method are better aligned with descriptions and are easier to recognize semantic contents.
+Table 2 summarizes comparison results based on human evaluation. When users are asked to rank images based on their relevance to input text, they choose images generated by our method as the best in about 60% of all presented sentences, which is substantially higher than baselines (about
+20%). This is consistent with the caption generation results in Table 1, in which our method substantially outperforms the baselines while their performances are comparable.
+Figure 4 illustrates qualitative comparisons. Due to adversarial training, images generated by the other methods, especially StackGAN, tend to be clear and exhibits high frequency details. However, it is difficult to recognize contents from the images, since they often fail to predict
+Input Text: A man is jumping and throwing a frisbee
+Input Text: two skiers on a big snowy hill in the woods
+Input Text: A man flying a kite at the beach while several people walk by
+Figure 6. Multiple samples generated from a text description. See
+Figure 12 for more results. important semantic structure of object and scene. As a result, the reconstructed captions from the generated images are usually not relevant to the input text. Compared to them, our method generates much more recognizable and semantically meaningful images by conditioning the generation with inferred semantic layout, and is able to reconstruct descriptions that better align with the input sentences.
+A zebra stands in the snow
+A zebra stands in a forest
+A zebra stands on grass covered field
+A zebra stands in the desert
+A zebra stands on dried filed
+A giraffe stands on grass covered field
+A horse stands on grass covered field
+An elephant stands on grass covered field
+A person stands on grass covered field
+A truck sits on grass covered field
+A large herd of sheep grazing on grass covered field
+Three sheep grazing on grass covered field
+Two sheep grazing on the grass covered field
+A person riding on a horse on grass covered field
+A person next to a horse on grass covered field
+Figure 7. Generation results by manipulating captions. The manipulated parts of texts are highlighted in bold characters, where the types of manipulation is indicated by different colors. Blue: scene context, Magenta: spatial location, Red: the number of objects, Green: object category.
+Ablative Analysis.
+To understand quality and the impact of the predicted semantic layout, we conduct an ablation study by gradually replacing the bounding box and mask layout predicted by layout generator with the groundtruths. Table 1 summarizes quantitative evaluation results.
+As it shows, replacing the predicted layouts to groundtruths leads with gradual performance improvements, which shows predictions errors in both bounding box and mask layout.
+6.3. Qualitative Analysis
+Figure 5 shows qualitative results of our method. For each text, we present the generated images alongside the predicted semantic layouts. As in the previous section, we also present our results conditioned on ground-truth layouts.
+As it shows, our method generates reasonable semantic layout and image matching the input text; it generates bounding boxes corresponding to fine-grained scene structure implied in texts (i.e. object categories, the number of objects), and object masks capturing class-specific visual attributes as well as relation to other objects. Given the inferred layouts, our image generator produces correct object appearances and background compatible with text. Replacing the predicted layouts with ground-truths makes the generated images to have a similar context to original images.
+Diversity of samples.
+To assess the diversity in generation, we sample multiple images while fixing the input text.
+Figure 6 illustrates the example images generated by our method. Our method generates diverse semantic structures
+Box Layout
+Generated Image
+Input text: a group of people standing in the snow and holding skis(a) Generation results by adding new objects.
+Box Layout
+Generated Image
+Input Text: A baseball player holding a bat over his head(b) Generation results by changing spatial configuration of objects.
+Figure 8. Examples of controllable image generation. See Figure 13 and 14 for more results. given the same text description, while preserving semantic details such as the number of objects and object categories.
+Text-conditional generation.
+To see how our model incorporates text description in generation process, we generate images while modifying parts of the descriptions. Figure 7 illustrates the example results. When we change the context of descriptions such as object class, number of objects, spatial composition of objects and background patterns, our method correctly adapts semantic structure and images based on the modified part of the text.
+Controllable image generation.
+We demonstrate controllable image generation by modifying bounding box layout. Figure 8 illustrates the example results. Our method updates object shapes and context based on the modified semantic layout (e.g. adding new objects, changing spatial configuration of objects) and generates reasonable images.
+See Figure 13 and 14 for more examples on various types of layout modifications.
+7. Conclusion
+We proposed an approach for text-to-image synthesis which explicitly infers and exploits a semantic layout as an intermediate representation from text to image. Our model hierarchically constructs a semantic layout in a coarse-tofine manner by a series of generators. By conditioning image generation on explicit layout prediction, our method generates complicated images that preserve semantic details and highly relevant to the text description. We also showed that the predicted layout can be used to control generation process. We believe that end-to-end training of layout and image generation would be an interesting future work.
+Acknowledgments
+This work was supported in part by
+ONR N00014-13-1-0762, NSF CAREER IIS-1453651, DARPA Explainable AI (XAI) program #313498, and Sloan Research Fellowship.
+References
+ S. Banerjee and A. Lavie. METEOR: An Automatic Metric for MT Evaluation with Improved Correlation with Human
+Judgments. In ACL, 2005. 6
+ M. Cha, Y. Gwon, and H. T. Kung. Adversarial nets with perceptual losses for text-to-image synthesis. arXiv preprint arXiv:1708.09321, 2017. 4
+ Q. Chen and V. Koltun. Photographic image synthesis with cascaded refinement networks. In ICCV, 2017. 2, 4, 5, 10
+ A. Dash, J. C. B. Gamboa, S. Ahmed, M. Z. Afzal, and M. Liwicki.
+TAC-GAN-Text Conditioned Auxiliary
+Classifier Generative Adversarial Network. arXiv preprint arXiv:1703.06412, 2017. 1, 2
+ J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and L. FeiFei. Imagenet: A large-scale hierarchical image database. In
+CVPR, 2009. 4, 6
+ H. Dong, J. Zhang, D. McIlwraith, and Y. Guo. I2t2i: Learning text to image synthesis with textual data augmentation.
+ICIP, 2017. 1, 2
+ I. J. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair, A. Courville, and Y. Bengio. Generative Adversarial Networks. In NIPS, 2014. 2, 4
+ D. Ha and D. Eck. A Neural Representation of Sketch Drawings. arXiv preprint arXiv:1704.03477, 2017. 3
+ S. Hochreiter and J. Schmidhuber. Long short-term memory.
+Neural computation, 1997. 3
+ P. Isola, J.-Y. Zhu, T. Zhou, and A. A. Efros. Image-to-image translation with conditional adversarial networks. In CVPR, J. Johnson, A. Alahi, and L. Fei-Fei. Perceptual Losses for
+Real-Time Style Transfer and Super-Resolution. In ECCV, L. Karacan, Z. Akata, A. Erdem, and E. Erdem. Learning to generate images of outdoor scenes from attributes and semantic layouts. CoRR, 2016. 2
+ D. Kingma and J. Ba. Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980, 2014. 10, 12
+ T.-Y. Lin, M. Maire, S. Belongie, L. Bourdev, R. Girshick, J. Hays, P. Perona, D. Ramanan, C.. L. Zitnick, and P. Doll´ar.
+Microsoft COCO: Common Objects in Context. In ECCV, A. L. Maas, A. Y. Hannun, and A. Y. Ng. Rectifier nonlinearities improve neural network acoustic models. In ICML
+Workshop on Deep Learning for Audio, Speech and Language Processing, 2013. 10
+ E. Mansimov, E. Parisotto, and J. Ba. Generating images from captions with attention. In ICLR, 2016. 2
+ M. Mirza and S. Osindero. Conditional generative adversarial nets. arXiv preprint arXiv:1411.1784, 2014. 4
+ A. Nguyen, J. Yosinski, Y. Bengio, A. Dosovitskiy, and J. Clune. Plug & play generative networks: Conditional iterative generation of images in latent space. In CVPR, 2017.
+ M.-E. Nilsback and A. Zisserman. Automated flower classification over a large number of classes. In Proceedings of the Indian Conference on Computer Vision, Graphics and Image
+Processing, Dec 2008. 1, 2
+ A. Odena, C. Olah, and J. Shlens. Conditional Image Synthesis with Auxiliary Classifier GANs. In ICML, 2017. 6
+ K. Papineni, S. Roukos, T. Ward, and W.-J. Zhu. BLEU: A
+Method for Automatic Evaluation of Machine Translation.
+In ACL, 2002. 6
+ S. Reed, Z. Akata, X. Yan, L. Logeswaran, B. Schiele, and H. Lee. Generative adversarial text to image synthesis. In
+ICML, 2016. 1, 2, 3, 6, 10
+ S. Reed, A. Oord, N. Kalchbrenner, S. G´omez, Z. Wang, D. Belov, and N. Freitas. Parallel multiscale autoregressive density estimation. In ICML, 2017. 2
+ S. E. Reed, Z. Akata, S. Mohan, S. Tenka, B. Schiele, and H. Lee. Learning what and where to draw. In NIPS, 2016. 1, T. Salimans, I. Goodfellow, W. Zaremba, V. Cheung, A. Radford, and X. Chen. Improved Techniques for Training GANs.
+In NIPS, 2016. 6
+ X. Shi, Z. Chen, H. Wang, D. Yeung, W. Wong, and W. Woo.
+Convolutional LSTM Network: A Machine Learning Approach for Precipitation Nowcasting. In NIPS, 2015. 4
+ K. Simonyan and A. Zisserman. Very deep convolutional networks for large-scale image recognition. In ICLR, 2015.
+ C. Szegedy, V. Vanhoucke, S. Ioffe, J. Shlens, and Z. Wojna.
+Rethinking the inception architecture for computer vision. In
+CVPR, 2016. 6
+ D. Ulyanov, A. Vedaldi, and V. S. Lempitsky. Instance normalization: The missing ingredient for fast stylization. arXiv preprint arXiv:1607.08022, 2016. 10
+ R. Vedantam, C. L. Zitnick, and D. Parikh.
+CIDEr:
+Consensus-based Image Description Evaluation. In CVPR, R. Villegas, J. Yang, Y. Zou, S. Sohn, X. Lin, and H. Lee.
+Learning to generate long-term future via hierarchical prediction. In ICML, 2017. 2
+ O. Vinyals, A. Toshev, S. Bengio, and D. Erhan. Show and tell: A neural image caption generator. In CVPR, 2015. 6
+ C. Wang, C. Xu, C. Wang, and D. Too. Perceptual adversarial networks for image-to-image transformation. arXiv preprint arXiv:1706.09138, 2017. 4
+ X. Wang and A. Gupta. Generative image modeling using style and structure adversarial networks. In ECCV, 2016. 2
+ P. Welinder, S. Branson, T. Mita, C. Wah, F. Schroff, S. Belongie, and P. Perona. Caltech-UCSD Birds 200. Technical
+Report CNS-TR-2010-001, California Institute of Technology, 2010. 1, 2
+ H. Zhang, T. Xu, H. Li, S. Zhang, X. Wang, X. Huang, and D. Metaxas. StackGAN: Text to Photo-realistic Image Synthesis with Stacked Generative Adversarial Networks.
+In
+ICCV, 2017. 1, 2, 3, 6, 7
+Appendix
+A. Implementation Details
+A.1. Box Generator
+This section describes the details of the box generator.
+Denoting bounding box of t-th object as Bt
+=(bx t, by t, bw t, bh t, lt), the joint probability of sampling Bt from the box generator is given by p(bx t, by t, bw t, bh t, lt) = p(lt)p(bx t, by t, bw t, bh t |lt).
+We drop the conditioning variables for notational brevity.
+As described in the main paper, we implement p(lt) by categorical distribution and p(bx t, by t, bw t, bh t |lt) by a mixture of quadravariate Gaussians. However, modeling full convariance matrix of quadravariate Gaussian is expensive as it involves many parameters.
+Therefore, we decompose the box coordinate probability as p(bx t, by t, bw t, bh t |lt) = p(bx t, by t |lt)p(bx t, by t |bw t, bh t, lt), and approximate it with two bivariate Gaussian mixtures by p(bx t, by t |lt) =
+K
+� k=1 πxy t,kN
+� bx t, by t ; µxy t,k, Σxy t,k
+�, p(bw t, bh t |bx t, by t, lt) =
+K
+� i=k πwh t,k N
+� bw t, bh t ; µwh t,k, Σwh t,k
+�
+Then the parameters for Eq. (13) are obtained from LSTM outputs at each step by
+[ht, ct] = LSTM(Bt−1; [ht−1, ct−1]), (14) lt = W lht + bl, (15) θxy t
+= W xy[ht, lt] + bxy, (16) θwh t
+= W wh[ht, lt, bx, by] + bwh, (17) where θ· t = [π· t,1:K, µ· t,1:K, Σ· t,1:K] are the parameters for
+GMM concatenated to a vector.
+For training, we employ an Adam optimizer with learning rate 0.001, β1 = 0.9, β2 = 0.999 and exponentially decrease the learning rate with rate 0.5 at every epoch after the initial 10 epochs.
+A.2. Shape Generator
+We provide a detailed architecture of the shape generator Gmask and the two discriminators Dinst and Dglobal in Figure 9. At each step t, we encode a box tensor Bt by a series of downsampling layers, where each downsampling layer is implemented by a stride-2 convolution followed by instance-wise normalization and ReLU. The encoded feature is fed into the bidirectional convolutional LSTM (biconvLSTM), and combined with features from all object instances. On top of the bi-convLSTM output at each step t, we add a noise zt by spatial replication and depth concatenation, and apply masking operation so that regions outside the object bounding box Bt are all set to 0. The masked feature is fed into several residual blocks, and mapped to a binary mask Mt by a series of upsampling layers. Similar to downsampling layers, we implement an upsampling layer by stride-2 deconvolution followed by instance-wise normalization and ReLU except the last one, which is 1 × 1 convolution followed by the sigmoid nonlinearity.
+The instance-wise discriminator Dinst and global discriminator Dglobal share the same architecture but have separate parameters. The input to the instance-wise discriminator is constructed by concatenating the box tensor Bt and the corresponding binary mask Mt through channel dimension, while the one for global discriminator is constructed by concatenating the aggregated box tensor Bglobal and the aggregated masks Mglobal. Both discriminators encode the input by a series of downsampling layers, which are implemented by stride-2 convolutions followed by instance-wise normalization and Leaky-ReLU.
+For training, we employ an Adam optimizer with learning rate 0.0002, β1 = 0.5, β2 = 0.999 and linearly decrease the learning rate after the first 50-epochs training.
+A.3. Image Generator
+A detailed architecture of the image generator is illustrated in Figure 10. The architecture of the downsampling and the residual blocks are same as the ones used in the shape generator. To encourage the model to generate images that match the input layout, we implement upsampling layers based on cascaded refinement network. At each upsampling layer, it takes an output from the previous layer and the semantic layout resized to the same spatial size as inputs, and combines them by depth concatenation followed by convolution. The combined feature map is then spatially upscaled by bilinear upsampling followed by instance-wise normalization and ReLU, and subsequently fed into the next upsampling layer.
+To encourage the model to generate images that match input text descriptions, we employ a matching-aware loss proposed in. Denoting a ground-truth training example as (M, s, X), where M, s and X denote semantic layout, text embedding and image, respectively, we construct an additional mismatching triple (M,�s, X) by sampling random text embedding �s non-relevant to the image. We consider it as additional fake examples in adversarial training, and extend the conditional adversarial loss for image generator(Eq. (11) in the main paper) as
+Ladv = E(M,s,X)
+� log Dimg
+�
+M, s, X
+��
++ E(M,�s,X)
+� log
+�
+1 − Dimg
+�
+M,�s, X
+���
++ E(M,s),z
+� log
+�
+1 − Dimg
+�
+M, s, Gimg(M, s, z)
+���
+Bi-ConvLSTM
+Bi-ConvLSTM
+Bi-ConvLSTM
+Residual blocks crop
+Residual blocks crop
+Residual blocks crop
+⋯
+B1
+B2
+BT
+MT
+M1
+M2
+Generator Network
+Discriminator Network
+Mt
+Bt
+Bglobal
+Mglobal(i) Instance-wise discriminator(ii) Global discriminator depth concat depth concat
+{0, 1}
+{0, 1}
+Conv
+3x3 pad 1 stride 2
+InstanceNorm
++ ReLU
+Deconv
+4x4 pad 1 stride 2
+InstanceNorm
++ ReLU
+Conv
+4x4 pad 1 stride 2
+InstanceNorm
++ LeakyReLU
+Conv
+3x3 pad 1 stride 1
+Conv
+3x3 pad 1 stride 1
+Conv
+3x3 pad 1 stride 1 downsampe block in residual block upsample block downsample block in and z1
+Dinst
+Dglobal
+Gmask
+Figure 9. Architecture of the shape generator.
+{0, 1}
+People riding elephants in a body of water.
+Generator Network
+Spatial
+Tiling z ∼ N(0, 1)
+L
+Residual Blocks down-sample concatenation
+Cascaded
+Decoder Network
+People riding elephants in a body of water.
+Discriminator Network
+M
+M
+FC
+FC
+A
+FC
+●
+FC s s
+S
+Ag h × w × d σ down-sample
+X
+X
+Conv
+3x3 pad 1 stride 2
+InstanceNorm
++ ReLU downsampe block in Conv
+4x4 pad 1 stride 2
+InstanceNorm
++ LeakyReLU downsample block in Conv
+3x3 pad 1 stride 1
+Conv
+3x3 pad 1 stride 1
+Conv
+3x3 pad 1 stride 1 residual block
+M
+Conv
+3x3 pad 1 stride 1 bilinear upsample(x2) concat cascaded block
+Gimg
+Dimg
+Figure 10. Architecture of the image generator.
+We found that employing matching-aware loss substantially improves text-conditional generation and stabilizes overall
+GAN training.
+For training, we employ an Adam optimizer with learning rate 0.0002, β1 = 0.5, β2 = 0.999 and linearly decrease the learning rate after the first 30-epoch training.
+B. Additional Experiment Results
+B.1. Ablative Analysis
+To understand the impact of each component in the proposed framework, we conduct an ablation study by varying configurations of the proposed model. Table 3 summarizes the results based on caption generation performance.
+Impact of shape generator
+We first investigate the impact of shape generator. To this end, we remove the shape generator from our generation pipeline, and modify the image generator to generate images directly from box generator outputs. Specifically, we feed the aggregated bounding box tensor Bglobal as an input to the image generator, which is constructed by taking pixel-wise maximum over all box tensors as Bglobal(i, j, l) = maxt Bt(i, j, l)2. The result is presented in the second row in Table 3. Removing the shape generator leads to substantial performance degradation, since predicting accurate object shapes and textures directly from bounding box is a complicated task; the image generator tends to miss detailed object shapes such as body parts, which are critical to recognize the image content for human. By explicitly inferring object shapes, it improves the overall image quality and interpretability of content.
+Impact of perceptual loss in shape generator
+To see the effectiveness of perceptual loss in shape generator, we train the model after replacing the reconstruction loss in Eq. (8) with the ℓ1 loss on pixels. The result is presented in the third row in Table 3. As it shows, adding perceptual loss to the shape generator improves the accuracy of object shapes and leads to more recognizable images and improved caption generation performance.
+Impact of perceptual loss in image generator
+Similar to the previous experiment, we replaced the perceptual loss in image generator (Eq. (12)) with the ℓ1 loss on pixels. The fourth row in Table 3 summarizes the results. As it shows, employing perceptual loss in the image generator critically improves the performance by reducing visual differences between real and synthesized images.
+Impact of attention in image generator
+Our image generator combines features from the text embedding s and semantic layout M by attention mechanism. To see its impact
+2Note that the the aggregated box tensor Bglobal can be considered as a semantic layout M that the shape of each object is a rectangular box. on text-conditional image generation, we remove the attention mechanism from the image generator (computation of S and Ag in Figure 10) and concatenate the layout feature
+A directly to text embedding. As shown in the last row of Table 3, employing attention mechanism improves the textconditional image generation performance, since it forces the model to exploit text information in generation process.
+We found that the attention mechanism helps the model to generate textures and background relevant to the input text.
+B.2. More qualitative examples
+Image and layout generation.
+We present the end-to-end image generation results of our method in Figure 11, including object bounding boxes and masks obtained by the layout generator. As illustrated in the figure, our model generates object bounding boxes that match content of the input text, and shapes capturing class-specific visual attributes and relation with other objects (e.g. person riding a motorcycle, person swinging a bat, etc). Given the layout, the image generator correctly predicts object textures and background match the description.
+Diversity of samples.
+Figure 12 presents a set of samples generated by our method, which corresponds to Figure 6 in the main paper. Our method generates diverse samples by generating semantic layouts that are both diverse and highly related to the input text description.
+Controllable image generation.
+Semantic layout provides a natural and interactive interface for image editing.
+By modifying the bounding box layout of the scene, our model can generate the object shapes and images compatible with the modified layout. Figure 13 illustrates the generated images obtained by adding new objects to the existing semantic layout. By placing new object bounding boxes to a scene, our model not only creates the corresponding object instance but also modifies surrounding context adaptive to the change. For instance, adding cars and pedestrians in front of a tower makes the model to generate a street on a background (the 4th row in Figure 13). Similarly, one can modify the semantic layout by changing size and spatial location of existing objects. Figure 14 illustrates the results.
+Modifying the spatial configuration of objects sometimes changes the relationship between objects and leads to images in different context. For instance, changing the locations of a soccer ball and players leads to various images such as dribbling, shooting and competing to occupy the ball (the first row in Figure 14).
+Caption generation
+Method
+BLEU-1
+BLEU-2
+BLEU-3
+BLEU-4
+METEOR
+CIDEr
+Ours (Full)
+0.367 w/o shape generator
+0.215 w/o perceptual loss in shape generator
+0.324 w/o perceptual loss in image generator
+0.170 w/o attention in image generator
+Table 3. Ablation study of the proposed method. The first row corresponds to the performance of our model presented in the main paper. input caption real image boxes mask pixel two surfers walk across the beach towards the ocean.
+An
+Aer
+Lingus plane touches down on an airport runway.
+A crowd of people standing on cement ground flying kites.
+A skier stands next to skis stuck into the snow.
+A person is shown riding a bicycle down the side of the road.
+A zebra standing on top of a lush green field.
+A man wearing a black water suit surfs through the water
+A Chicago logo boat is traveling in the water.
+A man holding a baseball bat on a field.
+A group of people fly kites into the air on a large grassy field.
+The dinner plate has asparagus, carrots and some kind of meat. input caption real image boxes mask pixel
+A bird flying through a blue sky with wide wings.
+A man wearing a black suit and pink bow tie.
+A man standing outdoors next to a dirt bike and ATV.
+A red fire hydrant sitting in a parking lot next to a metal post.
+A train moving on the tracks in treed area. a number of people playing frisbee indoors
+An elephant stands in front of a watering hole in his habitat.
+A skateboarder in the middle of a trick on a concrete rail.
+A man is playing tennis in front of steps a bench in the woods covered in snow
+A blue and white double decker bus next to a barrier.
+Figure 11. Illustrations of end-to-end prediction results of our method. Best viewed in color.
+Input Text: A group of men playing soccer in a park
+Input Text: A man taking a swing at a baseball
+Input Text: Elephants walking along a dirt path next to water
+Input Text: two pizzas on plates on a dining table with a pink design table cloth
+Input Text: A woman working on something hanging from the ceiling in a computer room
+Input Text: A fire hydrant covered with snow in the snow
+Input Text: an image of people riding elephants in the water
+Input Text: A baby elephant following its parent through a field
+Input Text: A clock tower is raised in front of a blue sky
+Input Text: A man riding a skateboard down a sidewalk
+Input Text: a couple of giraffes are standing on a trail
+Input Text: a couple of buses drive next to each other
+Input Text: The boat is in a body of water that is not clear
+Input Text: a plate of rice and broccoli with meat
+Input Text: A zebra standing on the fields looking up and howling
+Input Text: A blue plate holding food that includes shrimp, fries and greens
+Figure 12. Examples of multiple samples generated from a text description.
+Box Layout
+Generated Image
+Input Text: two pizzas on plates on a dining table with a pink design table cloth.
+Box Layout
+Generated Image
+Input Text: A baseball player taking a swing at a ball.
+Box Layout
+Generated Image
+Input Text: A cat sits on a desk in front of a computer.
+Box Layout
+Generated Image
+Input Text: A very tall clock tower with clocks on every side.
+Box Layout
+Generated Image
+Input Text: Waterway will all kinds of boats moored and docked.
+Figure 13. Examples of controllable image generation by adding new objects.
+Box Layout
+Generated Image
+Input Text: Two men who are standing in the grass near a soccer ball
+Box Layout
+Generated Image
+Input Text: A person riding on top of a surfboard on water
+Box Layout
+Generated Image
+Input Text: A black and white dog laying on top of a field of grass
+Box Layout
+Generated Image
+Input Text: A dog playing with a calf in the grass.
+Box Layout
+Generated Image
+Input Text: A man wearing skis holding two ski poles.
+Figure 14. Examples of controllable image generation by modifying the size and locations of object bounding boxes.

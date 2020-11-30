@@ -1,0 +1,452 @@
+HashNet: Deep Learning to Hash by Continuation∗
+Zhangjie Cao†, Mingsheng Long†, Jianmin Wang†, and Philip S. Yu†‡
+†KLiss, MOE; NEL-BDS; TNList; School of Software, Tsinghua University, China
+‡University of Illinois at Chicago, IL, USA caozhangjie14@gmail.com
+{mingsheng,jimwang}@tsinghua.edu.cn psyu@uic.edu
+Abstract
+Learning to hash has been widely applied to approximate nearest neighbor search for large-scale multimedia retrieval, due to its computation efficiency and retrieval quality. Deep learning to hash, which improves retrieval quality by end-to-end representation learning and hash encoding, has received increasing attention recently. Subject to the illposed gradient difficulty in the optimization with sign activations, existing deep learning to hash methods need to first learn continuous representations and then generate binary hash codes in a separated binarization step, which suffer from substantial loss of retrieval quality. This work presents
+HashNet, a novel deep architecture for deep learning to hash by continuation method with convergence guarantees, which learns exactly binary hash codes from imbalanced similarity data. The key idea is to attack the ill-posed gradient problem in optimizing deep networks with non-smooth binary activations by continuation method, in which we begin from learning an easier network with smoothed activation function and let it evolve during the training, until it eventually goes back to being the original, difficult to optimize, deep network with the sign activation function. Comprehensive empirical evidence shows that HashNet can generate exactly binary hash codes and yield state-of-the-art multimedia retrieval performance on standard benchmarks.
+1. Introduction
+In the big data era, large-scale and high-dimensional media data has been pervasive in search engines and social networks. To guarantee retrieval quality and computation efficiency, approximate nearest neighbors (ANN) search has attracted increasing attention. Parallel to the traditional indexing methods, another advantageous solution is hashing methods, which transform high-dimensional media data into compact binary codes and generate similar binary codes for similar data items. In this paper, we will focus on learning to hash methods that build data-dependent
+∗Corresponding author: M. Long (mingsheng@tsinghua.edu.cn). hash encoding schemes for efficient image retrieval, which have shown better performance than data-independent hashing methods, e.g. Locality-Sensitive Hashing (LSH).
+Many learning to hash methods have been proposed to enable efficient ANN search by Hamming ranking of compact binary hash codes.
+Recently, deep learning to hash methods have shown that end-to-end learning of feature representation and hash coding can be more effective using deep neural networks, which can naturally encode any nonlinear hash functions. These deep learning to hash methods have shown state-of-the-art performance on many benchmarks. In particular, it proves crucial to jointly learn similarity-preserving representations and control quantization error of binarizing continuous representations to binary codes. However, a key disadvantage of these deep learning to hash methods is that they need to first learn continuous deep representations, which are binarized into hash codes in a separated post-step of sign thresholding. By continuous relaxation, i.e. solving the discrete optimization of hash codes with continuous optimization, all these methods essentially solve an optimization problem that deviates significantly from the hashing objective as they cannot learn exactly binary hash codes in their optimization procedure.
+Hence, existing deep hashing methods may fail to generate compact binary hash codes for efficient similarity retrieval.
+There are two key challenges to enabling deep learning to hash truly end-to-end. First, converting deep representations, which are continuous in nature, to exactly binary hash codes, we need to adopt the sign function h = sgn (z) as activation function when generating binary hash codes using similarity-preserving learning in deep neural networks.
+However, the gradient of the sign function is zero for all nonzero inputs, which will make standard back-propagation infeasible. This is known as the ill-posed gradient problem, which is the key difficulty in training deep neural networks via back-propagation. Second, the similarity information is usually very sparse in real retrieval systems, i.e., the number of similar pairs is much smaller than the number of dissimilar pairs. This will result in the data imbalance
+1 arXiv:1702.00758v4 [cs.LG] 29 Jul 2017 problem, making similarity-preserving learning ineffective.
+Optimizing deep networks with sign activation remains an open problem and a key challenge for deep learning to hash.
+This work presents HashNet, a new architecture for deep learning to hash by continuation with convergence guarantees, which addresses the ill-posed gradient and data imbalance problems in an end-to-end framework of deep feature learning and binary hash encoding. Specifically, we attack the ill-posed gradient problem in the non-convex optimization of the deep networks with non-smooth sign activation by the continuation methods, which address a complex optimization problem by smoothing the original function, turning it into a different problem that is easier to optimize.
+By gradually reducing the amount of smoothing during the training, it results in a sequence of optimization problems converging to the original optimization problem. A novel weighted pairwise cross-entropy loss function is designed for similarity-preserving learning from imbalanced similarity relationships. Comprehensive experiments testify that
+HashNet can generate exactly binary hash codes and yield state-of-the-art retrieval performance on standard datasets.
+2. Related Work
+Existing learning to hash methods can be organized into two categories: unsupervised hashing and supervised hashing. We refer readers to for a comprehensive survey.
+Unsupervised hashing methods learn hash functions that encode data points to binary codes by training from unlabeled data. Typical learning criteria include reconstruction error minimization and graph learning.
+While unsupervised methods are more general and can be trained without semantic labels or relevance information, they are subject to the semantic gap dilemma that highlevel semantic description of an object differs from lowlevel feature descriptors. Supervised methods can incorporate semantic labels or relevance information to mitigate the semantic gap and improve the hashing quality significantly.
+Typical supervised methods include Binary Reconstruction
+Embedding (BRE), Minimal Loss Hashing (MLH) and Hamming Distance Metric Learning. Supervised
+Hashing with Kernels (KSH) generates hash codes by minimizing the Hamming distances across similar pairs and maximizing the Hamming distances across dissimilar pairs.
+As deep convolutional neural network (CNN) yield breakthrough performance on many computer vision tasks, deep learning to hash has attracted attention recently.
+CNNH adopts a two-stage strategy in which the first stage learns hash codes and the second stage learns a deep network to map input images to the hash codes. DNNH improved the two-stage CNNH with a simultaneous feature learning and hash coding pipeline such that representations and hash codes can be optimized in a joint learning process.
+DHN further improves DNNH by a cross-entropy loss and a quantization loss which preserve the pairwise similarity and control the quantization error simultaneously. DHN obtains state-of-the-art performance on several benchmarks.
+However, existing deep learning to hash methods only learn continuous codes g and need a binarization post-step to generate binary codes h. By continuous relaxation, these methods essentially solve an optimization problem L(g) that deviates significantly from the hashing objective L(h), because they cannot keep the codes exactly binary after convergence. Denote by Q(g, h) the quantization error function by binarizing continuous codes g into binary codes h.
+Prior methods control the quantization error in two ways:(a) min L(g) + Q(g, h) through continuous optimization
+ ; (b) min L(h)+Q(g, h) through discrete optimization on L(h) but continuous optimization on Q(g, h) (the continuous optimization is used for out-of-sample extension as discrete optimization cannot be extended to the test data). However, since Q(g, h) cannot be minimized to zero, there is a large gap between continuous codes and binary codes. To directly optimize min L(h), we must adopt sign as the activation function within deep networks, which enables generation of exactly binary codes but introduces the ill-posed gradient problem. This work is the first effort to learn sign-activated deep networks by continuation method, which can directly optimize L(h) for deep learning to hash.
+3. HashNet
+In similarity retrieval systems, we are given a training set of N points {xi}N i=1, each represented by a D-dimensional feature vector xi ∈ RD. Some pairs of points xi and xj are provided with similarity labels sij, where sij = 1 if xi and xj are similar while sij = 0 if xi and xj are dissimilar. The goal of deep learning to hash is to learn nonlinear hash function f : x �→ h ∈ {−1, 1}K from input space RD to Hamming space {−1, 1}K using deep neural networks, which encodes each point x into compact K-bit binary hash code h = f(x) such that the similarity information between the given pairs S can be preserved in the compact hash codes.
+In supervised hashing, the similarity set S = {sij} can be constructed from semantic labels of data points or relevance feedback from click-through data in real retrieval systems.
+To address the data imbalance and ill-posed gradient problems in an end-to-end learning framework, this paper presents HashNet, a novel architecture for deep learning to hash by continuation, shown in Figure 1. The architecture accepts pairwise input images {(xi, xj, sij)} and processes them through an end-to-end pipeline of deep representation learning and binary hash coding: (1) a convolutional network (CNN) for learning deep representation of each image xi, (2) a fully-connected hash layer (fch) for transforming the deep representation into K-dimensional representation zi ∈ RK, (3) a sign activation function h = sgn (z) for binarizing the K-dimensional representation zi into K-bit
+-1 x y
+1 input
+CNNs fch sgn similarity label weighted crossentropy loss
+-2
+-1
+-1
+1 h=tanh(βbz) h=tanh(βgz) h=tanh(βoz) z h
+Figure 1. (left) The proposed HashNet for deep learning to hash by continuation, which is comprised of four key components: (1) Standard convolutional neural network (CNN), e.g. AlexNet and ResNet, for learning deep image representations, (2) a fully-connected hash layer(fch) for transforming the deep representation into K-dimensional representation, (3) a sign activation function (sgn) for binarizing the K-dimensional representation into K-bit binary hash code, and (4) a novel weighted cross-entropy loss for similarity-preserving learning from sparse data. (right) Plot of smoothed responses of the sign function h = sgn (z): Red is the sign function, and blue, green and orange show functions h = tanh (βz) with bandwidths βb < βg < βo. The key property is limβ→∞ tanh (βz) = sgn (z). Best viewed in color. binary hash code hi ∈ {−1, 1}K, and (4) a novel weighted cross-entropy loss for similarity-preserving learning from imbalanced data. We attack the ill-posed gradient problem of the non-smooth activation function h = sgn (z) by continuation, which starts with a smoothed activation function y = tanh (βx) and becomes more non-smooth by increasing β as the training proceeds, until eventually goes back to the original, difficult to optimize, sign activation function.
+3.1. Model Formulation
+To perform deep learning to hash from imbalanced data, we jointly preserve similarity information of pairwise images and generate binary hash codes by weighted maximum likelihood. For a pair of binary hash codes hi and hj, there exists a nice relationship between their Hamming distance distH(·, ·) and inner product ⟨·, ·⟩: distH (hi, hj) =
+2 (K − ⟨hi, hj⟩). Hence, the Hamming distance and inner product can be used interchangeably for binary hash codes, and we adopt inner product to quantify pairwise similarity.
+Given the set of pairwise similarity labels S = {sij}, the Weighted Maximum Likelihood (WML) estimation of the hash codes H = [h1,..., hN] for all N training points is log P (S|H) =
+� sij∈S wij log P (sij|hi, hj), (1) where P(S|H) is the weighted likelihood function, and wij is the weight for each training pair (xi, xj, sij), which is used to tackle the data imbalance problem by weighting the training pairs according to the importance of misclassifying that pair. Since each similarity label in S can only be sij = 1 (similar) or sij = 0 (dissimilar), to account for the data imbalance between similar and dissimilar pairs, we set wij = cij ·
+�
+|S| / |S1|, sij = 1
+|S| / |S0|, sij = 0(2) where S1 = {sij ∈ S : sij = 1} is the set of similar pairs and S0 = {sij ∈ S : sij = 0} is the set of dissimilar pairs; cij is continuous similarity, i.e. cij = yi∩yj yi∪yj if labels yi and yj of xi and xj are given, cij = 1 if only sij is given.
+For each pair, P(sij|hi, hj) is the conditional probability of similarity label sij given a pair of hash codes hi and hj, which can be naturally defined as pairwise logistic function, P (sij|hi, hj) =
+� σ (⟨hi, hj⟩), sij = 1
+1 − σ (⟨hi, hj⟩), sij = 0
+= σ(⟨hi, hj⟩)sij(1 − σ (⟨hi, hj⟩))1−sij(3) where σ (x) = 1/(1 + e−αx) is the adaptive sigmoid function with hyper-parameter α to control its bandwidth. Note that the sigmoid function with larger α will have larger saturation zone where its gradient is zero. To perform more effective back-propagation, we usually require α < 1, which is more effective than the typical setting of α = 1. Similar to logistic regression, we can see in pairwise logistic regression that the smaller the Hamming distance distH (hi, hj) is, the larger the inner product ⟨hi, hj⟩ as well as the conditional probability P (1|hi, hj) will be, implying that pair hi and hj should be classified as similar; otherwise, the larger the conditional probability P (0|hi, hj) will be, implying that pair hi and hj should be classified as dissimilar.
+Hence, Equation (3) is a reasonable extension of the logistic regression classifier to the pairwise classification scenario, which is optimal for binary similarity labels sij ∈ {0, 1}.
+By taking Equation (3) into WML estimation in Equation (1), we achieve the optimization problem of HashNet, min
+Θ
+� sij∈S wij (log (1 + exp (α ⟨hi, hj⟩)) − αsij ⟨hi, hj⟩), (4) where Θ denotes the set of all parameters in deep networks.
+Note that, HashNet directly uses the sign activation function hi = sgn (zi) which converts the K-dimensional representation to exactly binary hash codes, as shown in Figure 1.
+By optimizing the WML estimation in Equation (4), we can enable deep learning to hash from imbalanced data under a statistically optimal framework. It is noteworthy that our work is the first attempt that extends the WML estimation from pointwise scenario to pairwise scenario. The HashNet can jointly preserve similarity information of pairwise images and generate exactly binary hash codes. Different from
+HashNet, previous deep-hashing methods need to first learn continuous embeddings, which are binarized in a separated step using the sign function. This will result in substantial quantization errors and significant losses of retrieval quality.
+3.2. Learning by Continuation
+HashNet learns exactly binary hash codes by converting the K-dimensional representation z of the hash layer fch, which is continuous in nature, to binary hash code h taking values of either +1 or −1. This binarization process can only be performed by taking the sign function h = sgn (z) as activation function on top of hash layer fch in HashNet, h = sgn (z) =
+�
++1, if z ⩾ 0
+−1, otherwise
+Unfortunately, as the sign function is non-smooth and nonconvex, its gradient is zero for all nonzero inputs, and is illdefined at zero, which makes the standard back-propagation infeasible for training deep networks. This is known as the vanishing gradient problem, which has been a key difficulty in training deep neural networks via back-propagation.
+Many optimization methods have been proposed to circumvent the vanishing gradient problem and enable effective network training with back-propagation, including unsupervised pre-training, dropout, batch normalization, and deep residual learning. In particular, Rectifier Linear Unit (ReLU) activation function makes deep networks much easier to train and enables end-to-end learning algorithms. However, the sign activation function is so ill-defined that all the above optimization methods will fail. A very recent work, BinaryNet, focuses on training deep networks with activations constrained to +1 or −1.
+However, the training algorithm may be hard to converge as the feed-forward pass uses the sign activation (sgn) but the back-propagation pass uses a hard tanh (Htanh) activation.
+Optimizing deep networks with sign activation remains an open problem and a key challenge for deep learning to hash.
+Algorithm 1: Optimizing HashNet by Continuation
+Input: A sequence 1 = β0 < β1 <... < βm = ∞ for stage t = 0 to m do
+Train HashNet (4) with tanh(βtz) as activation
+Set converged HashNet as next stage initialization end
+Output: HashNet with sgn(z) as activation, βm → ∞
+This paper attacks the problem of non-convex optimization of deep networks with non-smooth sign activation by starting with a smoothed objective function which becomes more non-smooth as the training proceeds. It is inspired by recent studies in continuation methods, which address a complex optimization problem by smoothing the original function, turning it into a different problem that is easier to optimize. By gradually reducing the amount of smoothing during the training, it results in a sequence of optimization problems converging to the original optimization problem.
+Motivated by the continuation methods, we notice there exists a key relationship between the sign function and the scaled tanh function in the concept of limit in mathematics, limβ→∞ tanh (βz) = sgn (z), (6) where β > 0 is a scaling parameter. Increasing β, the scaled tanh function tanh(βz) will become more non-smooth and more saturated so that the deep networks using tanh(βz) as the activation function will be more difficult to optimize, as in Figure 1 (right). But fortunately, as β → ∞, the optimization problem will converge to the original deep learning to hash problem in (4) with sgn(z) activation function.
+Using the continuation methods, we design an optimization method for HashNet in Algorithm 1. As deep network with tanh(z) as the activation function can be successfully trained, we start training HashNet with tanh(βtz) as the activation function, where β0 = 1. For each stage t, after
+HashNet converges, we increase βt and train (i.e. fine-tune)
+HashNet by setting the converged network parameters as the initialization for training the HashNet in the next stage. By evolving tanh(βtz) with βt → ∞, the network will converge to HashNet with sgn(z) as activation function, which can generate exactly binary hash codes as we desire. The efficacy of continuation in Algorithm 1 can be understood as multi-stage pre-training, i.e., pre-training HashNet with tanh(βtz) activation function is used to initialize HashNet with tanh(βt+1z) activation function, which enables easier progressive training of HashNet as the network is becoming non-smooth in later stages by βt → ∞. Using m = 10 we can already achieve fast convergence for training HashNet.
+3.3. Convergence Analysis
+We analyze that the continuation method in Algorithm 1 decreases HashNet loss (4) in each stage and each iteration.
+Let Lij = wij (log (1 + exp (α ⟨hi, hj⟩)) − αsij ⟨hi, hj⟩) and L = � sij∈S Lij, where hi ∈ {−1, +1}K are binary hash codes. Note that when optimizing HashNet by continuation in Algorithm 1, the network activation in each stage t is g = tanh(βtz), which is continuous in nature and will only become binary after convergence βt → ∞. Denote by
+Jij = wij (log (1 + exp (α ⟨gi, gj⟩)) − αsij ⟨gi, gj⟩) and J = � sij∈S Jij the true loss we optimize in Algorithm 1, where gi ∈ RK and hi = sgn(gi). Our results are two theorems, with proofs provided in the supplemental materials.
+Theorem 1. The HashNet loss L will not change across stages t and t+1 with bandwidths switched from βt to βt+1.
+Theorem 2. Loss L decreases when optimizing loss J(g) by the stochastic gradient descent (SGD) within each stage.
+4. Experiments
+We conduct extensive experiments to evaluate HashNet against several state-of-the-art hashing methods on three standard benchmarks.
+Datasets and implementations are available at http://github.com/thuml/HashNet.
+4.1. Setup
+The evaluation is conducted on three benchmark image retrieval datasets: ImageNet, NUS-WIDE and MS COCO.
+ImageNet is a benchmark image dataset for Large Scale
+Visual Recognition Challenge (ILSVRC 2015). It contains over 1.2M images in the training set and 50K images in the validation set, where each image is single-labeled by one of the 1,000 categories. We randomly select 100 categories, use all the images of these categories in the training set as the database, and use all the images in the validation set as the queries; furthermore, we randomly select 100 images per category from the database as the training points.
+NUS-WIDE1 is a public Web image dataset which contains 269,648 images downloaded from Flickr.com.
+Each image is manually annotated by some of the 81 ground truth concepts (categories) for evaluating retrieval models.
+We follow similar experimental protocols as DHN and randomly sample 5,000 images as queries, with the remaining images used as the database; furthermore, we randomly sample 10,000 images from the database as training points.
+MS COCO2 is an image recognition, segmentation, and captioning dataset. The current release contains 82,783 training images and 40,504 validation images, where each image is labeled by some of the 80 categories. After pruning images with no category information, we obtain 12,2218 images by combining the training and validation images.
+We randomly sample 5,000 images as queries, with the rest images used as the database; furthermore, we randomly sample 10,000 images from the database as training points.
+Following standard evaluation protocol as previous work, the similarity information for hash function learning and for ground-truth evaluation is constructed from image labels: if two images i and j share at least one label, they are similar and sij = 1; otherwise, they are dissimilar and sij = 0. Note that, although we use the image labels to construct the similarity information, our proposed HashNet
+1http://lms.comp.nus.edu.sg/research/NUS-WIDE.htm
+2http://mscoco.org can learn hash codes when only the similarity information is available. By constructing the training data in this way, the ratio between the number of dissimilar pairs and the number of similar pairs is roughly 100, 5, and 1 for ImageNet, NUSWIDE, and MS COCO, respectively. These datasets exhibit the data imbalance phenomenon and can be used to evaluate different hashing methods under data imbalance scenario.
+We compare retrieval performance of HashNet with ten classical or state-of-the-art hashing methods: unsupervised methods LSH, SH, ITQ, supervised shallow methods BRE, KSH, ITQ-CCA, SDH, and supervised deep methods CNNH, DNNH, DHN. We evaluate retrieval quality based on five standard evaluation metrics: Mean Average Precision (MAP), Precision-Recall curves (PR), Precision curves within Hamming distance 2 (P@H=2), Precision curves with respect to different numbers of top returned samples (P@N), and Histogram of learned codes without binarization. For fair comparison, all methods use identical training and test sets. We adopt MAP@1000 for ImageNet as each category has 1,300 images, and adopt MAP@5000 for the other datasets.
+For shallow hashing methods, we use DeCAF7 features
+ as input. For deep hashing methods, we use raw images as input. We adopt the AlexNet architecture for all deep hashing methods, and implement HashNet based on the Caffe framework. We fine-tune convolutional layers conv1–conv5 and fully-connected layers fc6–fc7 copied from the AlexNet model pre-trained on ImageNet 2012 and train the hash layer fch, all through back-propagation. As the fch layer is trained from scratch, we set its learning rate to be 10 times that of the lower layers. We use mini-batch stochastic gradient descent (SGD) with 0.9 momentum and the learning rate annealing strategy implemented in Caffe, and cross-validate the learning rate from 10−5 to 10−3 with a multiplicative step-size 10
+2. We fix the mini-batch size of images as 256 and the weight decay parameter as 0.0005.
+4.2. Results
+The Mean Average Precision (MAP) results are shown in Table 1. HashNet substantially outperforms all comparison methods. Specifically, compared to the best shallow hashing method using deep features as input, ITQ/ITQ-CCA, we achieve absolute boosts of 15.7%, 15.5%, and 9.1% in average MAP for different bits on ImageNet, NUS-WIDE, and MS COCO, respectively. Compared to the state-of-the-art deep hashing method, DHN, we achieve absolute boosts of 14.6%, 3.7%, 2.9% in average MAP for different bits on the three datasets, respectively. An interesting phenomenon is that the performance boost of HashNet over DHN is significantly different across the three datasets. Specifically, the performance boost on ImageNet is much larger than that on
+NUS-WIDE and MS COCO by about 10%, which is very impressive. Recall that the ratio between the number of disTable 1. Mean Average Precision (MAP) of Hamming Ranking for Different Number of Bits on the Three Image Datasets
+Method
+ImageNet
+NUS-WIDE
+MS COCO
+16 bits
+32 bits
+48 bits
+64 bits
+16 bits
+32 bits
+48 bits
+64 bits
+16 bits
+32 bits
+48 bits
+64 bits
+HashNet
+DHN 
+DNNH 
+CNNH 
+SDH 
+KSH 
+ITQ-CCA 
+ITQ 
+BRE 
+SH 
+LSH 
+Number of bits
+Precision(a) Precision within Hamming radius 2
+Recall
+Precision(b) Precision-recall curve @ 64 bits
+Number of top returned images
+Precision
+HashNet
+DHN
+DNNH
+CNNH
+ITQ-CCA
+KSH
+ITQ
+SH(c) Precision curve w.r.t. top-N @ 64 bits
+Figure 2. The experimental results of HashNet and comparison methods on the ImageNet dataset under three evaluation metrics.
+Number of Bits
+Precision(a) Precision within Hamming radius 2
+Recall
+Precision(b) Precision-recall curve @ 64 bits
+Number of top returned images
+Precision
+HashNet
+DHN
+DNNH
+CNNH
+ITQ-CCA
+KSH
+ITQ
+SH(c) Precision curve w.r.t. top-N @ 64 bits
+Figure 3. The experimental results of HashNet and comparison methods on the NUS-WIDE dataset under three evaluation metrics.
+Number of bits
+Precision(a) Precision within Hamming radius 2
+Recall
+Precision(b) Precision-recall curve @ 64 bits
+Number of top returned images
+Precision
+HashNet
+DHN
+DNNH
+CNNH
+ITQ-CCA
+KSH
+ITQ
+SH(c) Precision curve w.r.t. top-N @ 64 bits
+Figure 4. The experimental results of HashNet and comparison methods on the MS COCO dataset under three evaluation metrics.
+HashNet
+P@10
+DHN
+P@10
+Query
+Top 10 Retrieved Images fire engine
+HashNet
+P@10
+DHN
+P@10
+60% buildings
+HashNet
+P@10
+DHN
+P@10
+50% bicycle bed book sports ball umbrella
+ImageNet
+NUS-WIDE
+MS COCO
+Figure 5. Examples of top 10 retrieved images and precision@10. similar pairs and the number of similar pairs is roughly 100, 5, and 1 for ImageNet, NUS-WIDE and MS COCO, respectively. This data imbalance problem substantially deteriorates the performance of hashing methods trained from pairwise data, including all the deep hashing methods. HashNet enhances deep learning to hash from imbalanced dataset by
+Weighted Maximum Likelihood (WML), which is a principled solution to tackling the data imbalance problem. This lends it the superior performance on imbalanced datasets.
+The performance in terms of Precision within Hamming radius 2 (P@H=2) is very important for efficient retrieval with binary hash codes since such Hamming ranking only requires O(1) time for each query. As shown in Figures
+2(a), 3(a) and 4(a), HashNet achieves the highest P@H=2 results on all three datasets. In particular, P@H=2 of HashNet with 32 bits is better than that of DHN with any bits.
+This validates that HashNet can learn more compact binary codes than DHN. When using longer codes, the Hamming space will become sparse and few data points fall within the Hamming ball with radius 2. This is why most hashing methods achieve best accuracy with moderate code lengths.
+The retrieval performance on the three datasets in terms of Precision-Recall curves (PR) and Precision curves with respect to different numbers of top returned samples (P@N) are shown in Figures 2(b)∼4(b) and Figures 2(c)∼4(c), respectively. HashNet outperforms comparison methods by large margins. In particular, HashNet achieves much higher precision at lower recall levels or when the number of top results is small. This is desirable for precision-first retrieval, which is widely implemented in practical systems. As an intuitive illustration, Figure 5 shows that HashNet can yield much more relevant and user-desired retrieval results.
+Recent work studies two evaluation protocols for supervised hashing: (1) supervised retrieval protocol where queries and database have identical classes and (2) zero-shot retrieval protocol where queries and database have different classes. Some supervised hashing methods perform well in Table 2. MAP on ImageNet with Zero-Shot Retrieval Protocol 
+Method
+16 bits
+32 bits
+48 bits
+64 bits
+HashNet
+DHN 
+-40
+-20
+-40
+-30
+-20
+-10(a) HashNet
+-60
+-40
+-20
+-40
+-30
+-20
+-10(b) DHN
+Figure 6. The t-SNE of hash codes learned by HashNet and DHN. one protocol but poorly in another protocol. Table 2 shows the MAP results on ImageNet dataset under the zero-shot retrieval protocol, where HashNet substantially outperforms
+DHN. Thus, HashNet works well under different protocols.
+4.3. Empirical Analysis
+Visualization of Hash Codes: We visualize the t-SNE
+ of hash codes generated by HashNet and DHN on ImageNet in Figure 6 (for ease of visualization, we sample 10 categories). We observe that the hash codes generated by
+HashNet show clear discriminative structures in that different categories are well separated, while the hash codes generated by DHN do not show such discriminative structures.
+This suggests that HashNet can learn more discriminative hash codes than DHN for more effective similarity retrieval.
+Ablation Study: We go deeper with the efficacy of the weighted maximum likelihood and continuation methods.
+We investigate three variants of HashNet: (1) HashNet+C, variant using continuous similarity cij = yi∩yj yi∪yj when image labels are given; (2) HashNet-W, variant using maximum likelihood instead of weighted maximum likelihood, i.e. wij = 1; (3) HashNet-sgn, variant using tanh() instead of sgn() as activation function to generate continuous codes and requiring a separated binarization step to generate hash codes. We compare results of these variants in Table 3.
+By weighted maximum likelihood estimation, HashNet outperforms HashNet-W by substantially large margins of 12.4%, 2.8% and 0.1% in average MAP for different bits on
+ImageNet, NUS-WIDE and MS COCO, respectively. The standard maximum likelihood estimation has been widely adopted in previous work. However, this estimation does not account for the data imbalance, and may suffer from performance drop when training data is highly imbalanced (e.g. ImageNet). In contrast, the proposed weighted maximum likelihood estimation (1) is a principled solution to tackling the data imbalance problem by weighting the training pairs according to the importance of misclassifying that pair. Recall that MS COCO is a balanced dataset, hence
+HashNet and HashNet-W may yield similar MAP results.
+Table 3. Mean Average Precision (MAP) Results of HashNet and Its Variants, HashNet+C, HashNet-W, and HashNet-sgn on Three Datasets
+Method
+ImageNet
+NUS-WIDE
+MS COCO
+16 bits
+32 bits
+48 bits
+64 bits
+16 bits
+32 bits
+48 bits
+64 bits
+16 bits
+32 bits
+48 bits
+64 bits
+HashNet+C
+HashNet
+HashNet-W
+HashNet-sgn
+Number of Iterations
+Loss Value
+HashNet-sign
+HashNet+sign
+DHN-sign
+DHN+sign(a) ImageNet
+Number of Iterations
+Loss Value
+HashNet-sign
+HashNet+sign
+DHN-sign
+DHN+sign(b) NUS-WIDE
+Number of Iterations
+Loss Value
+HashNet-sign
+HashNet+sign
+DHN-sign
+DHN+sign(c) COCO
+Figure 7. Losses of HashNet and DHN through training process.
+By further considering continuous similarity (cij = yi∩yj yi∪yj ), HashNet+C achieves even better accuracy than HashNet.
+By training HashNet with continuation, HashNet outperforms HashNet-sgn by substantial margins of 8.1%, 1.4% and 3.0% in average MAP on ImageNet, NUS-WIDE, and MS COCO, respectively. Due to the ill-posed gradient problem, existing deep hashing methods cannot learn exactly binary hash codes using sgn() as activation function. Instead, they need to use surrogate functions of sgn(), e.g. tanh(), as the activation function and learn continuous codes, which require a separated binarization step to generate hash codes.
+The proposed continuation method is a principled solution to deep learning to hash with sgn() as activation function, which learn lossless binary hash codes for accurate retrieval.
+Loss Value Through Training Process: We compare the change of loss values of HashNet and DHN through the training process on ImageNet, NUS-WIDE and MSCOCO.
+We display the loss values before (-sign) and after (+sign) binarization, i.e. J(g) and L(h). Figure 7 reveals three important observations: (a) Both methods converge in terms of the loss values before and after binarization, which validates the convergence analysis in Section 3.3. (b) HashNet converges with a much smaller training loss than DHN both before and after binarization, which implies that HashNet can preserve the similarity relationship in Hamming space much better than DHN. (c) The two loss curves of HashNet before and after binarization become close to each other and overlap completely when convergence. This shows that the continuation method enables HashNet to approach the true loss defined on the exactly binary codes without continuous relaxation. But there is a large gap between two loss curves of DHN, implying that DHN and similar methods
+ cannot learn exactly binary codes by minimizing quantization error of codes before and after binarization.
+Histogram of Codes Without Binarization: As discussed previously, the proposed HashNet can learn exactly
+HashNet
+Frequency
+DHN(a) ImageNet
+HashNet
+Frequency
+DHN(b) NUS-WIDE
+HashNet
+Frequency
+DHN(c) COCO
+Figure 8. Histogram of non-binarized codes of HashNet and DHN. binary hash codes while previous deep hashing methods can only learn continuous codes and generate binary hash codes by post-step sign thresholding. To verify this key property, we plot the histograms of codes learned by HashNet and DHN on the three datasets without post-step binarization.
+The histograms can be plotted by evenly dividing into
+100 bins, and calculating the frequency of codes falling into each bin. To make the histograms more readable, we show absolute code values (x-axis) and squared root of frequency(y-axis). Histograms in Figure 8 show that DHN can only generate continuous codes spanning across the whole range of. This implies that if we quantize these continuous codes into binary hash codes (taking values in {−1, 1}) in a post-step, we may suffer from large quantization error especially for the codes near zero. On the contrary, the codes of HashNet without binarization are already exactly binary.
+5. Conclusion
+This paper addressed deep learning to hash from imbalanced similarity data by the continuation method. The proposed HashNet can learn exactly binary hash codes by optimizing a novel weighted pairwise cross-entropy loss function in deep convolutional neural networks. HashNet can be effectively trained by the proposed multi-stage pre-training algorithm carefully crafted from the continuation method.
+Comprehensive empirical evidence shows that HashNet can generate exactly binary hash codes and yield state-of-the-art multimedia retrieval performance on standard benchmarks.
+6. Acknowledgments
+This work was supported by the National Key R&D Program of China (No. 2016YFB1000701), the National Natural Science Foundation of China (No. 61502265, 61325008, and 71690231), the National Sci.&Tech. Supporting Program (2015BAF32B01), and the Tsinghua TNList Projects.
+7. Supplemental Material:
+HashNet: Deep Learning to Hash by Continuation
+7.1. Convergence Analysis
+We briefly analyze that the continuation optimization in Algorithm 1 will decrease the loss of HashNet (4) in each stage and in each iteration until converging to HashNet with sign activation function that generates exactly binary codes.
+Let Lij = wij (log (1 + exp (α ⟨hi, hj⟩)) − αsij ⟨hi, hj⟩) and L = � sij∈S Lij, where hi ∈ {−1, +1}K are binary hash codes. Note that when optimizing HashNet by continuation in Algorithm 1, network activation in each stage t is g = tanh(βtz), which is continuous in nature and will only become binary when convergence βt → ∞. Denote by
+Jij = wij (log (1 + exp (α ⟨gi, gj⟩)) − αsij ⟨gi, gj⟩) and J = � sij∈S Jij the true loss we optimize in Algorithm 1, where gi ∈ RK and note that hi = sgn(gi). We will show that HashNet loss L(h) descends when minimizing J(g).
+Theorem 3. The HashNet loss L will not change across stages t and t+1 with bandwidths switched from βt to βt+1.
+Proof. When the algorithm switches from stages t to t + 1 with bandwidths changed from βt to βt+1, only the network activation is changed from tanh(βtz) to tanh(βt+1z) but its sign h = sgn(tanh(βtz)) = sgn(tanh(βt+1z)), i.e. the hash code, remains the same. Thus L is unchanged.
+For each pair of binary codes hi, hj and their continuous counterparts gi, gj, the derivative of J w.r.t. each bit k is ∂J
+∂gik
+= wijα
+�
+1 + exp (−α ⟨gi, gj⟩) − sij
+� gjk, (7) where k = 1,..., K. The derivative of J w.r.t. gj can be defined similarly. Updating gi by SGD, the updated g′ i is g′ ik = gik − η ∂J
+∂gik
+= gik − ηwijα
+�
+1 + exp (−α ⟨gi, gj⟩) − sij
+� gjk, (8) where η is the learning rate and g′ j is computed similarly.
+Lemma 1. Denote by hi = sgn(gi), h′ i = sgn(g′ i), then
+�� h′ i, h′ j
+�
+⩾ ⟨hi, hj⟩, sij = 1, � h′ i, h′ j
+�
+⩽ ⟨hi, hj⟩, sij = 0.
+Proof. Since ⟨hi, hj⟩ = �K k=1 hikhjk, Lemma 1 can be proved by verifying that h′ ikh′ jk ⩾ hikhjk if sij = 1 and h′ ikh′ jk ⩽ hikhjk if sij = 0, ∀k = 1, 2,..., K.
+Case 1. sij = 0.(1) If gik < 0, gjk > 0, then
+∂J
+∂gik > 0, ∂J
+∂gjk < 0.
+Thus, h′ ik ⩽ hik = −1, h′ jk ⩾ hjk = 1. And we have h′ ikh′ jk = −1 = hikhjk.(2) If gik > 0, gjk < 0, then
+∂J
+∂gik < 0, ∂J
+∂gjk > 0.
+Thus, h′ ik ⩾ hik = 1, h′ jk ⩽ hjk = −1. And we have h′ ikh′ jk = −1 = hikhjk.(3) If gik < 0, gjk < 0, then
+∂J
+∂gik < 0, ∂J
+∂gjk < 0. Thus h′ ik ⩾ hik = −1, h′ jk ⩾ hjk = −1. So h′ ik and h′ jk may be either +1 or −1 and we have h′ ikh′ jk ⩽ 1 = hikhjk.(4) If gik > 0, gjk > 0, then
+∂J
+∂gik > 0, ∂J
+∂gjk > 0. Thus h′ ik ⩽ hik = 1, h′ jk ⩽ hjk = 1. So h′ ik and h′ jk may be either +1 or −1 and we have h′ ikh′ jk ⩽ 1 = hikhjk.
+Case 2. sij = 1. It can be proved similarly as Case 1.
+Theorem 4. Loss L decreases when optimizing loss J(g) by the stochastic gradient descent (SGD) within each stage.
+Proof. The gradient of loss L w.r.t. hash codes ⟨hi, hj⟩ is ∂L
+∂ ⟨hi, hj⟩ = wijα
+�
+1 + exp (−α ⟨hi, hj⟩) − sij
+�
+We observe that
+�
+∂L
+∂⟨hi,hj⟩ ⩽ 0, sij = 1, ∂L
+∂⟨hi,hj⟩ ⩾ 0, sij = 0.
+By substituting Lemma 1: if sij = 1, then
+� h′ i, h′ j
+�
+⩾
+⟨hi, hj⟩, and thus L(h′ i, h′ j) ⩽ L(hi, hj); if sij = 0, then
+� h′ i, h′ j
+�
+⩽ ⟨hi, hj⟩, and thus L(h′ i, h′ j) ⩽ L(hi, hj).
+References
+ E. L. Allgower and K. Georg. Numerical continuation methods: an introduction, volume 13. Springer
+Science & Business Media, 2012. 2, 4
+ Y. Bengio, A. Courville, and P. Vincent. Representation learning: A review and new perspectives. IEEE
+Transactions on Pattern Analysis and Machine Intelligence (TPAMI), 35(8):1798–1828, Aug 2013. 1
+ Y.
+Bengio, P.
+Lamblin, D.
+Popovici, and H. Larochelle.
+Greedy layer-wise training of deep networks.
+In B. Sch¨olkopf, J. C. Platt, and T. Hoffman, editors, NIPS, pages 153–160. MIT
+Press, 2007. 4
+ T.-S. Chua, J. Tang, R. Hong, H. Li, Z. Luo, and Y.-T.
+Zheng. Nus-wide: A real-world web image database from national university of singapore. In ICMR. ACM, M. Courbariaux and Y. Bengio.
+Binarynet: Training deep neural networks with weights and activations constrained to +1 or -1. In NIPS, 2016. 4
+ J. P. Dmochowski, P. Sajda, and L. C. Parra. Maximum likelihood in cost-sensitive learning:
+Model specification, approximations, and upper bounds.
+Journal of Machine Learning Research (JMLR), 11(Dec):3313–3332, 2010. 3
+ J. Donahue, Y. Jia, O. Vinyals, J. Hoffman, N. Zhang, E. Tzeng, and T. Darrell. Decaf: A deep convolutional activation feature for generic visual recognition.
+In
+ICML, 2014. 5, 7
+ V. Erin Liong, J. Lu, G. Wang, P. Moulin, and J. Zhou.
+Deep hashing for compact binary codes learning. In
+CVPR, pages 2475–2483. IEEE, 2015. 1
+ D. J. Fleet, A. Punjani, and M. Norouzi. Fast search in hamming space with multi-index hashing. In CVPR.
+IEEE, 2012. 1, 7
+ A. Gionis, P. Indyk, R. Motwani, et al.
+Similarity search in high dimensions via hashing. In VLDB, volume 99, pages 518–529. ACM, 1999. 1, 5, 6
+ Y. Gong, S. Kumar, H. Rowley, S. Lazebnik, et al.
+Learning binary codes for high-dimensional data using bilinear projections.
+In CVPR, pages 484–491.
+IEEE, 2013. 1
+ Y. Gong and S. Lazebnik. Iterative quantization: A procrustean approach to learning binary codes.
+In
+CVPR, pages 817–824, 2011. 1, 2, 5, 6
+ K. He, X. Zhang, S. Ren, and J. Sun. Deep residual learning for image recognition. CVPR, 2016. 2, 4
+ G. E. Hinton, S. Osindero, and Y.-W. Teh. A fast learning algorithm for deep belief nets. Neural Computation, 18(7):1527–1554, 2006. 1, 4
+ S. Ioffe and C. Szegedy. Batch normalization: Accelerating deep network training by reducing internal covariate shift. In ICML, 2015. 4
+ H. Jegou, M. Douze, and C. Schmid. Product quantization for nearest neighbor search. IEEE Transactions on Pattern Analysis and Machine Intelligence(TPAMI), 33(1):117–128, Jan 2011. 2
+ Y. Jia, E. Shelhamer, J. Donahue, S. Karayev, J. Long, R. Girshick, S. Guadarrama, and T. Darrell. Caffe:
+Convolutional architecture for fast feature embedding.
+In ACM Multimedia Conference. ACM, 2014. 5
+ A. Krizhevsky, I. Sutskever, and G. E. Hinton. Imagenet classification with deep convolutional neural networks. In NIPS, 2012. 1, 2, 5
+ B. Kulis and T. Darrell. Learning to hash with binary reconstructive embeddings.
+In NIPS, pages 1042–
+ H. Lai, Y. Pan, Y. Liu, and S. Yan. Simultaneous feature learning and hash coding with deep neural networks. In CVPR. IEEE, 2015. 1, 2, 5, 6
+ M. S. Lew, N. Sebe, C. Djeraba, and R. Jain. Contentbased multimedia information retrieval: State of the art and challenges. ACM Transactions on Multimedia Computing, Communications, and Applications(TOMM), 2(1):1–19, Feb. 2006. 1
+ W.-J. Li, S. Wang, and W.-C. Kang. Feature learning based deep supervised hashing with pairwise labels.
+In IJCAI, 2016. 1, 2, 8
+ T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Doll´ar, and C. L. Zitnick. Microsoft coco: Common objects in context. In ECCV, pages
+740–755. Springer, 2014. 5
+ H. Liu, R. Wang, S. Shan, and X. Chen. Deep supervised hashing for fast image retrieval. In CVPR, pages
+2064–2072, 2016. 1, 2, 8
+ W. Liu, J. Wang, R. Ji, Y.-G. Jiang, and S.-F. Chang.
+Supervised hashing with kernels.
+In CVPR. IEEE, W. Liu, J. Wang, S. Kumar, and S.-F. Chang. Hashing with graphs. In ICML. ACM, 2011. 2
+ X. Liu, J. He, B. Lang, and S.-F. Chang. Hash bit selection: a unified solution for selection problems in hashing. In CVPR, pages 1570–1577. IEEE, 2013. 1
+ C. Ma, I. W. Tsang, F. Peng, and C. Liu. Partial hash update via hamming subspace learning. IEEE Transactions on Image Processing (TIP), 26(4):1939–1951, V. Nair and G. E. Hinton. Rectified linear units improve restricted boltzmann machines. In J. F¨urnkranz and T. Joachims, editors, ICML, pages 807–814. Omnipress, 2010. 4
+ M. Norouzi and D. M. Blei.
+Minimal loss hashing for compact binary codes. In ICML, pages 353–360.
+ACM, 2011. 1, 2
+ M. Norouzi, D. M. Blei, and R. R. Salakhutdinov.
+Hamming distance metric learning. In NIPS, pages
+1061–1069, 2012. 2
+ O.
+Russakovsky, J.
+Deng, H.
+Su, J.
+Krause, S. Satheesh, S. Ma, Z. Huang, A. Karpathy, A. Khosla, M. Bernstein, A. C. Berg, and L. Fei-Fei.
+ImageNet Large Scale Visual Recognition Challenge.
+International Journal of Computer Vision (IJCV), 115(3):211–252, 2015. 5
+ R. Salakhutdinov and G. E. Hinton. Learning a nonlinear embedding by preserving class neighbourhood structure. In AISTATS, pages 412–419, 2007. 2
+ F. Shen, C. Shen, W. Liu, and H. Tao Shen. Supervised discrete hashing. In CVPR. IEEE, June 2015. 1, 5, 6, A. W. Smeulders, M. Worring, S. Santini, A. Gupta, and R. Jain. Content-based image retrieval at the end of the early years. IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI), 22(12):1349–
+ N. Srivastava, G. Hinton, A. Krizhevsky, I. Sutskever, and R. Salakhutdinov. Dropout: A simple way to prevent neural networks from overfitting. Journal of Machine Learning Research (JMLR), 15(1):1929–1958, Jan. 2014. 4
+ J. Wang, S. Kumar, and S.-F. Chang. Semi-supervised hashing for large-scale search. IEEE Transactions on
+Pattern Analysis and Machine Intelligence (TPAMI), 34(12):2393–2406, 2012. 1
+ J. Wang, H. T. Shen, J. Song, and J. Ji. Hashing for similarity search: A survey. Arxiv, 2014. 1, 2
+ Y. Weiss, A. Torralba, and R. Fergus. Spectral hashing. In NIPS, 2009. 2, 5, 6
+ R. Xia, Y. Pan, H. Lai, C. Liu, and S. Yan. Supervised hashing for image retrieval via image representation learning. In AAAI, pages 2156–2162. AAAI, 2014. 1, F. X. Yu, S. Kumar, Y. Gong, and S.-F. Chang. Circulant binary embedding. In ICML, pages 353–360.
+ACM, 2014. 1
+ P. Zhang, W. Zhang, W.-J. Li, and M. Guo. Supervised hashing with latent factor models. In SIGIR, pages
+173–182. ACM, 2014. 1
+ F. Zhao, Y. Huang, L. Wang, and T. Tan. Deep semantic ranking based hashing for multi-label image retrieval. In CVPR, pages 1556–1564, 2015. 1
+ H. Zhu, M. Long, J. Wang, and Y. Cao. Deep hashing network for efficient similarity retrieval. In AAAI.
+AAAI, 2016. 1, 2, 5, 6, 7

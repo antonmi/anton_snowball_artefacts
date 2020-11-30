@@ -1,0 +1,7 @@
+["input", "../data/GAN/005_reduced_joint_probabilities.npy"]
+["output", "../data/GAN/006_ssnmf_output.npy"]
+["outptmfile", "../data/GAN/006_ptm_output.npy"]
+["len(j_prob_reduced)=", 5581]
+"finished"
+["time", 4053.9073889255524]
+["used RAM(bytes)=", 322572288]

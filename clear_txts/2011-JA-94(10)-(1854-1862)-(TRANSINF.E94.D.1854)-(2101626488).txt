@@ -1,0 +1,344 @@
+IEICE TRANS. INF. & SYST., VOL.E94–D, NO.10 OCTOBER 2011
+INVITED PAPER
+Special Section on Information-Based Induction Sciences and Machine Learning
+A Short Introduction to Learning to Rank
+Hang LI†a), Nonmember
+SUMMARY
+Learning to rank refers to machine learning techniques for training the model in a ranking task. Learning to rank is useful for many applications in Information Retrieval, Natural Language Processing, and Data Mining. Intensive studies have been conducted on the problem and significant progress has been made,. This short paper gives an introduction to learning to rank, and it specifically explains the fundamental problems, existing approaches, and future work of learning to rank. Several learning to rank methods using SVM techniques are described in details. key words: learning to rank, information retrieval, natural language processing, SVM
+Ranking Problem
+Learning to rank can be employed in a wide variety of applications in Information Retrieval (IR), Natural Language Processing (NLP), and Data Mining (DM).
+Typical applications are document retrieval, expert search, definition search, collaborative filtering, question answering, keyphrase extraction, document summarization, and machine translation. Without loss of generality, we take document retrieval as example in this article.
+Document retrieval is a task as follows (Fig. 1). The system maintains a collection of documents. Given a query, the system retrieves documents containing the query words from the collection, ranks the documents, and returns the top ranked documents. The ranking task is performed by using a ranking model f(q, d) to sort the documents, where q denotes a query and d denotes a document.
+Traditionally, the ranking model f(q, d) is created without training. In the BM25 model, for example, it is assumed that f(q, d) is represented by a conditional probability distribution P(r|q, d) where r takes on 1 or 0 as value and denotes being relevant or irreverent, and q and d denote a query and a document respectively. In Language Model for IR (LMIR), f(q, d) is represented as a conditional probability distribution P(q|d). The probability models can be calculated with the words appearing in the query and document, and thus no training is needed (only tuning of a small number of parameters is necessary).
+A new trend has recently arisen in document retrieval, particularly in web search, that is, to employ machine learning techniques to automatically construct the ranking model f(q, d). This is motivated by a number of facts. At web
+Manuscript received December 31, 2010.
+Manuscript revised April 15, 2011.
+†The author is with Microsoft Research Asia, No.5 Dan Ling
+St., Haidian, Beijing, 100080, China. a) E-mail: hangli@microsoft.com
+DOI: 10.1587/transinf.E94.D.1854
+Fig. 1
+Document retrieval.
+Fig. 2
+Learning to rank for document retrieval. search, there are many signals which can represent relevance, for example, the anchor texts and PageRank score of a web page. Incorporating such information into the ranking model and automatically constructing the ranking model using machine learning techniques becomes a natural choice.
+In web search engines, a large amount of search log data, such as click through data, is accumulated. This makes it possible to derive training data from search log data and automatically create the ranking model. In fact, learning to rank has become one of the key technologies for modern web search.
+We describe a number of issues in learning for ranking, including training and testing, data labeling, feature construction, evaluation, and relations with ordinal classification.
+Training and Testing
+Learning to rank is a supervised learning task and thus has training and testing phases (see Fig. 2).
+The training data consists of queries and documents.
+Copyright c⃝ 2011 The Institute of Electronics, Information and Communication Engineers
+LI: A SHORT INTRODUCTION TO LEARNING TO RANK
+Each query is associated with a number of documents. The relevance of the documents with respect to the query is also given. The relevance information can be represented in several ways. Here, we take the most widely used approach and assume that the relevance of a document with respect to a query is represented by a label, while the labels denote several grades (levels). The higher grade a document has, the more relevant the document is.
+Suppose that Q is the query set and D is the document set. Suppose that Y = {1, 2, · · ·, l} is the label set, where labels represent grades. There exists a total order between the grades l ≻ l − 1 ≻ · · · ≻ 1, where ≻ denotes the order relation. Further suppose that {q1, q2, · · ·, qm} is the set of queries for training and qi is the i-th query.
+Di = {di,1, di,2, · · ·, di,ni} is the set of documents associated with query qi and yi = {yi,1, yi,2, · · ·, yi,ni} is the set of labels associated with query qi, where ni denotes the sizes of Di and yi; di, j denotes the j-th document in Di; and yi, j ∈ Y denotes the j-th grade label in yi, representing the relevance degree of di, j with respect to qi. The original training set is denoted as S = {(qi, Di), yi}m i=1.
+A feature vector xi, j
+= φ(qi, di, j) is created from each query-document pair (qi, di, j), i = 1, 2, · · ·, m; j =
+1, 2, · · ·, ni, where φ denotes the feature functions. That is to say, features are defined as functions of a query document pair. For example, BM25 and PageRank are typical features. Letting xi = {xi,1, xi,2, · · ·, xi,ni}, we represent the training data set as S ′ = {(xi, yi)}m i=1. Here x ∈ X and X ⊆ ℜd.
+We aim to train a (local) ranking model f(q, d) = f(x) that can assign a score to a given query document pair q and d, or equivalently to a given feature vector x. More generally, we can also consider training a global ranking model
+F(q, D) = F(x). The local ranking model outputs a single score, while the global ranking model outputs a list of scores.
+Let the documents in Di be identified by the integers
+{1, 2, · · ·, ni}. We define a permutation (ranking list) πi on
+Di as a bijection from {1, 2, · · ·, ni} to itself. We use Πi to denote the set of all possible permutations on Di, use πi( j) to denote the rank (or position) of the j-th document (i.e., di, j) in permutation πi. Ranking is nothing but to select a permutation πi ∈ Πi for the given query qi and the associated documents Di using the scores given by the ranking model f(qi, di).
+The test data consists of a new query qm+1 and associated documents Dm+1. T = {(qm+1, Dm+1)}. We create feature vector xm+1, use the trained ranking model to assign scores to the documents Dm+1, sort them based on the scores, and give the ranking list of documents as output πm+1.
+The training and testing data is similar to, but different from the data in conventional supervised learning such as classification and regression. Query and its associated documents form a group. The groups are i.i.d. data, while the instances within a group are not i.i.d. data. A local ranking model is a function of a query and a document, or equivalently, a function of a feature vector derived from a query and a document.
+Data Labeling
+Currently there are two ways to create training data. The first one is by human judgments and the second one is by derivation from search log data. We explain the first approach here. Explanations on the second approach can be found in. In the first approach, a set of queries is randomly selected from the query log of a search system. Suppose that there are multiple search systems. Then the queries are submitted to the search systems and all the top ranked documents are collected. As a result, each query is associated with multiple documents.
+Human judges are then asked to make relevance judgments on all the query document pairs. Relevance judgments are usually conducted at five levels, for example, perfect, excellent, good, fair, and bad.
+Human judges make relevance judgments from the viewpoint of average users. For example, if the query is 'Microsoft', and the web page is microsoft.com, then the label is 'perfect'. Furthermore, the Wikipedia page about
+Microsoft is 'excellent', and so on. Labels representing relevance are then assigned to the query document pairs. Relevance judgment on a query document pair can be performed by multiple judges and then majority voting can be conducted. Benchmark data sets on learning to rank have also been released.
+Evaluation
+The evaluation on the performance of a ranking model is carried out by comparison between the ranking lists output by the model and the ranking lists given as the ground truth.
+Several evaluation measures are widely used in IR and other fields. These include NDCG (Normalized Discounted Cumulative Gain), DCG (Discounted Cumulative Gain), MAP(Mean Average Precision), and Kendall's Tau.
+Given query qi and associated documents Di, suppose that πi is the ranking list (permutation) on Di and yi is the set of labels (grades) of Di. DCG measures the goodness of the ranking list with the labels. Specifically, DCG at position k is defined as:
+DCG(k) =
+� j:πi(j)≤k
+G( j)D(πi( j)), where Gi(·) is a gain function and Di(·) is a position discount function, and πi( j) is the position of di, j in πi. The summation is taken over the top k positions in the ranking list πi. DCG represents the cumulative gain of accessing the information from position one to position k with discounts on the positions. NDCG is normalized DCG and NDCG at position k is defined as:
+NDCG(k) = G−1 max,i(k)
+� j:πi(j)≤k
+G( j)D(πi( j)), where Gmax,i(k) is the normalizing factor and is chosen such
+IEICE TRANS. INF. & SYST., VOL.E94–D, NO.10 OCTOBER 2011
+Table 1
+Examples of NDCG calculation.
+Perfect ranking
+Formula
+Explanation(3, 3, 2, 2, 1, 1, 1) grades: 3, 2, 1
+Eq. (1) gains(1, 0.63, 0.5, · · ·)
+Eq. (2) discounts(7, 11.41, 12.91, · · ·)
+Eq. (3)
+DCG(1/7, 1/11.41, 1/12.91,· · ·) normalizers(1,1,1,· · ·)
+Eq. (4)
+NDCG
+Imperfect ranking
+Formula
+Explanation(2, 3, 2, 3, 1, 1, 1) grades: 3, 2, 1
+Eq. (1) gains(1, 0.63, 0.5, · · ·)
+Eq. (2) discounts(3, 7.41, 8.91, · · ·)
+Eq. (3)
+DCG(1/7, 1/11.41, 1/12.91,· · ·) normalizers(0.43, 0.65, 0.69, · · ·)
+Eq. (4)
+NDCG that a perfect ranking π∗ i 's NDCG score at position k is 1. In a perfect ranking, the documents with higher grades are always ranked higher. Note that there can be multiple perfect rankings for a query and associated documents.
+The gain function is normally defined as an exponential function of grade. That is to say, the satisfaction of accessing information exponentially increases when the grade of relevance of information increases.
+G( j) = 2yi,j − 1, (1) where yi, j is the label (grade) of document di, j in ranking list πi. The discount function is normally defined as a logarithmic function of position. That is to say, the satisfaction of accessing information logarithmically decreases when the position of access increases.
+D(πi( j)) =
+1 log2(1 + πi( j)), (2) where πi( j) is the position of document di, j in ranking list πi.
+Hence, DCG and NDCG at position k become
+DCG(k) =
+� j:πi(j)≤k
+2yi,j − 1 log2(1 + πi( j)), NDCG(k) = G−1 max,i(k)
+� j:πi(j)≤k
+2yi,j − 1 log2(1 + πi( j)).
+In evaluation, DCG and NDCG values are further averaged over queries.
+Table 1 gives examples of calculating NDCG values of two ranking lists. NDCG (DCG) has the effect of giving high scores to the ranking lists in which relevant documents are ranked high. For perfect rankings, the NDCG value at each position is always one, while for imperfect rankings, the NDCG values are usually less than one.
+MAP is another measure widely used in IR. In MAP, it is assumed that the grades of relevance are at two levels:
+1 and 0. Given query qi, associated documents Di, ranking list πi on Di, and labels yi of Di, Average Precision for qi is defined as:
+AP =
+�ni j=1 P( j) · yi, j
+�ni j=1 yi, j, where yi, j is the label (grade) of di, j and takes on 1 or 0 as a value, representing being relevant or irrelevant. P( j) for query qi is defined as:
+P( j) =
+� k:πi(k)≤πi(j) yi,k πi( j), where πi( j) is the position of di, j in πi. P( j) represents the precision until the position of di, j for qi. Note that labels are either 1 or 0, and thus 'precision' can be defined. Average Precision represents averaged precision over all the positions of documents with label 1 for query qi.
+Average Precision values are further averaged over queries to become Mean Average Precision (MAP).
+Relation with Ordinal Classification
+Ordinal classification (also known as ordinal regression) is similar to ranking, but is also different. The input of ordinal classification is a feature vector x and the output is a label y representing a grade, where the grades are classes in a total order. The goal of learning is to construct a model which can assign a grade label y to a given feature vector x. The model mainly consists of a scoring function f(x). The model first assigns a real number to x using f(x) and then determines the grade y of x using a number of thresholds. Specifically, it partitions the real number axis into intervals and aligns each interval to a grade. It takes the grade of the interval that f(x) falls into as the grade of x.
+In ranking, one cares more about accurate ordering of objects, while in ordinal classification, one cares more about accurate ordered-categorization of objects. A typical example of ordinal classification is product rating. For example, given the features of a movie, we are to assign a number of stars (ratings) to the movie. In that case, correct assignment of the number of stars is critical. In contrast, in ranking such as document retrieval, given a query, the objective is to correctly sort related documents, although sometimes training data and testing data are labeled at multiple grades as in ordinal classification. The number of documents to be ranked can vary from query to query. There are queries for which more relevant documents are available in the collection, and there are also queries for which only weakly relevant documents are available.
+Formulation
+We formalize learning to rank as a supervised learning task.
+Suppose that X is the input space (feature space) consisting of lists of feature vectors, and Y is the output space consisting of lists of grades. Further suppose that x is an element of X representing a list of feature vectors and y is an element of Y representing a list of grades. Let P(X, Y) be an unknown joint probability distribution where random variable X takes x as its value and random variable Y takes y as its value.
+Assume that F(·) is a function mapping from a list of feature vectors x to a list of scores. The goal of the learning task is to automatically learn a function ˆF(x) given training
+LI: A SHORT INTRODUCTION TO LEARNING TO RANK
+1857 data (x1, y1), (x2, y2),..., (xm, ym).
+Each training instance is comprised of feature vectors xi and the corresponding grades yi (i = 1, · · ·, m). Here m denotes the number of training instances.
+F(x) and y can be further written as F(x)
+=( f(x1), f(x2), · · ·, f(xn)) and y = (y1, y2, · · ·, yn). The feature vectors represent objects to be ranked. Here f(x) denotes the local ranking function and n denotes the number of feature vectors and grades.
+A loss function L(·, ·) is utilized to evaluate the prediction result of F(·). First, feature vectors x are ranked according to F(x), then the top n results of the ranking are evaluated using their corresponding grades y. If the feature vectors with higher grades are ranked higher, then the loss will be small. Otherwise, the loss will be large. The loss function is specifically represented as L(F(x), y). Note that the loss function for ranking is slightly different from the loss functions in other statistical learning tasks, in the sense that it makes use of sorting.
+We further define the risk function R(·) as the expected loss function with respect to the joint distribution P(X, Y), R(F) =
+�
+X×Y
+L(F(x), y)dP(x, y).
+Given training data, we calculate the empirical risk function as follows, ˆR(F) = 1 m m
+� i=1
+L(F(xi), yi).
+The learning task then becomes the minimization of the empirical risk function, as in other learning tasks. The minimization of the empirical risk function could be difficult due to the nature of the loss function (it is not continuous and it uses sorting). We can consider using a surrogate loss function L′(F(x), y).
+The corresponding empirical risk function is defined as follows.
+ˆR′(F) = 1 m m
+� i=1
+L′(F(xi), yi).
+We can also introduce a regularizer to conduct minimization of the regularized empirical risk. In such cases, the learning problem becomes minimization of the (regularized) empirical risk function based on the surrogate loss.
+Note that we adopt a machine learning formulation here. In IR, the feature vectors x are derived from a query and its associated documents. The grades y represent the relevance degrees of the documents with respect to the query.
+We make use of a global ranking function F(·). In practice, it can be a local ranking function f(·). The possible number of feature vectors in x can be very large, even infinite. The evaluation (loss function) is, however, only concerned with n results.
+In IR, the true loss functions can be those defined based on NDCG (Normalized Discounted Cumulative Gain) and MAP (Mean Average Precision). For example, we can have
+L(F(x), y) = 1.0 − NDCG.
+Note that the true loss functions (NDCG loss and MAP loss) makes use of sorting based on F(x).
+For the surrogate loss function, there are also different ways to define it, which lead to different approaches to learning to rank. For example, one can define pointwise loss, pairwise loss, and listwise loss functions.
+The squared loss used in Subset Regression is a pointwise surrogate loss. We call it pointwise loss, because it is defined on single objects.
+L′(F(x), y) = n
+� i=1( f(xi) − yi)2.
+It is actually an upper bound of 1.0 − NDCG.
+Pairwise losses can be the hinge loss, exponential loss, and logistic loss on pairs of objects, which are used in Ranking SVM, RankBoost, and RankNet, respectively.
+They are also upper bounds of 1.0 − NDCG.
+L′(F(x), y) = n−1
+� i=1 n
+� j=i+1 φ(sign(yi − yj), f(xi) − f(xj)), where it is assumed that L′ = 0 when yi = yj and φ is the hinge loss, exponential loss, or logistic loss function.
+Listwise loss functions are defined on lists of objects, just like the true loss functions, and thus are more directly related to the true loss functions.
+Different listwise loss functions are exploited in the listwise methods. For example, the loss function in AdaRank is a listwise loss.
+L′(F(x), y) = exp(−NDCG), where NDCG is calculated on the basis of F(x) and y. Obviously, it is also an upper bound of 1.0 − NDCG.
+Pointwise Approach
+In the pointwise approach, the ranking problem (ranking creation) is transformed to classification, regression, or ordinal classification, and existing methods for classification, regression, or ordinal classification are applied. Therefore, the group structure of ranking is ignored in this approach.
+The pointwise approach includes Subset Ranking, McRank, Prank, and OC SVM. We take the last one as an example and describe it in detail.
+SVM for Ordinal Classification
+The method proposed by Shashua & Levin utilizes a number of parallel hyperplanes as a ranking model. Their method, referred to as OC SVM in this article, learns the parallel hyperplanes by the large margin principle. In one implementation, the method tries to maximize a fixed margin for all the adjacent classes (grades)†.
+Suppose that X ⊆ ℜd and Y = {1, 2, · · ·, l} where there
+†The other method maximizes the sum of all margins.
+IEICE TRANS. INF. & SYST., VOL.E94–D, NO.10 OCTOBER 2011
+Fig. 3
+SVM for oridinal classification. exists a total order on Y. x ∈ X is an object (feature vector) and y ∈ Y is a label representing a grade. Given object x, we aim to predict its label (grade) y. That is to say, this is an ordinal classification problem. We employ a number of linear models (parallel hyperplanes) ⟨w, x⟩−br, (r = 1, · · ·, l−1) to make the prediction, where w ∈ ℜd is a weight vector and br ∈ ℜ, (r = 1, · · ·, l) are biases satisfying b1 ≤ · · · ≤ bl−1 ≤ bl = +∞. The models correspond to parallel hyperplanes
+⟨w, x⟩−br = 0 separating grades r and r+1, (r = 1, · · ·, l−1).
+Figure 3 illustrates the model. If x satisfies ⟨w, x⟩ − br−1 ≥ 0 and ⟨w, x⟩ − br < 0, then y = r, (r = 1, · · ·, l). We can write it as minr∈{1,···,l}{r|⟨w, x⟩ − br < 0}.
+Suppose that the training data is given as follows. For each grade r = 1, · · ·, l, there are mr instances: xr,i, i =
+1, · · ·, mr. The learning task is formalized as the following
+Quadratic Programming (QP) problem. minw,b,ξ 1
+2||w||2 + C �l−1 r=1
+�mr i=1(ξr,i + ξ∗ r+1,i) s. t. ⟨w, xr,i⟩ + br ≥ 1 − ξr,i
+⟨w, xr+1,i⟩ + br ≤ 1 − ξ∗ r+1,i ξr,i ≥ 0, ξ∗ r+1,i ≥ 0 i = 1, · · ·, mr, r = 1, · · ·, l − 1 m = m1 + · · · + ml, where xr,i denotes the i-th instance in the r-th grade, ξr+1,i and ξ∗ r+1,i denote the corresponding slack variables, || · || denotes L2 norm, m denotes the number of training instances, and C > 0 is a coefficient. The method tries to separate the instances in the neighboring grades with the same margin.
+Pairwise Approach
+In the pairwise approach, ranking is transformed into pairwise classification or pairwise regression.
+In the former case, a classifier for classifying the ranking orders of document pairs is created and is employed in the ranking of documents. In the pairwise approach, the group structure of ranking is also ignored.
+The pairwise approach includes Ranking SVM, RankBoost, RankNet, GBRank, IR SVM, Lambda Rank, and LambdaMART. We introduce
+Ranking SVM and IR SVM in this article.
+Ranking SVM
+We can learn a classifier, such as SVM, for classifying the Fig. 4
+Example of ranking problem.
+Fig. 5
+Transformation to pairwise classification. order of pairs of objects and utilize the classifier in the ranking task. This is the idea behind the Ranking SVM method proposed by Herbrich et al..
+Figure 4 shows an example of the ranking problem.
+Suppose that there are two groups of objects (documents associated with two queries) in the feature space. Further suppose that there are three grades (levels). For example, objects x1, x2, and x3 in the first group are at three different grades. The weight vector w corresponds to the linear function f(x) = ⟨w, x⟩ which can score and rank the objects.
+Ranking objects with the function is equivalent to projecting the objects into the vector and sorting the objects according to the projections on the vector. If the ranking function is 'good', then there should be an effect that objects at grade 3 are ranked ahead of objects at grade 2, etc. Note that objects belonging to different groups are incomparable.
+Figure 5 shows that the ranking problem in Fig. 4 can be transformed to Linear SVM classification. The differences between two feature vectors at different grades in the same group are treated as new feature vectors, e.g., x1 − x2, x1 − x3, and x2 − x3. Furthermore, labels are also assigned to the new feature vectors. For example, x1 − x2, x1 − x3, and x2 − x3 are positive. Note that feature vectors at the same grade or feature vectors from different groups are not utilized to create new feature vectors. One can train a Linear SVM classifier which separates the new feature vectors as shown in Fig. 5. Geometrically, the margin in the SVM model represents the closest distance between the projections of object pairs in two grades. Note that the hyperplane of the SVM classifier passes the original and the positive and negative instances form corresponding pairs. For example, x1 − x2 and x2 − x1 are positive and negative instances respectively. The weight vector w of the SVM classifier corresponds to the ranking function. In fact, we can discard the LI: A SHORT INTRODUCTION TO LEARNING TO RANK
+Grade: 3, 2, 1
+Documents are represented by their grades
+Example 1: ranking-1: 2 3 2 1 1 1 1 ranking-2: 3 2 1 2 1 1 1
+Example 2: ranking for query-1: 3 2 2 1 1 1 1 ranking for query-2: 3 3 2 2 2 1 1 1 1 1
+Fig. 6
+Example ranking lists. negative instances in learning, because they are redundant.
+Training data is given as {((x(1) i, x(2) i ), yi)}, i = 1, · · ·, m where each instance consists of two feature vectors(x(1) i, x(2) i ) and a label yi ∈ {+1, −1} denoting which feature vector should be ranked ahead.
+The learning of Ranking SVM is formalized as the following QP problem. minw,ξ 1
+2||w||2 + C �m i=1 ξi s. t. yi⟨w, x(1) i
+− x(2) i ⟩ ≥ 1 − ξi ξi ≥ 0 i = 1,..., m, where x(1) i and x(2) i denote the first and second feature vectors in a pair of feature vectors, || · || denotes L2 norm, m denotes the number of training instances, and C > 0 is a coefficient.
+It is equivalent to the following non-constrained optimization problem, i.e., the minimization of the regularized hinge loss function. min w m
+� i=1
+[1 − yi⟨w, x(1) i
+− x(2) i ⟩]+ + λ||w||2, (5) where [x]+ denotes function max(x, 0) and λ =
+2C.
+IR SVM
+IR SVM proposed by Cao et al. is an extension of Ranking SVM for Information Retrieval (IR), whose idea can be applied to other applications as well.
+Ranking SVM transforms ranking into pairwise classification, and thus it actually makes use of the 0-1 loss in the learning process. There exists a gap between the loss function and the IR evaluation measures. IR SVM attempts to bridge the gap by modifying 0-1 loss, that is, conducting cost sensitive learning of Ranking SVM.
+We first look at the problems caused by straightforward application of Ranking SVM to document retrieval, using examples in Fig. 6.
+One problem with the direction application of Ranking
+SVM is that Ranking SVM equally treats document pairs across different grades. Example 1 indicates the problem.
+There are two rankings for the same query. The documents at positions 1 and 2 are swapped in ranking-1 from the perfect ranking, while the documents at positions 3 and 4 are swapped in ranking-2 from the perfect ranking. There is only one error for each ranking in terms of the 0-1 loss, or difference in order of pairs. They have the same effect on the Fig. 7
+Modified hinge loss functions. training of Ranking SVM, which is not desirable. Ranking2 should be better than ranking-1, from the viewpoint of IR, because the result on its top is better. Note that to have high accuracy on top-ranked documents is crucial for an IR system, which is reflected in the IR evaluation measures.
+Another issue with Ranking SVM is that it equally treats document pairs from different queries. In example
+2, there are two queries and the numbers of documents associated with them are different. For query-1 there are 2 document pairs between grades 3-2, 4 document pairs between grades 3-1, 8 document pairs between grades 2-1, and in total 14 document pairs. For query-2, there are 31 document pairs. Ranking SVM takes 14 instances (document pairs) from query-1 and 31 instances (document pairs) from query-2 for training. Thus, the impact on the ranking model from query-2 will be larger than the impact from query-1. In other words, the model learned will be biased toward query2. This is in contrast to the fact that in IR evaluation queries are evenly important. Note that the numbers of documents usually vary from query to query.
+IR SVM addresses the above two problems by changing the 0-1 pairwise classification into a cost sensitive pairwise classification. It does so by modifying the hinge loss function of Ranking SVM.
+Specifically, it sets different losses for document pairs across different grades and from different queries. To emphasize the importance of correct ranking on the top, the loss function heavily penalizes errors related to the top. To increase the influence of queries with less documents, the loss function heavily penalizes errors from the queries.
+Figure 7 plots the shapes of different hinge loss functions with different penalty parameters. The x-axis represents yf(x) and the y-axis represents loss. When yf(x(1) i
+− x(2) i ) ≥ 1, the losses are zero. When yf(x(1) i
+− x(2) i ) < 1, the losses are represented by linearly decreasing functions with different slopes. If the slope equals −1, then the function is the normal hinge loss function. IR SVM modifies the hinge loss function, specifically modifies the slopes for different grade pairs and different queries. It assigns higher weights to document pairs across important grade pairs and assigns normalization weights to document pairs according to queries.
+The learning of IR SVM is equivalent to the following optimization problem. Specifically, the minimization of the IEICE TRANS. INF. & SYST., VOL.E94–D, NO.10 OCTOBER 2011 modified regularized hinge loss function, min w m
+� i=1 τk(i)μq(i)[1 − yi⟨w, x(1) i
+− x(2) i ⟩]+ + λ||w||2, where [x]+ denotes max(x, 0), λ =
+2C, and τk(i) and μq(i) are weights. See the loss function of Ranking SVM (5).
+Here τk(i) represents the weight of instance (document pair) i whose label pair belongs to the k-th type. Xu et al. propose a heuristic method to determine the value of τk. The method takes the average drop in NDCG@1 when randomly changing the positions of documents belonging to the grade pair as the value of a grade pair τk. Moreover, μq(i) represents the weight of instance (document pair) i which is from query q. The value of μq(i) is simply determined by
+|nq|, where nq is the number of document pairs for query q.
+The equivalent QP problem is as below. minw,ξ 1
+2||w||2 + Ci
+�m i=1 ξi s. t. yi⟨w, x(1) i
+− x(2) i ⟩ ≥ 1 − ξi, Ci = τk(i)μq(i)
+2λ ξi ≥ 0, i = 1,..., m.
+Listwise Approach
+The listwise approach addresses the ranking problem in a more straightforward way. Specifically, it takes ranking lists as instances in both learning and prediction.
+The group structure of ranking is maintained and ranking evaluation measures can be more directly incorporated into the loss functions in learning.
+The listwise approach includes ListNet, ListMLE, AdaRank, SVM MAP, and Soft Rank.
+SVM MAP and related methods are explained in this article.
+SVM MAP
+The algorithm SVM MAP developed by Yue et al. is designed to directly optimize MAP, but it can be easily extended to optimize NDCG. Xu et al. further generalize it to a group of algorithms.
+In ranking, for query qi the ranking model f(xij) assigns a score to each associated document dij or feature vector xij where xij is the feature vector derived from qi and dij.
+The documents di (feature vectors xi) are then sorted based on their scores and a permutation denoted as πi is obtained.
+For simplicity, suppose that the ranking model f(xij) is a linear model: f(xij) = ⟨w, xij⟩, (6) where w denotes a weight vector.
+Suppose that labels for the feature vectors xi are also given as yi. We consider using a scoring function S (xi, πi) to measure the goodness of ranking πi. S (xi, πi) is defined as
+S (xi, πi) = ⟨w, σ(xi, πi)⟩, Objects: A, B, C fA = ⟨w, xA⟩, fB = ⟨w, xB⟩, fC = ⟨w, xC⟩
+Suppose fA > fB > fC
+For example:
+Permutation1: ABC
+Permutation2: ACB
+S ABC = 1
+6 ⟨w, ((xA − xB) + (xB − xC) + (xA − xC))⟩
+S ACB = 1
+6 ⟨w, ((xA − xC) + (xC − xB) + (xA − xB))⟩
+S ABC > S ACB
+Fig. 8
+Example of scoring function. where w is still the weight vector and vector σ(xi, πi) is defined as σ(xi, πi) =
+2 ni(ni − 1)
+� k,l:k<l
+[zkl(xik − xil)], where zkl = +1, if πi(k) < πi(l) (xik is ranked ahead of xil in πi), and zkl = −1, otherwise. Recall that ni is the number of documents associated with query qi.
+For query qi, we can calculate S (xi, πi) for each permutation πi and select the permutation ˜πi with the largest score:
+˜πi = arg max πi∈Πi S (xi, πi), (7) where Πi denotes the set of all possible permutations for xi.
+It can be easily shown that the ranking ˜πi selected by
+Eq. (7) is equivalent to the ranking created by the ranking model f(xij) (when both of them are linear functions). Figure 8 gives an example. It is easy to verify that both f(x) and S (xi, π) will output ABC as the most preferable ranking(permutation).
+In learning, we would ideally create a ranking model that can maximize the accuracy in terms of a listwise evaluation measure on training data, or equivalently, minimizes the loss function defined below, L( f) = m
+� i=1(E(π∗ i, yi) − E(πi, yi)), (8) where πi is the permutation on feature vector xi by ranking model f and yi is the corresponding list of grades. E(πi, yi) denotes the evaluation result of πi in terms of an evaluation measure (e.g., NDCG). Usually E(π∗ i, yi) = 1.
+We view the problem of learning a ranking model as the following optimization problem in which the following loss function is minimized.
+�m i=1 maxπ∗ i ∈Π∗ i ;πi∈Πi\Π∗ i
+�
+E(π∗ i, yi) − E(πi, yi)
+�
+·
+�
+[S (xi, π∗ i ) ≤ S (xi, πi)
+�
+], (9) where [[c]] is one if condition c is satisfied, otherwise it is zero. π∗ i ∈ Π∗ i ⊆ Πi denotes any of the perfect permutations for qi.
+The loss function measures the loss when the most preferred ranking list by the ranking model is not the perfect ranking list. One can prove that the true loss function such as that in (8) is upper-bounded by the new loss function in LI: A SHORT INTRODUCTION TO LEARNING TO RANK
+The loss function (9) is still not continuous and differentiable. We can consider using continuous, differentiable, and even convex upper bounds of the loss function (9).
+1) The 0-1 function in (9) can be replaced with its upper bounds, for example, hinge functions, yielding
+�m i=1 maxπ∗ i ∈Π∗ i,πi∈Πi\Π∗ i
+�
+E(π∗ i, yi) − E(πi, yi)
+�
+·
+�
+1 −
+�
+S (xi, π∗ i ) − S (xi, πi)
+��
+�m i=1
+� maxπ∗ i ∈Π∗ i,πi∈Πi\Π∗ i
+��
+E(π∗ i, yi) − E(πi, yi)
+�
+−
+�
+S (xi, π∗ i ) − S (xi, πi)
+���
++, 2) The max function can also be replaced with its upper bound, the sum function. This is because � i xi ≥ maxi xi if xi ≥ 0 holds for all i.
+3) Relaxations 1 and 2 can be applied simultaneously.
+For example, using the hinge function and taking the true loss as 1.0 − MAP, we obtain SVM MAP. More precisely, SVM MAP solves the following QP problem: minw;ξ≥0 1
+2||w||2 + C m
+�m i=1 ξi s.t.
+∀i, ∀π∗ i ∈ Π∗ i, ∀πi ∈ Πi \ Π∗ i :
+S (xi, π∗ i ) − S (xi, πi) ≥ E(π∗ i, yi) − E(πi, yi) − ξi, (10) where C is a coefficient and ξi is the maximum loss among all the losses for permutations of query qi.
+Equivalently, SVM MAP minimizes the following regularized hinge loss function
+�m i=1
+� maxπ∗ i ∈Π∗ i ;πi∈Πi\Π∗ i (E(π∗ i, yi) − E(πi, yi))
+− (S (xi, π∗ i ) − S (xi, πi))
+�
++ + λ||w||2.
+Intuitively, the first term calculates the total maximum loss when selecting the best permutation for each of the queries.
+Specifically, if the difference between the permutations
+S (xi, π∗ i ) − S (xi, πi) is less than the difference between the corresponding evaluation measures E(π∗ i, yi)−E(πi, yi), then there will be a loss, otherwise not. Next, the maximum loss is selected for each query and they are summed up over all the queries.
+Since c · [[x ≤ 0]] < [c − x]+ holds for all c ∈ ℜ+ and x ∈ ℜ, it is easy to see that the loss in (11) also bounds the true loss function in (8).
+Ongoing and Future Work
+It is still necessary to develop more advanced technologies for learning to rank. There are also many open questions with regard to theory and applications of learning to rank,. Current and future research directions include
+• training data creation
+• semi-supervised learning and active learning
+• feature learning
+• scalable and efficient training
+• domain adaptation and multi-task learning
+• ranking by ensemble learning
+• global ranking
+• ranking of nodes in a graph.
+References
+ T.Y. Liu, "Learning to rank for information retrieval," Foundations and Trends in Information Retrieval, vol.3, no.3, pp.225–331, 2009.
+ H. Li, "Learning to rank for information retrieval and natural language processing," Synthesis Lectures on Human Language Technologies, Morgan & Claypool, 2011.
+ W.B. Croft, D. Metzler, and T. Strohman, Search Engines - Information Retrieval in Practice, Pearson Education, 2009.
+ T.Y. Liu, J. Xu, T. Qin, W. Xiong, and H. Li, "LETOR: Benchmark dataset for research on learning to rank for information retrieval,"
+Proc. SIGIR 2007 Workshop on Learning to Rank for Information
+Retrieval, 2007.
+ K. J¨arvelin and J. Kek¨al¨ainen, "IR evaluation methods for retrieving highly relevant documents," Proc. 23rd annual international ACM
+SIGIR conference on Research and development in information retrieval, pp.41–48, SIGIR '00, New York, NY, USA, 2000.
+ D. Cossock and T. Zhang, "Subset ranking using regression," COLT
+'06: Proc. 19th Annual Conference on Learning Theory, pp.605–
+ R. Herbrich, T. Graepel, and K. Obermayer, Large Margin rank boundaries for ordinal regression, MIT Press, Cambridge, MA, Y. Freund, R.D. Iyer, R.E. Schapire, and Y. Singer, "An efficient boosting algorithm for combining preferences," J. Machine Learning
+Research, vol.4, pp.933–969, 2003.
+ C. Burges, T. Shaked, E. Renshaw, A. Lazier, M. Deeds, N. Hamilton, and G. Hullender, "Learning to rank using gradient descent,"
+ICML '05: Proc. 22nd international conference on Machine learning, pp.89–96, 2005.
+ W. Chen, T.Y. Liu, Y. Lan, Z.M. Ma, and H. Li, "Ranking measures and loss functions in learning to rank," NIPS '09, 2009.
+ P. Li, C. Burges, and Q. Wu, "McRank: Learning to rank using multiple classification and gradient boosting," in Advances in Neural Information Processing Systems 20, ed. J. Platt, D. Koller, Y. Singer, and S. Roweis, pp.897–904, MIT Press, Cambridge, MA, 2008.
+ K. Crammer and Y. Singer, "Pranking with ranking," NIPS, pp.641–
+ A. Shashua and A. Levin, "Ranking with large margin principle:
+Two approaches," in Advances in Neural Information Processing
+Systems 15, ed. S.T.S. Becker and K. Obermayer, MIT Press, 2003.
+ Z. Zheng, H. Zha, T. Zhang, O. Chapelle, K. Chen, and G. Sun, "A general boosting method and its application to learning ranking functions for web search," in Advances in Neural Information Processing Systems 20, ed. J. Platt, D. Koller, Y. Singer, and S. Roweis, pp.1697–1704, MIT Press, Cambridge, MA, 2008.
+ Y. Cao, J. Xu, T.Y. Liu, H. Li, Y. Huang, and H.W. Hon, "Adapting ranking SVM to document retrieval," SIGIR' 06, pp.186–193, 2006.
+ C. Burges, R. Ragno, and Q. Le, "Learning to rank with nonsmooth cost functions," in Advances in Neural Information Processing Systems 18, pp.395–402, MIT Press, Cambridge, MA, 2006.
+ Q. Wu, C.J.C. Burges, K.M. Svore, and J. Gao, "Adapting boosting for information retrieval measures," Inf. Retr., vol.13, no.3, pp.254–
+ Z. Cao, T. Qin, T.Y. Liu, M.F. Tsai, and H. Li, "Learning to rank:
+From pairwise approach to listwise approach," ICML '07: Proc.
+24th international conference on Machine learning, pp.129–136, F. Xia, T.Y. Liu, J. Wang, W. Zhang, and H. Li, "Listwise approach to learning to rank: Theory and algorithm," ICML '08: Proc. 25th international conference on Machine learning, pp.1192–1199, New
+York, NY, USA, 2008.
+ J. Xu and H. Li, "AdaRank: A boosting algorithm for information retrieval," SIGIR '07: Proc. 30th annual international ACM SIGIR conference on Research and development in information retrieval, pp.391–398, New York, NY, USA, 2007.
+IEICE TRANS. INF. & SYST., VOL.E94–D, NO.10 OCTOBER 2011
+ Y. Yue, T. Finley, F. Radlinski, and T. Joachims, "A support vector method for optimizing average precision," Proc. 30th annual international ACM SIGIR conference, pp.271–278, 2007.
+ M. Taylor, J. Guiver, S. Robertson, and T. Minka, "SoftRank: Optimizing non-smooth rank metrics," WSDM '08: Proc. international conference on Web search and web data mining, pp.77–86, New
+York, NY, USA, 2008.
+ J. Xu, T.Y. Liu, M. Lu, H. Li, and W.Y. Ma, "Directly optimizing evaluation measures in learning to rank," SIGIR '08: Proc. 31st annual international ACM SIGIR conference on Research and development in information retrieval, pp.107–114, New York, NY, USA, O. Chapelle, Y. Chang, and T.Y. Liu, "Future directions in learning to rank," J. Machine Learning Research - Proceedings Track, vol.14, pp.91–100, 2011.
+Hang Li is senior researcher and research manager in Web Search and Mining Group at
+Microsoft Research Asia. He joined Microsoft
+Research in June 2001. Prior to that, He worked at the Research Laboratories of NEC Corporation. He obtained a B.S. in Electrical Engineering from Kyoto University in 1988 and a M.S. in Computer Science from Kyoto University in 1990. He earned his Ph.D. in Computer Science from the University of Tokyo in 1998. He is interested in statistical learning, information retrieval, data mining, and natural language processing.

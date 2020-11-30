@@ -1,0 +1,6 @@
+["clear_txt_dir", "../data/GAN/clear_txts"]
+["raw_txt_dir", "../data/GAN/datasets"]
+["reading raw TXT from", "../data/GAN/clear_txts", "writing datasets to", "../data/GAN/datasets"]
+"finished"
+["time", 0.4424450397491455]
+["used RAM(bytes)=", 114819072]

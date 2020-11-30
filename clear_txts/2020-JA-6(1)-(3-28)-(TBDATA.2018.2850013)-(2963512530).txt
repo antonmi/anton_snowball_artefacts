@@ -1,0 +1,1399 @@
+Network Representation Learning: A Survey
+Daokun Zhang, Jie Yin, Xingquan Zhu Senior Member, IEEE, Chengqi Zhang Senior Member, IEEE
+Abstract—With the widespread use of information technologies, information networks are becoming increasingly popular to capture complex relationships across various disciplines, such as social networks, citation networks, telecommunication networks, and biological networks. Analyzing these networks sheds light on different aspects of social life such as the structure of societies, information diffusion, and communication patterns. In reality, however, the large scale of information networks often makes network analytic tasks computationally expensive or intractable. Network representation learning has been recently proposed as a new learning paradigm to embed network vertices into a low-dimensional vector space, by preserving network topology structure, vertex content, and other side information. This facilitates the original network to be easily handled in the new vector space for further analysis. In this survey, we perform a comprehensive review of the current literature on network representation learning in the data mining and machine learning field. We propose new taxonomies to categorize and summarize the state-of-the-art network representation learning techniques according to the underlying learning mechanisms, the network information intended to preserve, as well as the algorithmic designs and methodologies. We summarize evaluation protocols used for validating network representation learning including published benchmark datasets, evaluation methods, and open source algorithms. We also perform empirical studies to compare the performance of representative algorithms on common datasets, and analyze their computational complexity. Finally, we suggest promising research directions to facilitate future study.
+Index Terms—Information networks, graph mining, network representation learning, network embedding.
+!
+INTRODUCTION
+I
+Nformation networks are becoming ubiquitous across a large spectrum of real-world applications in forms of social networks, citation networks, telecommunication networks and biological networks, etc. The scale of these networks ranges from hundreds to millions or even billions of vertices. Analyzing information networks plays a crucial role in a variety of emerging applications across many disciplines. For example, in social networks, classifying users into meaningful social groups is useful for many important tasks, such as user search, targeted advertising and recommendations; in communication networks, detecting community structures can help better understand the rumor spreading process; in biological networks, inferring interactions between proteins can facilitate new treatments for diseases. Nevertheless, efficient analysis of these networks heavily relies on the ways how networks are represented.
+Often, a discrete adjacency matrix is used to represent a network, which only captures neighboring relationships between vertices. Indeed, this simple representation cannot embody more complex, higher-order structure relationships, such as paths, frequent substructure etc. As a result, such a traditional routine often makes many network analytic tasks computationally expensive and intractable over largescale networks. Taking community detection as an example, •
+Daokun Zhang and Chengqi Zhang are with the Centre for Artificial
+Intelligence, FEIT, University of Technology Sydney, Australia
+Email: Daokun.Zhang@student.uts.edu.au, Chengqi.Zhang@uts.edu.au.
+•
+Jie Yin is with the Discipline of Business Analytics, The University of Sydney, Australia.
+Email: jie.yin@sydney.edu.au.
+•
+Xingquan Zhu is with the Dept. of CEECS, Florida Atlantic University, USA.
+Email: xqzhu@cse.fau.edu.
+Manuscript received 3 Dec., 2017; revised 26 Apr. 2018; accepted 12 June
+2018. (Corresponding author: Jie Yin.) most existing algorithms involve calculating the spectral decomposition of a matrix with at least quadratic time complexity with respect to the number of vertices. This computational overhead makes algorithms hard to scale to large-scale networks with millions of vertices.
+Recently, network representation learning (NRL) has aroused a lot of research interest. NRL aims to learn latent, low-dimensional representations of network vertices, while preserving network topology structure, vertex content, and other side information. After new vertex representations are learned, network analytic tasks can be easily and efficiently carried out by applying conventional vector-based machine learning algorithms to the new representation space. This obviates the necessity for deriving complex algorithms that are applied directly on the original network.
+Earlier work related to network representation learning dates back to the early 2000s, when researchers proposed graph embedding algorithms as part of dimensionality reduction techniques. Given a set of i.i.d. (independent and identically distributed) data points as input, graph embedding algorithms first calculate the similarity between pairwise data points to construct an affinity graph, e.g., the k-nearest neighbor graph, and then embed the affinity graph into a new space having much lower dimensionality. The idea is to find a low-dimensional manifold structure hidden in the high-dimensional data geometry reflected by the constructed graph, so that connected vertices are kept closer to each other in the new embedding space. Isomap, Locally
+Linear Embedding (LLE) and Laplacian Eigenmap are examples of algorithms based on this rationale. However, graph embedding algorithms are designed on i.i.d. data mainly for dimensionality reduction purpose. Most of these algorithms usually have at least quadratic time complexity with respect to the number of vertices, so the scalability is a major issue when they are applied to large-scale networks. arXiv:1801.05852v3 [cs.SI] 19 Jul 2018
+Since 2008, significant research efforts have shifted to the development of effective and scalable representation learning techniques that are directly designed for complex information networks. Many NRL algorithms, e.g.,,,,, have been proposed to embed existing networks, showing promising performance for various applications.
+These algorithms embed a network into a latent, lowdimensional space that preserves structure proximity and attribute affinity, such that the original vertices of the network can be represented as low-dimensional vectors. The resulting compact, low-dimensional vector representations can be then taken as features to any vector-based machine learning algorithms. This paves the way for a wide range of network analytic tasks to be easily and efficiently tackled in the new vector space, such as node classification,, link prediction,, clustering, recommendation,, similarity search, and visualization.
+Using vector representation to represent complex networks has now been gradually advanced to many other domains, such as point-of-interest recommendation in urban computing, and knowledge graph search in knowledge engineering and database systems.
+Challenges
+Despite its great potential, network representation learning is inherently difficult and is confronted with several key challenges that we summarize as follows.
+Structure-preserving: To learn informative vertex representations, network representation learning should preserve network structure, such that vertices similar/close to each other in the original structure space should also be represented similarly in the learned vector space. However, as stated in,, the structure-level similarity between vertices is reflected not only at the local neighborhood structure but also at the more global community structure.
+Therefore, the local and global structure should be simultaneously preserved in network representation learning.
+Content-preserving: Besides structure information, vertices of many networks are attached with rich content on attributes. Vertex attributes not only exert huge impacts on the forming of networks, but also provide direct evidence to measure attribute-level similarity between vertices. Therefore, if properly imported, attribute content can compensate network structure to render more informative vertex representations. However, due to heterogeneity of the two information sources, how to effectively leverage vertex attributes and make them compensate rather than deteriorate network structure is an open research problem.
+Data sparsity: For many real-world information networks, due to the privacy or legal restrictions, the problem of data sparsity exists in both network structure and vertex content. At the structure level, only very limited links are sometimes observed, making it difficult to discover the structure-level relatedness between vertices that are not explicitly connected. At the vertex content level, many values of vertex attributes are usually missing, which increases the difficulty of measuring content-level vertex similarity.
+Thus, it is challenging for network representation learning to overcome the data sparsity problem.
+Scalability: Real-world networks, social networks in particular, consist of millions or billions of vertices. The large scale of the networks challenges not only the traditional network analytic tasks but also the newborn network representation learning task. Without special concern, learning vertex representations for large-scale networks with limited computing resources may cost months of time, which is practically infeasible, especially for the case involving a large number of trails for tuning parameters. Therefore, it is necessary to design NRL algorithms that can learn vertex representations efficiently and meanwhile guarantee the effectiveness for large-scale networks.
+Our Contribution
+This survey provides a comprehensive up-to-date review of the state-of-the-art network representation learning techniques, with a focus on the learning of vertex representations. It covers not only early work on preserving network structure, but also a new surge of recent studies that incorporate vertex content and/or vertex labels as auxiliary information into the learning process of network embedding. By doing so, we hope to provide a useful guideline for the research community to better understand (1) new taxonomies of network representation learning methods, (2) the characteristics, uniqueness, and the niche of different types of network embedding methods, and (3) the resources and future challenges to stimulate research in the area. In particular, this survey has four major contributions:
+•
+We propose new taxonomies to categorize existing network representation learning techniques according to the underlying learning mechanisms, the network information intended to preserve, as well as the algorithmic designs and methodologies. As a result, this survey provides new angles to better understand the existing work.
+•
+We provide a detailed and thorough study of the state-of-the-art network representation learning algorithms. Compared to the existing graph embedding surveys, we not only review a more comprehensive set of research work on network representation learning, but also provide multifaceted algorithmic perspectives to understand the advantages and disadvantages of different algorithms.
+•
+We summarize evaluation protocols used for validating network representation learning techniques, including published benchmark datasets, evaluation methods, and open source algorithms. We also perform empirical studies to compare the performance of representative algorithms, along with a detailed analysis of computational complexity.
+•
+To foster future research, we suggest six promising future research directions for network representation learning, and summarize the limitations of current research work and propose new research ideas for each direction.
+Related Surveys and Differences
+A few graph embedding and representation learning related surveys exist in the recent literature. The first is, which reviews a few representative methods for network representation learning and visits some key concepts around the 3 idea of representation learning and its connections to other related field such as dimensionality reduction, deep learning, and network science. categorizes representative network embedding algorithms from a methodology perspective. reviews a few representation learning methods for embedding individual vertices as well as subgraphs, especially those inspired by deep learning, within an encoderdecoder framework. Yet, the majority of embedding algorithms reviewed by these surveys primarily preserve network structure. Recently,, extend to cover work leveraging other side information, such as vertex attributes and/or vertex labels, to harness representation learning.
+In summary, existing surveys have the following limitations. First, they typically focus on one single taxonomy to categorize the existing work. None of them provides a multifaceted view to analyze the state-of-the-art network representation learning techniques and to compare their advantages and disadvantages. Second, existing surveys do not have in-depth analysis of algorithm complexity and optimization methods, or they do not provide empirical results to compare the performance of different algorithms. Third, there is a lack of summary on available resources, such as publicly available datasets and open source algorithms, to facilitate future research. In this work, we provide the most comprehensive survey to bridge the gap. We believe that this survey will benefit both researchers and practitioners to gain a deep understanding of different approaches, and provide rich resources to foster future research in the field.
+Organization of the Survey
+The rest of this survey is organized as follows. In Section 2, we provide preliminaries and definitions required to understand the problem and the models discussed next. Section 3 proposes new taxonomies to categorize the existing network representation learning techniques. Section 4 and Section 5 review representative algorithms in two categories, respectively. A list of successful applications of network representation learning are discussed in Section 6. In Section 7, we summarize the evaluation protocols used to validate network representation learning, along with a comparison of algorithm performance and complexity. We discuss potential research directions in Section 8, and conclude the survey in Section 9.
+NOTATIONS AND DEFINITIONS
+In this section, as preliminaries, we first define important terminologies that are used to discuss the models next, followed by a formal definition of the network representation learning problem. For ease of presentation, we first define a list of common notations that will be used throughout the survey, as shown in Table 1.
+Definition 1 (Information Network). An information network is defined as G = (V, E, X, Y ), where V denotes a set of vertices, and |V | denotes the number of vertices in network G. E ⊆ (V × V ) denotes a set of edges connecting the vertices. X ∈ R|V |×m is the vertex attribute matrix, where m is the number of attributes, and the element Xij is the value of the i-th vertex on the j-th attribute. Y ∈ R|V |×|Y| is the vertex label matrix with
+TABLE 1
+A summary of common notations
+G
+The given information network
+V
+Set of vertices in the given information network
+E
+Set of edges in the given information network
+|V |
+Number of vertices
+|E|
+Number of edges m
+Number of vertex attributes d
+Dimension of learned vertex representations
+X ∈ R|V |×m
+The vertex attribute matrix
+Y
+Set of vertex labels
+|Y|
+Number of vertex labels
+Y ∈ R|V |×|Y|
+The vertex label matrix
+Y being a set of labels. If the i-th vertex has the k-th label, the element Yik = 1; otherwise, Yik = −1. Due to privacy concern or information access difficulty, vertex attribute matrix X is often sparse and vertex label matrix
+Y is usually unobserved or partially observed. For each(vi, vj) ∈ E, if information network G is undirected, we have (vj, vi) ∈ E; if G is directed, (vj, vi) unnecessarily belongs to E.1 Each edge (vi, vj) ∈ E is also associated to a weight wij, which is equal to 1, if the information network is binary (unweighted).
+Intuitively, the generation of information networks is not groundless, but guided or dominated by certain latent mechanisms. Although the latent mechanisms are hardly known, they can be reflected by some network properties that widely exist in information networks. Hence, the common network properties are essential for the learning of vertex representations that are informative to accurately interpret information networks. Below, we introduce several common network properties.
+Definition 2 (First-order Proximity). The first-order proximity is the local pairwise proximity between two connected vertices. For each vertex pair (vi, vj), if(vi, vj) ∈ E, the first-order proximity between vi and vj is wij; otherwise, the first-order proximity between vi and vj is 0. The first-order proximity captures the direct neighbor relationships between vertices.
+Definition 3 (Second-order Proximity and High-order Proximity). The second-order proximity captures the 2-step relations between each pair of vertices. For each vertex pair (vi, vj), the second order proximity is determined by the number of common neighbors shared by the two vertices, which can also be measured by the 2-step transition probability from vi to vj equivalently.
+Compared with the second-order proximity, the highorder proximity captures more global structure, which explores k-step (k ≥ 3) relations between each pair of vertices. For each vertex pair (vi, vj), the higherorder proximity is measured by the k-step (k ≥ 3) transition probability from vertex vi to vertex vj, which can also be reflected by the number of k-step (k ≥ 3) paths from vi to vj. The second-order and high-order proximity capture the similarity between a pair of, indirectly connected, vertices with similar structural contexts.
+1Without any specific declaration, the networks discussed in this survey are assumed to be undirected.
+15 network
+Fig. 1. An illustrative example of structural role proximity. Vertex 4 and vertex 12 have similar structural roles, but are located far away from each other.
+Definition 4 (Structural Role Proximity). The structural role proximity depicts similarity between vertices serving as the similar roles in their neighborhood, such as edge of a chain, center of a star, and a bridge between two communities. In communication and traffic networks, vertices' structural roles are important to characterize their properties. Different from the first-order, second-order and high-order proximity, which capture the similarity between vertices close to each other in the network, the structural role proximity tries to discover the similarity between distant vertices while sharing the equivalent structural roles. As is shown in Fig. 1, vertex 4 and vertex
+12 are located far away from each other, while they serve as the same structural role, center of a star. Thus, they have high structural role proximity.
+Definition(Intra-community
+Proximity). The intracommunity proximity is the pairwise proximity between vertices in a same community. Many networks have community structure, where vertex-vertex connections within the same community are dense, but connections to vertices outside the community are sparse. As cluster structure, a community preserves certain kinds of common properties of vertices within it. For example, in social networks, communities might represent social groups by interest or background; in citation networks, communities might represent related papers on a same topic. The intra-community proximity captures such cluster structure by preserving the common property shared by vertices within a same community.
+Vertex attribute: In addition to network structure, vertex attributes can provide direct evidence to measure contentlevel similarity between vertices. As shown in,,, vertex attributes and network structure can help each other filter out noisy information and compensate each other to jointly learn informative vertex representations.
+Vertex label: Vertex labels provide direct information about the semantic categorization of each network vertex to certain classes or groups. Vertex labels are strongly influenced by and inherently correlated to both network structure and vertex attributes. Though vertex labels are usually partially observed, when coupled with network structure and vertex attributes, they encourage a network structure and vertex attribute consistent labeling, and help learn informative and discriminative vertex representations.
+Definition 6 (Network Representation Learning (NRL)).
+Given an information network G = (V, E, X, Y ), by integrating network structure in E, vertex attributes in X and vertex labels in Y (if available), the task of network representation learning is to learn a mapping function f : v �−→ rv ∈ Rd, where rv is the learned vector representation of vertex v, and d is the dimension of the learned representation. The transformation f preserves the original network information, such that two vertices similar in the original network should also be represented similarly in the learned vector space.
+The learned vertex representations should satisfy the following conditions: (1) low-dimensional,i.e., d ≪ |V |, in other words, the dimension of learned vertex representations should be much smaller than the dimension of the original adjacency matrix representation for memory efficiency and the scalability of subsequent network analytic tasks; (2) informative, i.e., the learned vertex representations should preserve vertex proximity reflected by network structure, vertex attributes and vertex labels (if available);(3) continuous, i.e., the learned vertex representations should have continuous real values to support subsequent network analytic tasks, like vertex classification, vertex clustering, or anomaly detection, and have smooth decision boundaries to ensure the robustness of these tasks.(a) Input: Information Network(b) Output: Vertex Representations
+Fig. 2. A conceptual view of network representation learning. Vertices in(a) are indexed using their ID and color coded based on their community information. The network representation learning in (b) transforms all vertices into a two-dimensional vector space, such that vertices with structural proximity are close to each other in the new embedding space.
+Fig. 2 demonstrates a conceptual view of network representation learning, using a toy network. In this case, only network structure is considered to learn vertex representations. Given an information network shown in Fig. 2(a), the objective of NRL is to embed all network vertices into a low-dimensional space, as depicted in Fig. 2(b). In the embedding space, vertices with structural proximity are represented closely to each other. For example, as vertex 7 and vertex 8 are directly connected, the first-order proximity enforces them close to each other in the embedding space.
+Though vertex 2 and vertex 5 are not directly connected, they are also embedded closely to each other because they have high second-order proximity, which is reflected by 4 common neighbors shared by these two vertices. Vertex 20 and vertex 25 are not directly connected, nor do they share common direct neighbors. However, they are connected by many k-step paths (k ≥ 3), which proves that they have high-order proximity. Thus, vertex 20 and vertex 25 also have close embeddings. Different from other vertices, vertex
+10–16 clearly belong to the same community in the original network. This intra-community proximity guarantees the images of these vertices also exhibit a clear cluster structure in the embedding space.
+Network Representation Learning
+Unsupervised NRL(Section 4)
+Semi-supervised NRL(Section 5)
+Unsupervised Structure
+Preserving NRL(Section 4.1)
+Unsupervised Content
+Augmented NRL(Section 4.2)
+Semi-supervised Structure
+Preserving NRL(Section 5.1)
+Semi-supervised Content
+Augmented NRL(Section 5.2)
+Structure Information microscopic structure macroscopic structure
+Information Sources network structure vertex attributes
+Information Sources network structure vertex labels
+Information Sources network structure vertex attributes vertex labels mesoscopic structure
+Fig. 3. The proposed taxonomy to summarize network representation learning techniques. We categorize network representation learning into two groups, unsupervised network representation learning and semi-supervised network representation learning, depending on whether vertex labels are available for learning. For each group, we further categorize methods into two subgroups, depending on whether the representation learning is based on network topology structure only, or augmented with information from node content.
+CATEGORIZATION
+In this section, we propose a new taxonomy to categorize existing network representation learning techniques in the literature, as shown in Fig. 3. The first layer of the taxonomy is based on whether vertex labels are provided for learning.
+According to this, we categorize network representation learning into two groups: unsupervised network representation learning and semi-supervised network representation learning.
+Unsupervised network representation learning. In this setting, there are no labeled vertices provided for learning vertex representations. Network representation learning is therefore considered as a generic task independent of subsequent learning, and vertex representations are learned in an unsupervised manner.
+Most of the existing NRL algorithms fall into this category. After vertex representations are learned in a new embedding space, they are taken as features to any vectorbased algorithms for various learning tasks. Unsupervised
+NRL algorithms can be further divided into two subgroups based on the type of network information available for learning: unsupervised structure preserving methods that preserve only network structure, and unsupervised content augmented methods that incorporate vertex attributes and network structure to learn joint vertex embeddings.
+Semi-supervised network representation learning. In this case, there exist some labeled vertices for representation learning. Because vertex labels play an essential role in determining the categorization of each vertex with strong correlations to network structure and vertex attributes, semisupervised network representation learning is proposed to take advantage of vertex labels available in the network for seeking more effective joint vector representations.
+In this setting, network representation learning is coupled with supervised learning tasks such as vertex classification. A unified objective function is often formulated to simultaneously optimize the learning of vertex representations and the classification of network vertices. Therefore, the learned vertex representations can be both informative and discriminative with respect to different categories.
+Semi-supervised NRL algorithms can also be categorized into two subgroups, semi-supervised structure preserving methods and semi-supervised content augmented methods.
+Table 2 summarizes all NRL algorithms, according to the information sources that they use for representation learning. In general, there are three main types of information sources: network structure, vertex attributes, and vertex labels. Most of the unsupervised NRL algorithms focus on preserving network structure for learning vertex representations, and only a few algorithms (e.g., TADW, HSCA ) attempt to leverage vertex attributes. By contrast, under the semi-supervised learning setting, half of the algorithms intend to couple vertex attributes with network structure and vertex labels to learn vertex representations.
+On both settings, most of the algorithms focus on preserving microscopic structure, while very few algorithms (e.g., MNMF, DP, HARP ) attempt to take advantage of the mesoscopic and macroscopic structure.
+Approaches to network representation learning in the above two different settings can be summarized into five categories from algorithmic perspectives.
+Matrix factorization based methods. Matrix factorization based methods represent the connections between network vertices in the form of a matrix and use matrix factorization to obtain the embeddings. Different types of matrices are constructed to preserve network structure, such as the k-step transition probability matrix, the modularity matrix, or the vertex-context matrix. By assuming that such high-dimensional vertex representations are only affected by a small quantity of latent factors, matrix factorization is used to embed the highdimensional vertex representations into a latent, low-dimensional structure preserving space.
+Factorization strategies vary across different algoTABLE 2
+A summary of NRL algorithms according to the information sources they use for learning
+Category
+Algorithms
+Network Structure
+Vertex Attributes
+Vertex Labels
+Microscopic
+Mesoscopic
+Macroscopic
+Structural Role
+Intra-community
+Proximity
+Proximity
+Unsupervised
+Social Dim.,, 
+✓
+DeepWalk 
+✓
+LINE 
+✓
+GraRep 
+✓
+DNGR 
+✓
+SDNE 
+✓ node2vec 
+✓
+HOPE 
+✓
+APP 
+✓
+M-NMF 
+✓
+✓
+GraphGAN 
+✓ struct2vec 
+✓
+GraphWave 
+✓
+SNS 
+✓
+✓
+DP 
+✓
+✓
+HARP 
+✓
+✓
+TADW 
+✓
+✓
+HSCA 
+✓
+✓ pRBM 
+✓
+✓
+UPP-SNE 
+✓
+✓
+PPNE 
+✓
+✓
+Semi-supervised
+DDRW 
+✓
+✓
+MMDW 
+✓
+✓
+TLINE 
+✓
+✓
+GENE 
+✓
+✓
+SemiNE 
+✓
+✓
+TriDNR 
+✓
+✓
+✓
+LDE 
+✓
+✓
+✓
+DMF 
+✓
+✓
+✓
+Planetoid 
+✓
+✓
+✓
+LANE 
+✓
+✓
+✓ rithms according to their objectives. For example, in the Modularity Maximization method, eigen decomposition is performed on the modularity matrix to learn community indicative vertex representations ; in the TADW algorithm, inductive matrix factorization is carried out on the vertexcontext matrix to simultaneously preserve vertex textual features and network structure in the learning of vertex representations. Although matrix factorization based methods have been proved effective in learning informative vertex representations, the scalability is a major bottleneck because carrying out factorization on a matrix with millions of rows and columns is memory intensive and computationally expensive or, sometime, even infeasible.
+Random walk based methods. For scalable vertex representation learning, random walk is exploited to capture structural relationships between vertices. By performing truncated random walks, an information network is transformed into a collection of vertex sequences, in which, the occurrence frequency of a vertex-context pair measures the structural distance between them. Borrowing the idea of word representation learning,, vertex representations are then learned by using each vertex to predict its contexts. DeepWalk is the pioneer work in using random walks to learn vertex representations. node2vec further exploits a biased random walk strategy to capture more flexible contextual structure.
+As the extensions of the structure only preserving version, algorithms like DDRW, GENE and SemiNE incorporate vertex labels with network structure to harness representation learning, PPNE imports vertex attributes, and Tri-DNR
+ enforces the model with both vertex labels and attributes. As these models can be trained in an online manner, they have great potential to scale up.
+Edge modeling based methods. Different from approaches that use matrix or random walk to capture network structure, the edge modeling based methods directly learn vertex representations from vertex-vertex connections. For capturing the firstorder and second-order proximity, LINE models
+TABLE 3
+A categorization of NRL algorithms from methodology perspectives
+Methodology
+Algorithms
+Advantage
+Disadvantage
+Matrix Factorization
+Social Dim.,, GraRep, HOPE, GraphWave, M-NMF, TADW, HSCA, MMDW, DMF, LANE capture global structure high time and memory cost
+Random Walk
+DeepWalk, node2vec, APP, DDRW, GENE, TriDNR, UPP-SNE, struct2vec, SNS, PPNE, SemiNE relatively efficient only capture local structure
+Edge Modeling
+LINE, TLINE, LDE, pRBM, GraphGAN efficient only capture local structure
+Deep Learning
+DNGR, SDNE capture non-linearity high time cost
+Hybrid
+DP, HARP, Planetoid capture global structure a joint probability distribution and a conditional probability distribution, respectively, on connected vertices. To learn the representations of linked documents, LDE models the document-document relationships by maximizing the conditional probability between connected documents. pRBM adapts the RBM model to linked data by making the hidden RBM representations of connected vertices similar to each other. GraphGAN adopts Generative Adversarial Nets (GAN) to accurately model the vertex connectivity probability. Edge modeling based methods are more efficient compared to matrix factorization and random walk based methods. However, these methods cannot capture global network structure as they only consider observable vertex connectivity information.
+Deep learning based methods. To extract complex structure features and learn deep, highly nonlinear vertex representations, deep learning techniques, are also applied to network representation learning. For example, DNGR applies the stacked denoising autoencoders (SDAE) on the high-dimensional matrix representations to learn deep low-dimensional vertex representations.
+SDNE uses a semi-supervised deep autoencoder model to model non-linearity in network structure. Deep learning based methods have the ability to capture non-linearity in networks, but their computational time cost is usually high. Traditional deep learning architectures are designed for 1D, 2D, or 3D Euclidean structured data, but efficient solutions need to be developed on nonEuclidean structured data like graphs.
+Hybrid methods. Some other methods make use of a mixture of above methods to learn vertex representations. For example, DP enhances spectral embedding and DeepWalk with the degree penalty principle to preserve the macroscopic scale-free property. HARP takes advantage of random walk based methods (DeepWalk and node2vec ) and edge modeling based method(LINE ) to learn vertex representations from small sampled networks to the original network.
+We summarize all five categories of network representation learning techniques and compare their advantages and disadvantages in Table 3.
+UNSUPERVISED
+NETWORK
+REPRESENTATION
+LEARNING
+In this section, we review unsupervised network representation learning methods by separating them into two subsections, as outlined in Fig. 3. After that, we summarize key characteristics of the methods and compare their differences across the two categories.
+Unsupervised Structure Preserving Network Representation Learning
+Structure preserving network representation learning refers to methods that intend to preserve network structure, in the sense that vertices close to each other in the original network space should be represented similarly in the new embedding space. In this category, research efforts have been focused on designing various models to capture structure information conveyed by the original network as much as possible.
+Network Structure
+Microscopic Structure
+Macroscopic Structure
+Mesoscopic Structure
+Structural Role Proximity
+Intra-community Proximity(Sec. 4.1.1)(Sec. 4.1.2)(Sec. 4.1.3)(Sec. 4.1.4)
+Fig. 4. Categorization of network structure.
+We summarize network structure considered for learning vertex representations into three types: (i) microscopic structure, which includes local closeness proximity, i.e., the first-order, second-order, and high-order proximity, (ii) mesoscopic structure, which captures structural role proximity and the intra-community proximity, and (iii) macroscopic structure, which captures global network properties, such as the scale-free property or small world property.
+The following subsections are organized according to our categorization of network structure, as depicted in Fig. 4.
+Microscopic Structure Preserving NRL
+This category of NRL algorithms aim to preserve local structure information among directly or indirectly connected
+Network
+Random Walks
+……
+……
+……
+……
+……
+……
+Representation Learning
+Fig. 5. The workflow of DeepWalk. It first generates random walk sequences from a given network, and then applies the Skip-Gram model to learn vertex representations. vertices in their neighborhood, including first-order, secondorder, and high-order proximity. The first-order proximity captures the homophily, i.e., directly connected vertices tend to be similar to each other, while the second-order and highorder proximity captures the similarity between vertices sharing common neighbors. Most of structure preserving
+NRL algorithms fall into this category.
+DeepWalk. DeepWalk generalizes the idea of the Skip-Gram model, that utilizes word context in sentences to learn latent representations of words, to the learning of latent vertex representations in networks, by making an analogy between natural language sentence and short random walk sequence. The workflow of DeepWalk is given in Fig. 5. Given a random walk sequence with length L, {v1, v2, · · ·, vL}, following Skip-Gram, DeepWalk learns the representation of vertex vi by using it to predict its context vertices, which is achieved by the optimization problem: min f
+− log Pr({vi−t, · · ·, vi+t} \ vi|f(vi)), (1) where {vi−t, · · ·, vi+t} \ vi are the context vertices of vertex vi within t window size. Making conditional independence assumption, the probability Pr({vi−t, · · ·, vi+t} \ vi|f(vi)) is approximated as
+Pr ({vi−t, · · ·, vi+t} \ vi|f(vi)) = i+t
+� j=i−t,j̸=i
+Pr(vj|f(vi)).
+Following the DeepWalk's learning architecture, vertices that share similar context vertices in random walk sequences should be represented closely in the new embedding space.
+Considering the fact that context vertices in random walk sequences describe neighborhood structure, DeepWalk actually represents vertices sharing similar neighbors (direct or indirect) closely in the embedding space, so the secondorder and high-order proximity is preserved.
+Large-scale Information Network Embedding (LINE).
+Instead of exploiting random walks to capture network structure, LINE learns vertex representations by explicitly modeling the first-order and second-order proximity.
+To preserve the first-order proximity, LINE minimizes the following objective:
+O1 = d(ˆp1(·, ·), p1(·, ·)).
+For each vertex pair vi and vj with (vi, vj) ∈ E, p1(·, ·) is the joint distribution modeled by their latent embeddings rvi and rvj. ˆp1(vi, vj) is the empirical distribution between them. d(·, ·) is the distance between two distributions.
+To preserve the second-order proximity, LINE minimizes the following objective:
+O2 =
+� vi∈V λid(ˆp2(·|vi), p2(·|vi)), (4) where p2(·|vi) is the context conditional distribution for each vi ∈ V modeled by vertex embeddings, ˆp2(·|vi) is the empirical conditional distribution and λi is the prestige of vertex vi. Here, vertex context is determined by its neighbors, i.e., for each vj, vj is vi's context, if and only if (vi, vj) ∈ E.
+By minimizing these two objectives, LINE learns two kinds of vertex representations that preserve the first-order and second-order proximity, and takes their concatenation as the final vertex representation.
+GraRep.
+Following the idea of DeepWalk, GraRep extends the skip-gram model to capture the high-order proximity, i.e., vertices sharing common k-step neighbors (k ≥ 1) should have similar latent representations. Specifically, for each vertex, GraRep defines its kstep neighbors (k ≥ 1) as context vertices, and for each
+1 ≤ k ≤ K, to learn k-step vertex representations, GraRep employs the matrix factorization version of skip-gram:
+�
+U k, Σk, V k�
+= SV D(Xk).(5) where Xk is the log k-step transition probability matrix. The k-step representation for vertex vi is constructed as the ith row of matrix U k d (Σk d)
+2, where U k d is the first-d columns of U k and Σk d is the diagonal matrix composed of the top d singular values. After k-step vertex representations are learned, GraRep concatenates them together as the final vertex representations.
+Deep Neural Networks for Graph Representations(DNGR). To overcome the weakness of truncated random walks in exploiting vertex contextual information, i.e., the difficulty in capturing correct contextual information for vertices at the boundary of sequences and the difficulty in determining the walk length and the number of walks, DNGR utilizes the random surfing model to capture contextual relatedness between each pair of vertices and preserves them into |V |-dimensional vertex representations
+X. To extract complex features and model non-linearities, DNGR applies the stacked denoising autoencoders (SDAE) to the high-dimensional vertex representations X to learn deep low-dimensional vertex representations.
+Structural
+Deep
+Network
+Embedding(SDNE).
+SDNE is a deep learning based approach that uses a semi-supervised deep autoencoder model to capture non-linearity in network structure. In the unsupervised component, SDNE learns the second-order proximity preserving vertex representations via reconstructing the |V |dimensional vertex adjacent matrix representations, which tries to minimize
+L2nd =
+|V |
+� i=1
+∥(r(0) vi − ˆr(0) vi ) ⊙ bi∥2
+2, (6) where r(0) vi = Si: is the input representation and ˆr(0) vi is the reconstructed representation. bi is a weight vector used to penalize construction error more on non-zero elements of S.
+BFS
+DFS
+Fig. 6. Two different neighborhood sampling strategies considered by node2vec: BFS and DFS.
+In the supervised component, SDNE imports the firstorder proximity by penalizing the distance between connected vertices in the embedding space. The loss function for this objective is defined as:
+L1st =
+|V |
+� i,j=1
+Sij∥r(K) vi
+− r(K) vj ∥2
+2, (7) where r(K) vi is the K-th layer representation of vertex vi, with
+K being the number of hidden layers.
+In all, SDNE minimizes the joint objective function:
+L = L2nd + αL1st + νLreg, (8) where Lreg is a regularization term to prevent overfitting.
+After solving the minimization of (8), for vertex vi, the K-th layer representation r(K) vi is taken as its representation rvi. node2vec. In contrast to the rigid strategy of defining neighborhood (context) for each vertex, node2vec designs a flexible neighborhood sampling strategy, i.e., biased random walk, which smoothly interpolates between two extreme sampling strategies, i.e., Breadth-first Sampling (BFS) and Depth-first Sampling (DFS), as illustrated in Fig. 6.
+The biased random walk exploited in node2vec can better preserve both the second-order and high-order proximity.
+Following the skip-gram architecture, given the set of neighbor vertices N(vi) generated by biased random walk, node2vec learns the vertex representation f(vi) by optimizing the occurrence probability of neighbor vertices N(vi) conditioned on the representation of vertex vi, f(vi): max f
+� vi∈V log Pr(N(vi)|f(vi)).
+High-order Proximity Preserved Embedding (HOPE).
+HOPE learns vertex representations that capture the asymmetric high-order proximity in directed networks. In undirected networks, the transitivity is symmetric, but it is asymmetric in directed networks. For example, in an directed network, if there is a directed link from vertex vi to vertex vj and from vertex vj to vertex vk, it is more likely to have a directed link from vi to vk, but not from vk to vi.
+To preserve the asymmetric transitivity, HOPE learns two vertex embedding vectors U s, U t ∈ R|V |×d, which is called source and target embedding vectors, respectively. After constructing the high-order proximity matrix
+S from four proximity measures, i.e., Katz Index, Rooted PageRank, Common Neighbors and AdamicAdar. HOPE learns vertex embeddings by solving the following matrix factorization problem: min
+Us,Ut ∥S − U s · U tT∥2
+F.
+TABLE 4
+A summary of microscopic structure preserving NRL algorithms
+Algorithms
+First-order
+Second-order
+High-order
+Proximity
+Proximity
+Proximity
+DeepWalk 
+✓
+✓
+LINE 
+✓
+✓
+GraRep 
+✓
+✓
+DNGR 
+✓
+✓
+SDNE 
+✓
+✓ node2vec 
+✓
+✓
+HOPE 
+✓
+✓
+APP 
+✓
+✓
+GraphGAN 
+✓
+Asymmetric Proximity Preserving graph embedding(APP). APP is another NRL algorithm designed to capture asymmetric proximity, by using a Monte Carlo approach to approximate the asymmetric Rooted PageRank proximity. Similar to HOPE, APP has two representations for each vertex vi, the one as a source role rs vi and the other as a target role rt vi. For each sampled path starting from vi and ending with vj, the representations are learned by maximizing the target vertex vj's occurrence probability conditioned on the source vertex vi:
+Pr(vj|vi) = exp(rs vi · rt vj)
+� v∈V exp(rsvi · rtv).
+GraphGAN. GraphGAN learns vertex representations by modeling the connectivity behavior through an adversarial learning framework. Inspired by GAN (Generative
+Adversarial Nets), GraphGAN works through two components: (i) Generator G(v|vc), which fits the distribution of the vertices connected to vc across V and generates the likely connected vertices, and (ii) Discriminator D(v, vc), which outputs a connecting probability for the vertex pair (v, vc), to differentiate the vertex pairs generated by G(v|vc) from the ground truth. G(v|vc) and D(v, vc) compete in a way that G(v|vc) tries to fit the true connecting distribution as much as possible and generates fake connected vertex pairs to fool D(v, vc), while D(v, vc) tries to increase its discriminative power to distinguish the vertex pairs generated by
+G(v|vc) from the ground truth. The competition is achieved by the following minimax game: min θG max θD
+� vc∈V
+�
+Ev∼Prtrue(·|vc) [log D(v, vc; θD)]
++ Ev∼G(·|vc;θG) [log(1 − D(v, vc; θD))]
+�
+Here, G(v|vc; θG) and D(v, vc; θD) are defined as following:
+G(v|vc; θG) = exp(gv · gvc)
+� v̸=vc exp(gv · gvc), D(v, vc; θD) =
+1 + exp(dv · dvc), (13) where gv ∈ Rk and dv ∈ Rk is the representation vector for generator and discriminator, respectively, and θD = {dv}, θG = {gv}. After the minimax game in Eq. (12) is solved, gv serves as the final vertex representations.
+Summary: The proximity preserved by microscopic structure preserving NRL algorithms is summarized in Table 4. Most algorithms in this category preserve the secondorder and high-order proximity, whereas only LINE, SDNE and GraphGAN consider the first-order proximity. From the methodology perspective, DeepWalk, node2vec and APP employ random walks to capture vertex neighborhood structure. GraRep and HOPE are realized by performing factorization on a |V | × |V | scale matrix, making them hard to scale up.
+LINE and GraphGAN directly model the connectivity behavior, while deep learning based methods (DNGR and SDNE ) learn non-linear vertex representations.
+Structural Role Proximity Preserving NRL
+Besides local connectivity patterns, vertices often share similar structural roles at a mesoscopic level, such as centers of stars or members of cliques. Structural role proximity preserving NRL aims to embed vertices that are far away from each other but share similar structural roles close to each other. This not only facilitates the downstream structural role dependent tasks but also enhances microscopic structure preserving NRL. struct2vec. struct2vec first encodes the vertex structural role similarity into a multilayer graph, where the weights of edges at each layer are determined by the structural role difference at the corresponding scale. DeepWalk is then performed on the multilayer graph to learn vertex representations, such that vertices close to each other in the multilayer graph (with high structural role similarity) are embedded closely in the new representation space.
+For each vertex pair (vi, vj), considering their k-hop neighborhood formed by their neighbors within k steps, their structural distance at scale k, Dk(vi, vj), is defined as
+Dk(vi, vj) = Dk−1(vi, vj) + g(s(Rk(vi)), s(Rk(vj))), (14) where Rk(vi) is the set of vertices in vi's k-hop neighborhood, s(Rk(vi)) is the ordered degree sequence of the vertices in Rk(vi), and g(s(Rk(vi)), s(Rk(vj))) is the distance between the ordered degree sequences s(Rk(vi)) and s(Rk(vj)). When k = 0, D0(vi, vj) is the degree difference between vertex vi and vj.
+GraphWave. By making use of the spectral graph wavelet diffusion patterns, GraphWave embeds vertex neighborhood structure into a low-dimensional space and preserves the structural role proximity. The assumption is that, if two vertices residing distantly in the network share similar structural roles, the graph wavelets starting at them will diffuse similarly across their neighbors.
+For vertex vk, its spectral graph wavelet coefficients Ψk is defined as
+Ψk = UDiag(gs(λ1), · · ·, gs(λ|V |))U Tδk, (15) where U is the eigenvector matrix of the graph Laplacian
+L and λ1, · · ·, λ|V | are the eigenvalues, gs(λ) = exp(−λs) is the heat kernel, and δk is the one-hot vector for k. By taking Ψk as a probability distribution, the spectral wavelet distribution pattern in Ψk is then encoded into its empirical characteristic function: φk(t) =
+|V |
+|V |
+� m=1 eitΨkm.
+Then vk's low-dimensional representation is then obtained by sampling the 2-dimensional parametric function of φk(t) at d evenly separated points t1, t2, · · ·, td as: f(vk) = [Re(φk(t1)), · · ·, Re(φk(td)), Im(φk(t1)), · · ·, Im(φk(td))].
+Structural and Neighborhood Similarity preserving network embedding (SNS). SNS enhances a random walk based method with structural role proximity. To preserve vertex structural roles, SNS represents each vertex as a Graphlet Degree Vector with each element being the number of times the given vertex is touched by the corresponding orbit of graphlets. The Graphlet Degree Vector is used to measure the vertex structural role similarity.
+Given a vertex vi, SNS uses its context vertices C(vi) and structurally similar vertices S(vi) to predict its existence, which is achieved by maximizing the following probability:
+Pr(vi|C(vi), S(vi)) = exp(r′ vi · hvi)
+� u∈V exp(r′u · hvi), (18) where r′ vi is the output representation of vi and hvi is the hidden layer representation for predicting vi, which is aggregated from the input representations ru, for each u in C(vi) and S(vi).
+Summary: struct2vec and GraphWave take advantage of structural role proximity to learn vertex representations that facilitate specific structural role dependent tasks, e.g., vertex classification in traffic networks, while SNS enhances a random walk based microscopic structure preserving NRL algorithm with structural role proximity. Technically, random walk is employed by struct2vec and SNS, while matrix factorization is adopted by GraphWave.
+Intra-community Proximity Preserving NRL
+Another interesting feature that real-world networks exhibit is the community structure, where vertices are densely connected to each other within the same community, but sparsely connected to vertices from other communities. For example, in social networks, people from the same interest group or affiliation often form a community. In citation networks, papers on similar research topics tend to frequently cite each other. Intra-community preserving NRL aims to leverage the community structure that characterizes key vertex properties to learn informative vertex representations.
+Learning Latent Social Dimensions. The social dimension based NRL algorithms try to construct social actors' embeddings through their membership or affiliation to a number of social dimensions. To infer these latent social dimensions, the phenomenon of "community" in social networks is considered, stating that social actors sharing similar properties often form groups with denser within-group connections. Thus, the problem boils down to one classical network analytic task—community detection—that aims to discover a set of communities with denser within-group connections than between-group connections. Three clustering techniques, including modularity maximization, spectral clustering and edge clustering are employed to discover latent social dimensions. Each social dimension describes the likelihood of a vertex belonging to a plausible affiliation. These methods preserve the global
+11 community structure, but neglect local structure properties, e.g., the first-order and second-order proximity.
+Modularized Nonnegative Matrix Factorization (MNMF). M-NMF augments the second-order and highorder proximity with broader community structure to learn more informative vertex embeddings U ∈ R|V |×d using the following objective: min
+M,U,H,C ∥S − MU T∥2
+F + α∥H − UCT∥2
+F − βtr(HTBH) s.t., M ≥ 0, U ≥ 0, H ≥ 0, C ≥ 0, tr(HTH) = |V |, (19) where vertex embedding U is learned by minimizing
+∥S − MU T∥2
+F, with S ∈ R|V |×|V | being the vertex pairwise proximity matrix, which captures the second-order and the high-order proximity when taken as representations. The community indicative vertex embedding H is learned by maximizing tr(HTBH), which is essentially the objective of modularity maximization with B being the modularity matrix. The minimization on ∥H − UCT∥2
+F makes these two embeddings consistent with each other by importing a community representation matrix C.
+Summary: The algorithms of learning latent social dimensions,, only consider the community structure to learn vertex representation, while M-NMF integrates microscopic structure (the second-order and highorder proximity) with the intra-community proximity. These methods primarily rely on matrix factorization to detect community structure, which makes them hard to scale up.
+Macroscopic Structure Preserving NRL
+Macroscopic structure preserving methods aim to preserve certain global network properties in a macroscopic view.
+Only very few recent studies are developed for this purpose.
+Degree penalty principle (DP). Many real-world networks present the macroscopic scale-free property, which depicts the phenomenon that vertex degree follows a longtailed distribution, i.e., most vertices are sparsely connected and only few vertices have dense edges. To capture the scale-free property, proposes the degree penalty principle (DP): penalizing the proximity between high-degree vertices. This principle is then coupled with two NRL algorithms (i.e., spectral embedding and DeepWalk ) to learn scale-free property preserving vertex representations.
+Hierarchical Representation Learning for Networks(HARP). To capture the global patterns in networks, HARP samples small networks to approximate the global structure. The vertex representations learned from sampled networks are taken as the initialization for inferring the vertex representations of the original network. In this way, global structure is preserved in the final representations. To obtain smooth solutions, a series of smaller networks are successively sampled from the original network by coalescing edges and vertices, and the vertex representations are hierarchically inferred back from the smallest network to the original network. In HARP, DeepWalk and LINE are used to learn vertex representations.
+Summary: DP and HARP are both realized by adapting the existing NRL algorithms to capture the macroscopic structure. The former tries to preserve the scale-free property, while the latter makes the learned vertex representations respect the global network structure.
+Unsupervised Content Augmented Network Representation Learning
+Besides network structure, real-world networks are often attached with rich content as vertex attributes, such as webpages in webpage networks, papers in citation networks, and user metadata in social networks. Vertex attributes provide direct evidence to measure content-level similarity between vertices. Therefore, network representation learning can be significantly improved if vertex attribute information is properly incorporated into the learning process.
+Recently, several content augmented NRL algorithms have been proposed to incorporate network structure and vertex attributes to reinforce the network representation learning.
+Text-Associated DeepWalk (TADW)
+TADW firstly proves the equivalence between DeepWalk and the following matrix factorization: min
+W,H ∥M − W TH∥2
+F + λ
+2 (∥W∥2
+F + ∥H∥2
+F ), (20) where W and H are learned latent embeddings and M is the vertex-context matrix carrying transition probability between each vertex pair within k steps. Then, textual features are imported through inductive matrix factorization
+ min
+W,H ∥M − W THT∥2
+F + λ
+2 (∥W∥2
+F + ∥H∥2
+F ), (21) where T is vertex textual feature matrix. After (21) is solved, the final vertex representations are formed by taking the concatenation of W and HT.
+Homophily, Structure, and Content Augmented Network Representation Learning (HSCA)
+Despite its ability to incorporate textural features, TADW only considers structural context of network vertices, i.e., the second-order and high-order proximity, but ignores the important homophily property (the first-order proximity) in its learning framework. HSCA is proposed to simultaneously integrates homophily, structural context, and vertex content to learn effective network representations.
+For TADW, the learned representation for the i-th vertex vi is �W T
+:i, (HT:i)T�T, where W:i and T:i is the i-th column of W and T, respectively. To enforce the firstorder proximity, HSCA introduces a regularization term to enforce homophily between directly connected nodes in the embedding space, which is formulated as
+R(W, H) = 1
+|V |
+� i,j=1
+Sij
+����
+�
+W:i
+HT:i
+�
+−
+�
+W:j
+HT:j
+�����, (22) where S is the adjacent matrix. The objective of HSCA is min
+W,H ∥M − W THT∥2
+F + λ
+2 (∥W∥2
+F + ∥H∥2
+F ) + µR(W, H), (23) where λ and µ are the trade-off parameters. After solving the above optimization problem, the concatenation of W and HT is taken as the final vertex representations.
+Paired Restricted Boltzmann Machine (pRBM)
+By leveraging the strength of Restricted Boltzmann Machine(RBM), designs a novel model called Paired RBM(pRBM) to learn vertex representations by combining vertex attributes and link information. The pRBM considers the networks with vertices associated with binary attributes.
+For each edge (vi, vj) ∈ E, the attributes for vi and vj are v(i) and v(j) ∈ {0, 1}m, and their hidden representations are h(i) and h(j) ∈ {0, 1}d. Vertex hidden representations are learned by maximizing the joint probability of pRBM defined over v(i), v(j), h(i) and h(j):
+Pr(v(i), v(j), h(i), h(j), wij; θ)
+= exp(−E(v(i), v(j), h(i), h(j), wij))/Z, (24) where θ = {W ∈ Rd×m, b ∈ Rd×1, c ∈ Rm×1, M ∈ Rd×d} is the parameter set and Z is the normalization term. To model the joint probability, the energy function is defined as
+E(v(i), v(j), h(i), h(j), wij) =
+− wij(h(i))TMh(j) − (h(i))TWv(i) − cTv(i) − bTh(i)
+− (h(j))TWv(j) − cTv(i) − bTh(j), (25) where wij(h(i))TMh(j) forces the latent representations of vi and vj to be close and wij is the weight of edge (vi, vj).
+User Profile Preserving Social Network Embedding(UPP-SNE)
+UPP-SNE leverages user profile features to enhance the embedding learning of users in social networks. Compared with textural content features, user profiles have two unique properties: (1) user profiles are noisy, sparse and incomplete and (2) different dimensions of user profile features are topic-inconsistent. To filter out noise and extract useful information from user profiles, UPP-SNE constructs user representations by performing a non-linear mapping on user profile features, which is guided by network structure.
+The approximated kernel mapping is used in UPPSNE to construct user embedding from user profile features: f(vi) = ϕ(xi) =
+√ d
+� cos(µT
+1 xi), · · ·, cos(µT d xi), sin(µT
+1 xi), · · ·, sin(µT d xi)
+�T, (26) where xi is the user profile feature vector of vertex vi and µi is the corresponding coefficient vector.
+To supervise the learning of the non-linear mapping and make user profiles and network structure complement each other, the objective of DeepWalk is used: min f
+− log Pr({vi−t, · · ·, vi+t} \ vi|f(vi)), (27) where {vi−t, · · ·, vi+t}\vi is the context vertices of vertex vi within t window size in the given random walk sequence.
+Property Preserving Network Embedding (PPNE)
+To learn content augmented vertex representations, PPNE jointly optimizes two objectives: (i) the structuredriven objective and (ii) the attribute-driven objective.
+Following DeepWalk, the structure-driven objective aims to make vertices sharing similar context vertices represented closely. For a given random walk sequence S, the structuredriven objective is formulated as min DT =
+� v∈S
+� u∈context(v)
+Pr(u|v).
+The attribute-driven objective aims to make the vertex representations learned by Eq. (28) respect the vertex attribute similarity. A realization of the attribute-driven objective is min DN =
+� v∈S
+� u∈pos(v)∪neg(v)
+P(v, u)d(v, u), (29) where P(u, v) is the attribute similarity between u and v, d(u, v) is the distance between u and v in the embedding space, and pos(v) and neg(v) is the set of top-k similar and dissimilar vertices according to P(u, v), respectively.
+Summary: The above unsupervised content augmented
+NRL algorithms incorporate vertex content features in three ways. The first, used by TADW and HSCA, is to couple the network structure with vertex content features via inductive matrix factorization. This process can be considered as a linear transformation on vertex attributes constrained by network structure. The second is to perform a non-linear mapping to construct new vertex embeddings that respect network structure. For example, RBM and the approximated kernel mapping is used by pRBM and UPP-SNE, respectively, to achieve this goal. The third used by PPNE is to add an attribute preserving constraint to the structure preserving optimization objective.
+SEMI-SUPERVISED
+NETWORK
+REPRESENTATION LEARNING
+Label information attached with vertices directly indicates vertices' group or class affiliation. Such labels have strong correlations, although not always consistent, to network structure and vertex attributes, and are always helpful in learning informative and discriminative network representations. Semi-supervised NRL algorithms are developed along this line to make use of vertex labels available in the network for seeking more effective vertex representations.
+Semi-supervised Structure Preserving NRL
+The first group of semi-supervised NRL algorithms aim to simultaneously optimize the representation learning that preserves network structure and discriminative learning. As a result, the information derived from vertex labels can help improve the representative and discriminative power of the learned vertex representations.
+Discriminative Deep Random Walk (DDRW)
+Inspired by the discriminative representation learning,, DDRW proposes to learn discriminative network representations through jointly optimizing the objective of DeepWalk together with the following L2-loss Support
+Vector Classification objective:
+Lc = C
+|V |
+� i=1(σ(1 − YikβTrvi))2 + 1
+2βTβ, (30) where σ(x) = x, if x > 0 and otherwise σ(x) = 0.
+The joint objective of DDRW is thus defined as
+L = ηLDW + Lc.(31) where LDW is the objective function of Deekwalk. The objective (31) aims to learn discriminative vertex representations for binary classification for the k-th class. DDRW is generalized to handle multi-class classification by using the one-against-rest strategy.
+Max-Margin DeepWalk (MMDW)
+Similarly, MMDW couples the objective of the matrix factorization version DeepWalk with the following multi-class Support Vector Machine objective with
+{(rv1, Y1:), · · ·, (rvT, YT :)} training set: min
+W,ξ LSV M = min
+W,ξ
+2∥W∥2
+2 + C
+T
+� i=1 ξi, s.t. wT lirvi − wT j rvi ≥ ej i − ξi, ∀i, j, (32) where li = k with Yik = 1, ej i = 1 for Yij = −1, and ej i = 0 for Yij = 1.
+The joint objective of MMDW is min
+U,H,W,ξ L = min
+U,H,W,ξ LDW + 1
+2∥W∥2
+2 + C
+T
+� i=1 ξi, s.t. wT lirvi − wT j rvi ≥ ej i − ξi, ∀i, j.(33) where LDW is the objective of the matrix factorization version of DeepWalk.
+Transductive LINE (TLINE)
+Along similar lines, TLINE is proposed as a semisupervised extension of LINE that simultaneously learns
+LINE's vertex representations and an SVM classifier. Given a set of labeled and unlabeled vertices {v1, v2, · · ·, vL} and {vL+1, · · ·, v|V |}, TLINE trains a multi-class SVM classifier on {v1, v2, · · ·, vL} by optimizing the objective:
+Osvm =
+L
+� i=1
+K
+� k=1 max(0, 1 − Yikwk
+Trvi) + λ∥wk∥2
+Based on LINE's formulations that preserve the firstorder and second-order proximity, TLINE optimizes two objective functions:
+OT LINE(1st) = Oline1 + βOsvm, OT LINE(2nd) = Oline2 + βOsvm.
+Inheriting LINE's ability to deal with large-scale networks, TLINE is claimed to be able to learn discriminative vertex representations for large-scale networks with low time and memory cost.
+Group Enhanced Network Embedding (GENE)
+GENE integrates group (label) information with network structure in a probabilistic manner.
+GENE assumes that vertices should be embedded closely in lowdimensional space, if they share similar neighbors or join similar groups. Inspired by DeepWalk and document modeling,, the mechanism of GENE for learning group label informed vertex representations is achieved by maximizing the following log probability:
+L =
+� gi∈Y
+�
+�α
+�
+W ∈Wgi
+� vj∈W log Pr(vj|vj−t, · · ·, vj+t, gi)+ β
+�
+ˆvj∈ ˆ
+Wgj log Pr(ˆvj|gi)
+�
+��, (37) where Y is the set of different groups, Wgi is the set of random walk sequences labeled with gi, ˆWgi is the set of vertices randomly sampled from group gi.
+Semi-supervised Network Embedding (SemiNE)
+SemiNE learns semi-supervised vertex representations in two stages. In the first stage, SemiNE exploits the DeepWalk framework to learn vertex representations in an unsupervised manner. It points out that DeepWalk does not consider the order information of context vertex, i.e., the distance between the context vertex and the central vertex, when using the context vertex vi+j to predict the central vertex vi. Thus, SemiNE encodes the order information into
+DeepWalk by modeling the probability Pr(vi+j|vi) with jdependent parameters:
+Pr(vi+j|vi) = exp(Φ(vi) · Ψj(vi+j))
+� u∈V exp(Φ(vi) · Ψj(u)), (38) where Φ(·) is the vertex representation and Ψj(·) is the parameter for calculating Pr(vi+j|vi).
+In the second stage, SemiNE learns a neural network that tunes the learned unsupervised vertex representations to fit vertex labels.
+Semi-supervised Content Augmented NRL
+Recently, more research efforts have shifted to the development of label and content augmented NRL algorithms that investigate the use of vertex content and labels to assist with network representation learning. With content information incorporated, the learned vertex representations are expected to be more informative, and with label information considered, the learned vertex representations can be highly customized for the underlying classification task.
+Tri-Party Deep Network Representation (TriDNR)
+Using a coupled neural network framework, TriDNR learns vertex representations from three information sources: network structure, vertex content and vertex labels.
+To capture the vertex content and label information, TriDNR adapts the Paragraph Vector model
+ to describe the vertex-word correlation and the label-word correspondence by maximizing the following objective:
+LP V =
+� i∈L log Pr(w−b : wb|ci) +
+|V |
+� i=1 log Pr(w−b : wb|vi), (39) where {w−b : wb} is a sequence of words inside a contextual window of length 2b, ci is the class label of vertex vi, and L is the set of indices of labeled vertices.
+TriDNR is then realized by coupling the Paragraph Vector objective with DeepWalk objective: max (1 − α)LDW + αLP V, 14 where LDW is the DeepWalk maximization objective function and α is the trade-off parameter.
+Linked Document Embedding (LDE)
+LDE is proposed to learn representations for linked documents, which are actually the vertices of citation or webpage networks. Similar to TriDNR, LDE learns vertex representations by modeling three kinds of relations, i.e., word-word-document relations, document-document relations, and document-label relations. LDE is realized by solving the following optimization problem: min
+W,D,Y − 1
+|P|
+�(wi,wj,dk)∈P log Pr(wj|wi, dk)
+− 1
+|E|
+� i
+� j:(vi,vj)∈E log Pr(dj|di)
+− 1
+|Y|
+� i:yi∈Y log Pr(yi|di)
++ γ(∥W ∥2
+F + ∥D∥2
+F + ∥Y ∥2
+F ).
+Here, the probability Pr(wj|wi, dk) is used to model wordword-document relations, which means the probability that in document dk, word wj is a neighboring word of wi. To capture word-word-document relations, triplets (wi, wj, dk) are extracted, with the word-neighbor pair (wi, wj) occurring in document dk. The set of triplets (wi, wj, dk) is denoted by P. The document-document relations are captured by the conditional probability between linked document pairs (di, dj), Pr(dj|di). The document-label relations are also considered by modeling Pr(yi|di), the probability for the occurrence of class label yi conditioned on document di.
+In (41), W, D and Y is the embedding matrix for words, documents and labels, respectively.
+Discriminative Matrix Factorization (DMF)
+To empower vertex representations with discriminative ability, DMF enforces the objective of TADW (21) with an empirical loss minimization for a linear classifier trained on labeled vertices: min
+W,H,η
+|V |
+� i,j=1(Mij − wT i Htj)2 + µ
+� n∈L(Yn1 − ηTxn)2
++ λ1
+2 (∥H∥2
+F + ∥η∥2
+2) + λ2
+2 ∥W∥2
+F, (42) where wi is the i-th column of vertex representation matrix
+W and tj is j-th column of vertex textual feature matrix T, and L is the set of indices of labeled vertices. DMF considers binary-class classification, i.e. Y = {+1, −1}. Hence, Yn1 is used to denote the class label of vertex vn.
+DMF constructs vertex representations from W rather that W and HT. This is based on empirical findings that W contains sufficient information for vertex representations. In the objective of (42), xn is set to [wT n, 1]T, which incorporates the intercept term b of the linear classifier into η. The optimization problem (42) is solved by optimizing W, H and η alternately. Once the optimization problem is solved, the discriminative and informative vertex representations together with the linear classifier are learned, and work together to classify unlabeled vertices in networks.
+Predictive Labels And Neighbors with Embeddings
+Transductively Or Inductively from Data (Planetoid)
+Planetoid leverages network embedding together with vertex attributes to carry out semi-supervised learning.
+Planetoid learns vertex embeddings by minimizing the loss for predicting structural context, which is formulated as
+Lu = −E(i,c,γ) log σ(γwT c ei), (43) where (i, c) is the index for vertex context pair (vi, vc), ei is the embedding of vertex vi, wc is the parameter vector for context vertex vc, and γ ∈ {+1, −1} indicates whether the sampled vertex context pair (i, c) is positive or negative.
+The triple (i, c, γ) is sampled according to both the network structure and vertex labels.
+Planetoid then maps the learned vertex representations e and vertex attributes x to hidden layer space via deep neural network, and concatenates these two hidden layer representations together to predict vertex labels, by minimizing the following classification loss:
+Ls = − 1
+L
+L
+� i=1 log p(yi|xi, ei), To integrate network structure, vertex attributes and vertex labels together, Planetoid jointly minimizes the two objectives (43) and (44) to learn vertex embedding e with deep neural networks.
+Label informed Attribute Network Embedding (LANE)
+LANE learns vertex representations by embedding the network structure proximity, attribute affinity, and label proximity into a unified latent representation. The learned representations are expected to capture both network structure and vertex attribute information, and label information if provided. The embedding learning in LANE is carried out in two stages. During the first stage, vertex proximity in network structure and attribute information are mapped into latent representations U(G) and U(A), then U(A) is incorporated into U(G) by maximizing their correlations.
+In the second stage, LANE employs the joint proximity(determined by U(G)) to smooth label information and uniformly embeds them into another latent representation
+U(Y ), and then embeds U(A), U(G) and U(Y ) into a unified embedding representation H.
+Summary
+We now summarize and compare the discriminative learning strategies used by semi-supervised NRL algorithms in Table 5 in terms of their advantages and disadvantages.
+Three strategies are used to achieve discriminative learning. The first strategy (i.e., DDRW, MMDW, TLINE, DMF, SemiNE ) is to enforce classification loss minimization on vertex representations, i.e., fitting the vertex representations to a classifier. This provides a direct way to separate vertices of different categories from each other in the new embedding space. The second strategy (used by GENE, TriDNR, LDE and Planetoid ) is achieved by modeling vertex label relation, such that vertices with same labels have similar vector
+TABLE 5
+A summary of semi-supervised NRL algorithms
+Discriminative Learning Strategy
+Algorithm
+Loss function
+Advantage
+Disadvantage fitting a classifier
+DDRW hinge loss a) directly optimize classification loss; b) perform better in sparsely labeled scenarios prone to overfitting
+MMDW hinge loss
+TLINE hinge loss
+DMF square loss
+SemiNE logistic loss modeling vertex label relation
+GENE likelihood loss a) better capture intra-class proximity; b) generalization to other tasks require more labeled data
+TriDNR likelihood loss
+LDE likelihood loss
+Planetoid likelihood loss joint vertex label embedding
+LANE correlation loss representations. The third strategy used by LANE is to jointly embed vertices and labels into a common space.
+Fitting vertex representations to a classifier can take advantage of the discriminative power in vertex labels.
+Algorithms using this strategy only require a small number of labeled vertices (e.g., 10%) to achieve significant performance gain over their unsupervised counterparts. They are thus more effective for discriminative learning in sparsely labeled scenarios. However, fitting vertex representations to a classifier is more prone to overfitting. Regularization and DropOut are often introduced to overcome this problem. By contrast, modeling vertex label relation and joint vertex embedding requires more vertex labels to make vertex representations more discriminative, but they can better capture intra-class proximity, i.e., vertices belonging to the same class are kept closer to each other in the new embedding space. This allows them to have generalized benefits on tasks like vertex clustering or visualization.
+APPLICATIONS
+Once new vertex representations are learned via network representation learning techniques, traditional vector-based algorithms can be used to solve important analytic tasks, such as vertex classification, link prediction, clustering, visualization, and recommendation. The effectiveness of the learned representations can also be validated through assessing their performance on these tasks.
+Vertex Classification
+Vertex classification is one of the most important tasks in network analytic research. Often in networks, vertices are associated with semantic labels characterizing certain aspects of entities, such as beliefs, interests, or affiliations. In citation networks, a publication may be labeled with topics or research areas, while the labels of entities in social network may indicate individuals' interests or political beliefs.
+Often, because network vertices are partially or sparsely labeled due to high labeling costs, a large portion of vertices in networks have unknown labels. The problem of vertex classification aims to predict the labels of unlabeled vertices given a partially labeled network,. Since vertices are not independent but connected to each other in the form of a network via links, vertex classification should exploit these dependencies for jointly classifying the labels of vertices. Among others, collective classification proposes to construct a new set of vertex features that summarize label dependencies in the neighborhood, which has been shown to be most effective in classifying many real-world networks,.
+Network representation learning follows the same principle that automatically learns vertex features based on network structure. Existing studies have evaluated the discriminative power of the learned vertex representations under two settings: unsupervised settings (e.g.,,,,, ), where vertex representations are learned separately, followed by applying discriminative classifiers like SVM or logistic regression on the new embeddings, and semisupervised settings (e.g.,,,,, ), where representation learning and discriminative learning are simultaneously tackled, so that discriminative power inferred from labeled vertices can directly benefit the learning of informative vertex representations. These studies have proved that better vertex representations can contribute to high classification accuracy.
+Link Prediction
+Another important application of network representation learning is link prediction,, which aims to infer the existence of new relationships or emerging interactions between pairs of entities based on the currently observed links and their properties. The approaches developed to solve this problem can enable the discovery of implicit or missing interactions in the network, the identification of spurious links, as well as understanding the network evolution mechanism. Link prediction techniques are widely applied in social networks to predict unknown connections among people, which can be used to recommend friendship or identify suspicious relationships. Most of the current social networking systems are using link prediction to automatically suggest friends with a high degree of accuracy. In biological networks, link prediction methods have been developed to predict previously unknown interactions between proteins, thus significantly reducing the costs of empirical approaches. Readers can refer to the survey papers, for the recent progress in this field.
+Good network representations should be able to capture explicit and implicit connections between network vertices thus enabling application to link prediction. and predict missing links based on the learned vertex representations on social networks. also applies network representation learning to collaboration networks
+16 and protein-protein interaction networks. They demonstrate that on these networks links predicted using the learned representations achieve better performance than traditional similarity-based link prediction approaches.
+Clustering
+Network clustering refers to the task of partitioning network vertices into a set of clusters, such that vertices are densely connected to each other within the same cluster, but connected to few vertices from other clusters.
+Such cluster structures, or communities widely occur in a wide spectrum of networked systems from bioinformatics, computer science, physics, sociology, etc., and have strong implications. For example, in biology networks, clusters may correspond to a group of proteins having the same function; in the network of webpages, clusters are likely pages having similar topics or related content; in social networks, clusters may indicate groups of people having similar interests or affiliations.
+Researchers have proposed a large body of network clustering algorithms based on various metrics of similarity or strength of connection between vertices. Min-max cut and normalized cut methods, seek to recursively partition a graph into two clusters that maximize the number of intra-cluster connections and minimize the number of intercluster connections. Modularity-based methods (e.g.,, ) aim to maximize the modularity of a clustering, which is the fraction of intra-cluster edges minus the expected fraction assuming the edges were randomly distributed.
+A network partitioning with high modularity would have dense intra-cluster connections but sparse inter-cluster connections. Some other methods (e.g., ) try to identify nodes with similar structural roles like bridges and outliers.
+Recent NRL methods (e.g., GraRep, DNGR, MNMF, and pRBM ) used the clustering performance to evaluate the quality of the learned network representations on different networks. Intuitively, better representations would lead to better clustering performance. These works followed the common approach that first applies an unsupervised NRL algorithm to learn vertex representations, and then performs k-means clustering on the learned representations to cluster the vertices. In particular, pRBM showed that NRL methods outperform the baseline that uses original features for clustering without learning representations. This suggests that effective representation learning can improve the clustering performance.
+Visualization
+Visualization techniques play critical roles in managing, exploring, and analyzing complex networked data. surveys a range of methods used to visualize graphs from an information visualization perspective. This work compares various traditional layouts used to visualize graphs, such as tree-, 3D-, and hyperbolic-based methods, and shows that classical visualization techniques are proved effective for small or intermediate sized networks; they however confront a big challenge when applied to large-scale networks.
+Few systems can claim to deal effectively with thousands of vertices, although networks with this order of magnitude often occur in a wide variety of applications. Consequently, a first step in the visualization process is often to reduce the size of the network to display. One common approach is essentially to find an extremely low-dimensional representation of a network that preserves the intrinsic structure, i.e., keeping similar vertices close and dissimilar vertices far apart, in the low-dimensional space.
+Network representation learning has the same objective that embeds a large network into a new latent space of low dimensionality. After new embeddings are obtained in the vector space, popular methods such as t-distributed stochastic neighbor embedding (t-SNE) can be applied to visualize the network in a 2-D or 3-D space. By taking the learned vertex representations as input, LINE used the tSNE package to visualize the DBLP co-author network after the authors are mapped into a 2-D space, and showed that
+LINE is able to cluster authors in the same field to the same community. HSCA illustrated the advantages of the content-augmented NRL algorithm by visualizing citations networks. Semi-supervised algorithms (e.g., TLINE, TriDNR, and DMF ) demonstrated that the visualization results have better clustering structures with vertex labels properly imported.
+Recommendation
+In addition to structure, content, and vertex label information, many social networks also include geographical and spatial-temporal information, and users can share their experiences online with their friends for point of interest(POI) recommendation, e.g., transportation, restaurant, and sightseeing landmark, etc. Examples of such location-based social networks (LBSN) include Foursquare, Yelp, Facebook
+Places, and many others. For these types of social networks, POI recommendation intends to recommend user interested objects, depending on their own context, such as the geographic location of the users and their interests. Traditionally, this is solved by using approaches, such as collaborative filtering, to leverage spatial and temporal correlation between user activities and geographical distance. However, because each user's check-in records are very sparse, finding similar users or calculating transition probability between users and locations is a significant challenge.
+Recently, spatial-temporal embedding,, has emerged to learn low-dimensional dense vectors to represent users, locations, and point-of-interests etc. As a result, each user, location, and POI can be represented as a lowdimensional vector, respectively, for similarity search and many other analysis. An inherent advantage of such spatialtemporal aware embedding is that it alleviates the data sparsity problem, because the learned low dimensional vector is typically much more dense than the original representation.
+As a result, it makes query tasks, such as top-k POI search, much more accurate than traditional approaches.
+Knowledge Graph
+Knowledge graphs represent a new type of data structure in database systems which encode structured information of billions of entities and their rich relations. A knowledge graph typically contains a rich set of heterogeneous objects and different types of entity relationships. Such networked entities form a gigantic graph and is now powering
+17 many commercial search engines to find similar objects online. Traditionally, knowledge graph search is carried out through database driven approaches to explore schema mapping between entities, including entity relationships.
+Recent advancement in network representation learning has inspired structured embeddings of knowledge bases.
+Such embedding methods learn a low-dimensional vector representation for knowledge graph entities, such that generic database queries, such as top-k search, can be carried out by comparing vector representation of the query object and objects in the database.
+In addition to using vector representation to represent knowledge graph entities, researchers have also proposed to use such representation to further enhance and complete the knowledge graph itself. For example, knowledge graph completion intends to discover complete relationships between entities, and a recent work has proposed to use graph context to find missing links between entities. This is similar to link prediction in social networks, but the entities are typically heterogeneous and a pair of entities may also have different types of relationships.
+EVALUATION PROTOCOLS
+In this section, we discuss evaluation protocols for validating the effectiveness of network representation learning.
+This includes a summary of commonly used benchmark datasets and evaluation methods, followed by a comparison of algorithm performance and complexity.
+Benchmark Datasets
+Benchmark datasets play an important role for the research community to evaluate the performance of newly developed NRL algorithms as compared to the existing baseline methods. A handful of network datasets have been made publicly available to facilitate the evaluation of NRL algorithms across different tasks. We summarize a list of network datasets used by most of the published network representation learning papers in Table 6.
+Table 6 summarizes the main characteristics of the publicly available benchmark datasets, including the type of network (directed or undirected, binary or weighted), number of vertices |V |, number of edges |E|, number of labels
+|Y|, whether the network is multi-labeled or not, as well as whether network vertices are attached with attributes. In
+Table 6, according to the property of information networks, we classify benchmark datasets into eight different types:
+Social Network. The BlogCatalog, Flickr and YouTube datasets are formed by users of the corresponding online social network platforms. For the three datasets, vertex labels are defined by user interest groups but user attributes are unavailable. The Facebook network is a combination of 10 Facebook ego-networks, where each vertex contains user profile attributes. The Amherst, Hamilton, Mich and Rochester datasets are the Facebook networks formed by users from the corresponding US universities, where each user has six user profile features. Often, user profile features are noisy, incomplete, and long-tail distributed.
+Language Network. The language network Wikipedia is a word co-occurrence network constructed from the entire set of English Wikipedia pages. There is no class label on this network. The word embeddings learned from this network are evaluated by word analogy and document classification.
+Citation Network. The citation networks are directed information networks formed by author-author citation relationships or paper-paper citation relationships. They are collected from different databases of academic papers, such as DBLP and Citeseer. Among the commonly used citation networks, DBLP (AuthorCitation) is a weighted citation network between authors with the edge weight defined by the number of papers written by one author and cited by the other author, while DBLP (PaperCitation), Cora, Citeseer, PubMed and Citeseer-M10 are the binary paper citation networks, which are also attached with vertex text attributes as the content of papers. Compared with user profile features in social networks, the vertex text features here are more topic-centric, informative and can better complement network structure to learn effective vertex representations.
+Collaboration Network. The collaboration network Arxiv
+GR-QC describes the co-author relationships for papers in the research field of General Relativity and Quantum
+Cosmology. In this network, vertices represent authors and edges indicate co-author relationships between authors. Because there is no category information for vertices, this network is used for the link prediction task to evaluate the quality of learned vertex representations.
+Webpage Network. Webpage networks (Wikipedia, WebKB and Political Blog ) are composed of real-world webpages and hyperlinks between them, where the vertex represents a webpage and the edge indicates that there is a hyperlink from one webpage to another. Webpage text content is often collected as vertex features.
+Biological Network. As a typical biological network, the Protein-Protein Interaction network is a subgraph of the PPI network for Homo Sapiens. The vertex here represents a protein and the edge indicates that there is an interaction between proteins. The labels of vertices are obtained from the hallmark gene sets and represent biological states.
+Communication Network. The Enron Email Network is formed by the Email communication between Enron employees, with vertices being employees and edges representing the email communicated between employees. Employees are labeled as 7 roles (e.g., CEO, president and manager), according to their functions.
+Traffic Network. European Airline Networks used in are constructed from 6 airlines operating flights between European airports: 4 commercial airlines (Air France, Easyjet, Lufthansa, and RyanAir) and 2 cargo airlines (TAP Portugal, and European Airline Transport). For each airline network, vertices are airports and edges represent the direct flights between airports. In all, 45 airports are labeled as hub airports, regional hubs, commercial hubs, and focus cities, according to their structural roles.
+Evaluation Methods
+It is difficult to directly compare the quality of the vertex representations learned by different NRL algorithms, due to the unavailability of ground truth. Alternatively, in order to evaluate the effectiveness of NRL algorithms on learned vertex representations, several network analytic tasks are commonly used for comparison studies.
+TABLE 6
+A summary of benchmark datasets for evaluating network representation learning.
+Category
+Dataset
+Type
+|V |
+|E|
+|Y|
+Multi-label
+Vertex attr.
+Social Network
+BlogCataloga undirected, binary
+Yes
+No
+Flickrb undirected, binary
+Yes
+No
+YouTubeb undirected, binary
+Yes
+No
+Facebookc undirected, binary
+No
+Yes
+Amherstd undirected, binary
+No
+Yes
+Hamiltond undirected, binary
+No
+Yes
+Michd undirected, binary
+No
+Yes
+Rochesterd undirected, binary
+No
+Yes
+Language Network
+Wikipedia undirected, weighted
+N/A
+N/A
+No
+Citation Network
+DBLP (PaperCitation), directed, binary
+No
+Yes
+DBLP (AuthorCitation), directed, weighted
+No
+No
+Corae directed, binary
+No
+Yes
+Citeseere directed, binary
+No
+Yes
+PubMede directed, binary
+No
+Yes
+Citeseer-M10f directed, binary
+No
+Yes
+Collaboration network
+Arxiv GR-QC undirected, binary
+N/A
+N/A
+No
+Webpage Network
+Wikipediae directed, binary
+No
+Yes
+WebKBe directed, binary
+No
+Yes
+Political Blog directed, binary
+No
+No
+Biological Network
+Protein-Protein Interaction undirected, binary
+Yes
+No
+Communication Network
+Enron Email Networkg undirected, binary
+No
+No
+Traffic Network
+European Airline Networksh undirected, binary
+N/A
+N/A
+No
+No ahttp://www.public.asu.edu/∼ltang9/ bhttp://socialnetworks.mpi-sws.org/data-imc2007.html chttps://snap.stanford.edu/data/egonets-Facebook.html dhttps://escience.rpi.edu/data/DA/fb100/ ehttps://linqs.soe.ucsc.edu/data fhttp://citeseerx.ist.psu.edu/ ghttps://snap.stanford.edu/data/email-Enron.html hhttp://complex.unizar.es/∼atnmultiplex/
+Network Reconstruction. The aim of network reconstruction is to reconstruct the original network from the learned vertex representations by predicting the links between vertices based on the inner product or similarity between vertex representations. The known links in the original network serve as the ground truth for evaluating reconstruction performance. precision@k and MAP are often used as evaluation metrics. This evaluation method can check whether the learned vertex representations well preserve network structure and support network formation.
+Vertex Classification. As an evaluation method for NRL, vertex classification is conducted by taking learned vertex representations as features to train a classifier on labeled vertices. The classification performance on unlabeled vertices is used to evaluate the quality of the learned vertex representations. Different vertex classification settings, including binary-class classification, multi-class classification, and multi-label classification, are often carried out, depending on the underlying network characteristics. For binary-class classification, F1 score is used as the evaluation criterion.
+For multi-class and multi-label classification, Micro-F1 and Macro-F1 are adopted as evaluation criteria.
+Vertex Clustering. To validate the effectiveness of NRL algorithms, vertex clustering is also carried out by applying k-means clustering algorithm to the learned vertex representations. Communities in networks are served as the ground truth to assess the quality of clustering results, which is measured by Accuracy and NMI (normalized mutual information). The hypothesis is that, if the learned vertex representations are indeed informative, vertex clustering on learned vertex representations should be able to discover community structures. That is, good vertex representations are expected to generate good clustering results.
+Link Prediction. Link prediction can be used to evaluate whether the learned vertex representations are informative to support the network evolution mechanism. To perform link prediction on a network, a portion of edges are first removed, and vertex representations are learned from the remaining network. Finally, the removed edges are predicted with the learned vertex representations. The performance of link prediction is measured by AUC and precision@k.
+Visualization. Visualization provides a straightforward way to visually evaluate the quality of the learned vertex representations. Often, t-distributed stochastic neighbor embedding (t-SNE) is applied to project the learned vertex representation vectors into a 2-D space, where the distribution of vertex 2-D mappings can be easily visualized. If vertex representations are of good quality, in the 2-D space, vertices within a same class or community should be embedded closely, and the 2-D mappings of vertices in different classes or communities should be far apart from each other.
+In Table 7, we summarize the type of information networks and network analytic tasks used to evaluate the quality of vertex representations learned by existing NRL algorithms. We also provide hyperlinks for the codes of respective NRL algorithms if available to help interested readers to further study these algorithms or run experiments for comparison. Overall, social networks and citation netTABLE 7
+A summary of NRL algorithms with respect to the evaluation methodology
+Category
+Algorithm
+Network Type
+Evaluation Method
+Code Link
+Social Dim.,, 
+Social Network
+Vertex Classification
+DeepWalk 
+Social Network
+Vertex Classification https://github.com/phanein/deepwalk
+LINE 
+Citation Network
+Language Network
+Social Network
+Vertex Classification
+Visualization https://github.com/tangjianpku/LINE
+GraRep 
+Citation Network
+Language Network
+Social Network
+Vertex Classification
+Vertex Clustering
+Visualization https://github.com/ShelsonCao/GraRep
+DNGR 
+Language Network
+Vertex Clustering
+Visualization https://github.com/ShelsonCao/DNGR
+SDNE 
+Collaboration Network
+Language Network
+Social Network
+Network Reconstruction
+Vertex Classification
+Link Prediction
+Visualization https://github.com/suanrong/SDNE node2vec 
+Biological Network
+Language Network
+Social Network
+Vertex Classification
+Link Prediction https://github.com/aditya-grover/node2vec
+HOPE 
+Social Network
+Citation Network
+Network Reconstruction
+Link Prediction
+APP 
+Social Network
+Citation Network
+Collaboration Network
+Link Prediction
+GraphGAN 
+Citation Network
+Language Network
+Social Network
+Vertex Classification
+Link Prediction
+Unsupervised
+M-NMF 
+Social Network
+Webpage Network
+Vertex Classification
+Vertex Clustering http://git.thumedia.org/embedding/M-NMF struct2vec 
+Traffic Network
+Vertex Classification
+GraphWave 
+Traffic Network
+Communication Network
+Vertex Clustering
+Visualization http://snap.stanford.edu/graphwave
+SNS 
+Social Network
+Language Network
+Biological Network
+Vertex Classification
+DP 
+Social Network
+Citation Network
+Collaboration Network
+Network Reconstruction
+Link Prediction
+Vertex Classification
+HARP 
+Social Network
+Collaboration Network
+Citation Network
+Vertex Classification
+Visualization
+TADW 
+Citation Network
+Webpage Network
+Vertex Classification https://github.com/thunlp/tadw
+HSCA 
+Citation Network
+Webpage Network
+Vertex Classification
+Visualization https://github.com/daokunzhang/HSCA pRBM 
+Social Network
+Vertex Clustering
+UPP-SNE 
+Social Network
+Vertex Classification
+Vertex Clustering
+PPNE 
+Social Network
+Citation Network
+Webpage network
+Vertex Classification
+Link Prediction
+DDRW 
+Social Network
+Vertex Classification
+MMDW 
+Citation Network
+Webpage Network
+Vertex Classification
+Visualization https://github.com/thunlp/MMDW
+TLINE 
+Citation Network
+Collaboration Network
+Vertex Classification
+Visualization
+Semi-supervised
+GENE 
+Social Network
+Vertex Classification
+SemiNE 
+Social Network
+Network Reconstruction
+Vertex Classification
+Link prediction
+TriDNR 
+Citation Network
+Vertex Classification
+Visualization https://github.com/shiruipan/TriDNR
+LDE 
+Social Network
+Citation Network
+Vertex Classification
+DMF 
+Citation Network
+Vertex Classification
+Visualization https://github.com/daokunzhang/DMF CC
+Planetoid 
+Citation Network
+Vertex Classification
+Visualization https://github.com/kimiyoung/planetoid
+LANE 
+Social Network
+Vertex Classification works are frequently used as benchmark datasets, and vertex classification is most commonly used as the evaluation method in both unsupervised and semi-supervised settings.
+Empirical Results
+We observe from the literature that empirical evaluation is often carried out on different datasets under different settings. There is a lack of consistency on empirical results to determine the best performing algorithms and their circumstances. Therefore, we perform benchmark experiments to fairly compare the performance of several representative
+NRL algorithms on the same set of datasets. Note that, because semi-supervised NRL algorithms are task-dependent: the target task may be binary or multi-class, or multi-label classification, or because they use different classification strategies, it would be difficult to assess the effectiveness of network embedding under the same settings. Therefore, our empirical study focuses on comparing seven unsupervised
+NRL algorithms (DeepWalk, LINE, node2vec, MNMF, TADW, HSCA, UPP-SNE ) on vertex classification and vertex clustering, which are the two most commonly used evaluation methods in the literature.
+Our empirical studies are based on seven benchmark datasets: Amherst, Hamilton, Mich, Rochester, Citeseer, Cora and Facebook. Following, for Amherst, Hamilton, Mich and Rochester, only the network structure is used and TABLE 8
+Vertex Classification Results on Seven Datasets
+Method
+Training ratio = 5%
+Training ratio = 50%
+Amherst
+Hamilton
+Mich
+Rochester
+Citeseer
+Cora
+Facebook
+Amherst
+Hamilton
+Mich
+Rochester
+Citeseer
+Cora
+Facebook
+Micro-F1
+DeepWalk
+LINE
+0.6848 node2vec
+M-NMF
+TADW
+HSCA
+UPP-SNE
+Macro-F1
+DeepWalk
+LINE
+0.2460 node2vec
+M-NMF
+TADW
+HSCA
+UPP-SNE
+TABLE 9
+Vertex Clustering Results on on Seven Datasets
+Method
+Amherst
+Hamilton
+Mich
+Rochester
+Citeseer
+Cora
+Facebook
+Accuracy
+DeepWalk
+LINE
+0.6952 node2vec
+M-NMF
+TADW
+HSCA
+UPP-SNE
+NMI
+DeepWalk
+LINE
+0.0113 node2vec
+M-NMF
+TADW
+HSCA
+UPP-SNE
+0.2095 the attribute "year" is used as class label, which is a good indicator of community structure. For Citeseer and Cora, the research area is used as the class label. The class label of Facebook dataset is given by the attribute "education type".
+Experimental Setup
+For random walk based methods, DeepWalk, node2vec and UPP-SNE, we uniformly set the number of walks, walk length and window size as 10, 80, 10, respectively. For
+UPP-SNE, we use the implementation that is optimized by stochastic gradient descent. The parameter p and q of node2vec are set to 1, as the default setting. For M-NMF, we set α and β as 1. For all algorithms, the dimension of learned vertex representations is set to 256. For LINE, we learn 128-dimensional vertex representations with the firstorder proximity preserving version and the second-order proximity preserving version respectively and concatenate them together to obtain 256-dimensional vertex representations. The other parameters of the above algorithms are all set to their default values.
+Taking the learned vertex representations as input, we carry out vertex classification and vertex clustering experiments to evaluate the quality of learned vertex representations. For vertex classification, we randomly select 5% and 50% samples to train an SVM classifier (with the LIBLINEAR implementation ) and test it on the remaining samples. We repeat this process 10 times and report the averaged Micro-F1 and Macro-F1 values. We adopt Kmeans to perform vertex clustering. To reduce the variance caused by random initialization, we repeat the clustering process for 20 times and report the averaged Accuracy and NMI values.
+Performance Comparison
+Table 8 and 9 compare the performance of different algorithms on vertex classification and vertex clustering. For each dataset, the best performing method across all baselines is bold-faced. For the attributed networks (Citeseer, Cora and Facebook), the underlined results indicate the best performer among the structure only preserving NRL algorithms (DeepWalk, LINE, node2vec and M-NMF).
+Table 8 shows that among structure only preserving
+NRL algorithms, when the training ratio is 5%, node2vec achieves the best classification performance overall, and when the training ratio is 50%, M-NMF performs best in terms of Micro-F1 while DeepWalk is the winner of MacroF1. Here, M-NMF does not exhibit significant advantage over DeepWalk, LINE and node2vec. This is probably due to that the parameter α and β of N-NMF are not optimally tuned; their values must be carefully chosen so as to achieve a good trade-off between different components.
+On attributed networks (Citeseer, Cora and Facebook), the content augmented NRL performs much better than the structure only preserving NRL algorithms. This proves that vertex attributes can largely contribute to learning more informative vertex representations. When training ratio is 5%, UPP-SNE is the best performer. This indicates that the UPP-SNE's non-linear mapping provides a better way to construct vertex representations from vertex attributes than the linear mapping, as is done in TADW and HSCA. When training ratio is 50%, TADW achieves the best overall classification performance, although in some cases, it is slightly outperformed by HSCA. On citation networks (Citeseer and Cora), HSCA performs better than TADW, while it yields worse performance than TADW on Facebook. This might be caused by the fact that the homophily property of Facebook social network is weaker than that of citation networks. The homophily preserving objective should be weighted less to make HSCA achieve satisfactory performance on Facebook.
+Table 9 shows that LINE achieves the best clustering performance on Amherst, Hamilton, Mich and Rochester.
+As LINE's vertex representations capture both the firstorder and second-order proximity, it can better preserve the community structure, leading to good clustering performance. On Citeseer, Cora and Facebook, the content augmented NRL algorithm UPP-SNE performs best. As
+TABLE 10
+Complexity analysis
+Category
+Algorithm
+Complexity
+Optimization Method
+Unsupervised
+Social Dim.,, 
+O(d|V |2)
+Eigen Decomposition
+GraRep 
+O(|V ||E| + d|V |2)
+HOPE 
+O(d2I|E|)
+GraphWave 
+O(|E|)
+DeepWalk 
+O(d|V | log |V |)
+Stochastic Gradient Descent
+LINE 
+O(d|E|)
+SDNE 
+O(dI|V |2) node2vec 
+O(d|V |)
+APP 
+O(d|V |)
+GraphGAN 
+O(|V | log |V |) struct2vec 
+O(|V |3)
+SNS 
+O(d|V |) pRBM 
+O(dmI|V |)
+PPNE 
+O(d|V |)
+M-NMF 
+O(dI|V |2)
+Alternative Optimization
+TADW 
+O(|V ||E| + dI|E| + dmI|V | + d2I|V |)
+HSCA 
+O(|V ||E| + dI|E| + dmI|V | + d2I|V |)
+UPP-SNE 
+O(I|E| · nnz(X))
+Gradient Descent
+Semi-supervised
+DDRW 
+O(d|V | log |V |)
+Stochastic Gradient Descent
+TLINE 
+O(d|E|)
+SemiNE 
+O(d|V |)
+TriDNR 
+O(d · nnz(X) log m + d|V | log |V |)
+LDE 
+O(dI · nnz(X) + dI|E| + dI|Y||V |)
+DMF 
+O(|V ||E| + dI|E| + dmI|V | + d2I|V |)
+Alternative Optimization
+LANE 
+O(m|V |2 + dI|V |2)
+UPP-SNE constructs vertex representations from vertex attributes via a non-linear mapping, the well preserved content information favors the best clustering performance. On
+Citeseer and Cora, node2vec performs much better than other structure only preserving NRL algorithms, including its equivalent version DeepWalk. For each vertex context pair (vi, vj), DeepWalk and node2vec use two different strategies to approximate the probability Pr(vj|vi): hierarchical softmax, and negative sampling. The better clustering performance of node2vec over DeepWalk proves the advantage of negative sampling over hierarchical softmax, which is consistent with the word embedding results as reported in.
+Complexity Analysis
+To better understand the existing NRL algorithms, we provide a detailed analysis of their time complexity and underlying optimization methods in Table 10. A new notation I is introduced to represent the number of iterations and we use nnz(·) to denote the number of non-zero entries of a matrix.
+In a nutshell, four kinds of solutions are used to optimize the objectives of the existing NRL algorithms: (1) eigen decomposition that involves finding top-d eigenvectors of a matrix, (2) alternative optimization that optimizes one variable with the remaining variables fixed alternately, (3) gradient descent that updates all parameters at each iteration for optimizing the overall objective, and (4) stochastic gradient descent that optimizes the partial objective stochastically in an on-line mode.
+Both unsupervised and semi-supervised NRL algorithms mainly adopt stochastic gradient descent to solve their optimization problems. The time complexity of these algorithms is often linear with respect to the number of vertices/edges, which makes them scalable to large-scale networks. By contrast, other optimization strategies usually involve higher time complexity, which is quadratic with regards to the number of vertices, or even higher with the scale of the number of vertices times the number of edges. The corresponding NRL algorithms usually perform factorization on a |V | × |V | structure preserving matrix, which is quite time-consuming. Efforts have been made to reduce the complexity of matrix factorization. For example, TADW, DMF and HSCA take advantage of the sparsity of the original vertex-context matrix. HOPE and GraphWave adopt advanced techniques to perform matrix eigen decomposition.
+FUTURE RESEARCH DIRECTIONS
+In this section, we summarize six potential research directions and future challenges to stimulate research on network representation learning.
+Task-dependence: To date, most existing NRL algorithms are task-independent, and task-specific NRL algorithms have primarily focused on vertex classification under the semi-supervised setting. Only very recently, a few studies have started to design task-specific NRL algorithms for link prediction, community detection,,,, class imbalance learning, active learning, and information retrieval. The advantage of using network representation learning as an intermediate layer to solve the target task is that the best possible information preserved in the new representation can further benefit the subsequent task. Thus, a desirable task-specific NRL algorithm must preserve information critical to the specific task in order to optimize its performance.
+Theory: Although the effectiveness of the existing NRL algorithms has been empirically proved through experiments, the underlying working mechanism has not been
+22 well understood. There is a lack of theoretical analysis with regard to properties of algorithms and what contributes to good empirical results. To better understand DeepWalk, LINE, and node2vec, discovers their theoretical connections to graph Laplacians. However, in-depth theoretical analysis about network representation learning is necessary, as it provides a deep understanding of algorithms and helps interpret empirical results.
+Dynamics: Current research on network representation learning has mainly concerned static networks. However, in real-life scenarios, networks are not always static. The underlying network structure may evolve over time, i.e., new vertices/edges appear while some old vertices/edges disappear. The vertices/edges may also be described by some time-varying information. Dynamic networks have unique characteristics that make static network embedding fail to work: (i) vertex content features may drift over time;(ii) the addition of new vertices/edges requires learning or updating vertex representations to be efficient; and (iii) network size is not fixed. The work on dynamic network embedding is rather limited; the majority of existing approaches (e.g.,,, ) assume that the node set is fixed and deal with the dynamics caused by the deletion/addition of edges only. However, a more challenging problem is to predict the representations of new added vertices, which is referred to as "out-of-sample" problem. A few attempts such as,, are made to exploit inductive learning to address this issue. They learn an explicit mapping function from a network at a snapshot, and use this function to infer the representations of out-ofsample vertices, based on their available information such as attributes or neighborhood structure. However, they have not considered how to incrementally update the existing mapping function. How to design effective and efficient representation learning algorithms in complex dynamic domains still requires further exploration.
+Scalability: The scalability is another driving factor to advance the research on network representation learning.
+Several NRL algorithms have made attempts to scale up to large-scale networks with linear time complexity with respect to the number of vertices/edges. Nevertheless, the scalability still remains a major challenge. Our findings on complexity analysis show that random walk and edge modeling based methods that adopt stochastic gradient descent optimization are much more efficient than matrix factorization based methods that are solved by eigen decomposition and alternative optimization. Matrix factorization based methods have shown great promise in incorporating vertex attributes and discovering community structures, but their scalability needs to be improved to handle networks with millions or billions of vertices. Deep learning based methods can capture non-linearity in networks, but their computational cost is usually high. Traditional deep learning architectures take advantage of GPU to speed up training on Euclidean structured data. However, networks do not have such a structure, and therefore require new solutions to improve the scalability.
+Heterogeneity and semantics: Representation learning for heterogeneous information networks (HIN) is one promising research direction. The vast amounts of existing work has focused on homogeneous network embedding, where all vertices are of the same type and edges represent a single relation. However, there is an increasing need to study heterogeneous information networks with different types of vertices and edges, such as DBLP, DBpedia, and Flickr.
+An HIN is composed of different types of entities, such as text, images, or videos, and the interdependencies between entities are very complex. This makes it very difficult to measure rich semantics and proximity between vertices and seek a common and coherent embedding space. Recent studies by,,,,,,,,, have investigated the use of various descriptors (e.g., metapath or meta structure) to capture semantic proximity between distant HIN vertices for representation learning. However, the research along this line is still at early stage. Further research requires to investigate better ways for capturing the proximity between cross-modal data, and their interplay with network structure.
+Another interesting direction is to investigate edge semantics in signed networks, where vertices have both positive and negative relationships. Signed networks are ubiquitous in social networks, such as Epinions and Slashdot, that allow users to form positive or negative friendship/trust connection to other users. The existence of negative links makes the traditional homophily based network representation learning algorithms unable to be directly applied. Some studies,, tackle signed network representation learning through directly modeling the polar of links.
+How to fully encode network structure and vertex attributes for signed network embedding remains an open question.
+Robustness: Real-world networks are often noisy and uncertain, which makes traditional NRL algorithms unable to produce stable and robust representations. ANE (Adversarial Network Embedding) and ARGA (Adversarially
+Regularized Graph Autoencoder) learn robust vertex representations via enforcing an adversarial learning regularizer. To deal with the uncertainty in the existence of edges, URGE (Uncertain Graph Embedding) encodes the edge existence probability into the vertex representation learning process. It is of great importance to have more research efforts on enhancing the robustness of network representation learning.
+CONCLUSION
+This survey provides a comprehensive review of the stateof-the-art network representation learning algorithms in the data mining and machine learning field. We propose a taxonomy to summarize existing techniques into two settings: unsupervised setting and semi-supervised settings. According to the information sources they use and the methodologies they employ, we further categorize different methods at each setting into subgroups, review representative algorithms in each subgroup, and compare their advantages and disadvantages. We summarize evaluation protocols used for validating existing NRL algorithms, compare their empirical performance and complexity, as well as point out a few emerging research directions and the promising extensions.
+Our categorization and analysis not only help researchers to gain a comprehensive understanding of existing methods in the field, but also provide rich resources to advance the research on network representation learning.
+ACKNOWLEDGMENTS
+The work was supported by the US National Science Foundation (NSF) through grant IIS-1763452, and the Australian
+Research Council (ARC) through grant LP160100630 and DP180100966. Daokun Zhang was supported by China
+Scholarship Council (CSC) with No. 201506300082 and a post-graduate scholarship from Data61, CSIRO in Australia.
+REFERENCES
+ 
+J. Tang, M. Qu, M. Wang, M. Zhang, J. Yan, and Q. Mei, "LINE:
+Large-scale information network embedding," in Proceedings of the 24th International Conference on World Wide Web, 2015, pp.
+1067–1077.
+ 
+F. D. Malliaros and M. Vazirgiannis, "Clustering and community detection in directed networks: A survey," Physics Reports, vol.
+533, no. 4, pp. 95–142, 2013.
+ 
+J. B. Tenenbaum, V. De Silva, and J. C. Langford, "A global geometric framework for nonlinear dimensionality reduction,"
+Science, vol. 290, no. 5500, pp. 2319–2323, 2000.
+ 
+S. T. Roweis and L. K. Saul, "Nonlinear dimensionality reduction by locally linear embedding," Science, vol. 290, no. 5500, pp. 2323–
+ 
+M. Belkin and P. Niyogi, "Laplacian eigenmaps and spectral techniques for embedding and clustering," in Advances in Neural
+Information Processing Systems, 2002, pp. 585–591.
+ 
+B. Perozzi, R. Al-Rfou, and S. Skiena, "DeepWalk: Online learning of social representations," in Proceedings of the 20th ACM SIGKDD
+International Conference on Knowledge Discovery and Data Mining, 2014, pp. 701–710.
+ 
+C. Yang, Z. Liu, D. Zhao, M. Sun, and E. Y. Chang, "Network representation learning with rich text information," in Proceedings of the 24th International Joint Conference on Artificial Intelligence, 2015, pp. 2111–2117.
+ 
+D. Zhang, J. Yin, X. Zhu, and C. Zhang, "Collective classification via discriminative matrix factorization on sparsely labeled networks," in Proceedings of the 25th ACM International Conference on
+Information and Knowledge Management, 2016, pp. 1563–1572.
+ 
+S. Cao, W. Lu, and Q. Xu, "Deep neural networks for learning graph representations," in Proceedings of the 30th AAAI Conference on Artificial Intelligence, 2016, pp. 1145–1152.
+ 
+S. Zhu, K. Yu, Y. Chi, and Y. Gong, "Combining content and link for classification using matrix factorization," in Proceedings of the 30th Annual International ACM SIGIR Conference on Research and Development in Information Retrieval, 2007, pp. 487–494.
+ 
+S. Bhagat, G. Cormode, and S. Muthukrishnan, "Node classification in social networks," Social Network Data Analytics, pp. 115–
+ 
+L. L¨u and T. Zhou, "Link prediction in complex networks: A survey," Physica A: Statistical Mechanics and its Applications, vol.
+390, no. 6, pp. 1150–1170, 2011.
+ 
+S. Gao, L. Denoyer, and P. Gallinari, "Temporal link prediction by integrating content and structure information," in Proceedings of the 20th ACM International Conference on Information and Knowledge
+Management, 2011, pp. 1169–1174.
+ 
+C. Zhang, K. Zhang, Q. Yuan, H. Peng, Y. Zheng, T. Hanratty, S. Wang, and J. Han, "Regions, periods, activities: Uncovering urban dynamics via cross-modal representation learning," in Proceedings of the 26th International Conference on World Wide Web, 2017, pp. 361–370.
+ 
+M. Xie, H. Yin, H. Wang, F. Xu, W. Chen, and S. Wang, "Learning graph-based POI embedding for location-based recommendation," in Proceedings of the 25th ACM International Conference on
+Information and Knowledge Management, 2016, pp. 15–24.
+ 
+Z. Liu, V. W. Zheng, Z. Zhao, F. Zhu, K. C.-C. Chang, M. Wu, and J. Ying, "Distance-aware DAG embedding for proximity search on heterogeneous graphs," in Proceedings of the 32nd AAAI
+Conference on Artificial Intelligence, 2018, pp. 2355–2362.
+ 
+J. Tang, J. Liu, and Q. Mei, "Visualizing large-scale and highdimensional data," in Proceedings of the 25th International Conference on World Wide Web, 2016, pp. 287–297.
+ 
+Y. Lin, Z. Liu, M. Sun, Y. Liu, and X. Zhu, "Learning entity and relation embeddings for knowledge graph completion," in Proceedings of the 29th AAAI Conference on Artificial Intelligence, 2015, pp. 2181–2187.
+ 
+D. Wang, P. Cui, and W. Zhu, "Structural deep network embedding," in Proceedings of the 22nd ACM SIGKDD International
+Conference on Knowledge Discovery and Data Mining, 2016, pp.
+1225–1234.
+ 
+D. Zhang, J. Yin, X. Zhu, and C. Zhang, "Homophily, structure, and content augmented network representation learning," in Proceedings of the 16th IEEE International Conference on Data Mining, 2016, pp. 609–618.
+ 
+L. G. Moyano, "Learning network representations," The European
+Physical Journal Special Topics, vol. 226, no. 3, pp. 499–518, 2017.
+ 
+P. Goyal and E. Ferrara, "Graph embedding techniques, applications, and performance: A survey," Knowledge Based Systems, vol.
+151, pp. 78–94, 2018.
+ 
+W. L. Hamilton, R. Ying, and J. Leskovec, "Representation learning on graphs: Methods and applications," IEEE Data Engineering
+Bulletin, vol. 40, no. 3, pp. 52–74, 2017.
+ 
+P. Cui, X. Wang, J. Pei, and W. Zhu, "A survey on network embedding," IEEE Transactions on Knowledge and Data Engineering, 
+H. Cai, V. W. Zheng, and K. C.-C. Chang, "A comprehensive survey of graph embedding: Problems, techniques and applications," IEEE Transactions on Knowledge and Data Engineering, 2018.
+ 
+S. Cao, W. Lu, and Q. Xu, "GraRep: Learning graph representations with global structural information," in Proceedings of the 24th ACM International Conference on Information and Knowledge
+Management, 2015, pp. 891–900.
+ 
+M. Girvan and M. E. Newman, "Community structure in social and biological networks," Proceedings of the National Academy of Sciences, vol. 99, no. 12, pp. 7821–7826, 2002.
+ 
+X. Wang, P. Cui, J. Wang, J. Pei, W. Zhu, and S. Yang, "Community preserving network embedding," in Proceedings of the 31st AAAI
+Conference on Artificial Intelligence, 2017, pp. 203–209.
+ 
+S. Wang, J. Tang, F. Morstatter, and H. Liu, "Paired restricted
+Boltzmann machine for linked data," in Proceedings of the 25th
+ACM International Conference on Information and Knowledge Management, 2016, pp. 1753–1762.
+ 
+X. Huang, J. Li, and X. Hu, "Label informed attributed network embedding," in Proceedings of the 10th ACM International Conference on Web Search and Data Mining, 2017, pp. 731–739.
+ 
+L. Tang and H. Liu, "Relational learning via latent social dimensions," in Proceedings of the 15th ACM SIGKDD International
+Conference on Knowledge Discovery and Data Mining, 2009, pp. 817–
+ 
+——, "Leveraging social media networks for classification," Data
+Mining and Knowledge Discovery, vol. 23, no. 3, pp. 447–478, 2011.
+ 
+——, "Scalable learning of collective behavior based on sparse social dimensions," in Proceedings of the 18th ACM International
+Conference on Information and Knowledge Management, 2009, pp.
+1107–1116.
+ 
+A. Grover and J. Leskovec, "node2vec: Scalable feature learning for networks," in Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2016, pp. 855–864.
+ 
+M. Ou, P. Cui, J. Pei, Z. Zhang, and W. Zhu, "Asymmetric transitivity preserving graph embedding," in Proceedings of the 22nd
+ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2016, pp. 1105–1114.
+ 
+C. Zhou, Y. Liu, X. Liu, Z. Liu, and J. Gao, "Scalable graph embedding for asymmetric proximity," in Proceedings of the 31st
+AAAI Conference on Artificial Intelligence, 2017, pp. 2942–2948.
+ 
+H. Wang, J. Wang, J. Wang, M. Zhao, W. Zhang, F. Zhang, X. Xie, and M. Guo, "GraphGAN: Graph representation learning with generative adversarial nets," in Proceedings of the 32nd AAAI
+Conference on Artificial Intelligence, 2018, pp. 2508–2515.
+ 
+L. F. Ribeiro, P. H. Saverese, and D. R. Figueiredo, "struc2vec:
+Learning node representations from structural identity," in Proceedings of the 23rd ACM SIGKDD International Conference on
+Knowledge Discovery and Data Mining, 2017, pp. 385–394.
+ 
+C. Donnat, M. Zitnik, D. Hallac, and J. Leskovec, "Spectral graph wavelets for structural role similarity in networks," arXiv preprint arXiv:1710.10321, 2017.
+ 
+T. Lyu, Y. Zhang, and Y. Zhang, "Enhancing the network embedding quality with structural similarity," in Proceedings of the 2017
+ACM on Conference on Information and Knowledge Management, 2017, pp. 147–156.
+ 
+R. Feng, Y. Yang, W. Hu, F. Wu, and Y. Zhuang, "Representation learning for scale-free networks," in Proceedings of the 32nd AAAI
+Conference on Artificial Intelligence, 2018, pp. 282–289.
+ 
+H. Chen, B. Perozzi, Y. Hu, and S. Skiena, "HARP: Hierarchical representation learning for networks," in Proceedings of the 32nd
+AAAI Conference on Artificial Intelligence, 2018, pp. 2127–2134.
+ 
+D. Zhang, J. Yin, X. Zhu, and C. Zhang, "User profile preserving social network embedding," in Proceedings of the 26th International
+Joint Conference on Artificial Intelligence, 2017, pp. 3378–3384.
+ 
+C. Li, S. Wang, D. Yang, Z. Li, Y. Yang, X. Zhang, and J. Zhou, "PPNE: Property preserving network embedding," in International Conference on Database Systems for Advanced Applications, 2017, pp. 163–179.
+ 
+J. Li, J. Zhu, and B. Zhang, "Discriminative deep random walk for network classification," in Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics, vol. 1, 2016, pp.
+1004–1013.
+ 
+C. Tu, W. Zhang, Z. Liu, and M. Sun, "Max-Margin DeepWalk: discriminative learning of network representation," in Proceedings of the 25th International Joint Conference on Artificial Intelligence, 2016, pp. 3889–3895.
+ 
+X. Zhang, W. Chen, and H. Yan, "TLINE: scalable transductive network embedding," in Information Retrieval Technology, 2016, pp. 98–110.
+ 
+J. Chen, Q. Zhang, and X. Huang, "Incorporate group information to enhance network embedding," in Proceedings of the 25th ACM International Conference on Information and Knowledge
+Management, 2016, pp. 1901–1904.
+ 
+C. Li, Z. Li, S. Wang, Y. Yang, X. Zhang, and J. Zhou, "Semisupervised network embedding," in International Conference on
+Database Systems for Advanced Applications, 2017, pp. 131–147.
+ 
+S. Pan, J. Wu, X. Zhu, C. Zhang, and Y. Wang, "Tri-party deep network representation," in Proceedings of the 25th International
+Joint Conference on Artificial Intelligence, 2016, pp. 1895–1901.
+ 
+S. Wang, J. Tang, C. Aggarwal, and H. Liu, "Linked document embedding for classification," in Proceedings of the 25th ACM
+International Conference on Information and Knowledge Management, 2016, pp. 115–124.
+ 
+Z. Yang, W. W. Cohen, and R. Salakhutdinov, "Revisiting semisupervised learning with graph embeddings," in Proceedings of the 33rd International Conference on International Conference on
+Machine Learning (ICML), 2016, pp. 40–48.
+ 
+M. E. Newman, "Finding community structure in networks using the eigenvectors of matrices," Physical review E, vol. 74, no. 3, p.
+ 
+N. Natarajan and I. S. Dhillon, "Inductive matrix completion for predicting gene–disease associations," Bioinformatics, vol. 30, no. 12, pp. i60–i68, 2014.
+ 
+T. Mikolov, K. Chen, G. Corrado, and J. Dean, "Efficient estimation of word representations in vector space," arXiv preprint arXiv:1301.3781, 2013.
+ 
+T. Mikolov, I. Sutskever, K. Chen, G. S. Corrado, and J. Dean, "Distributed representations of words and phrases and their compositionality," in Advances in Neural Information Processing
+Systems, 2013, pp. 3111–3119.
+ 
+G. E. Hinton and R. R. Salakhutdinov, "Reducing the dimensionality of data with neural networks," Science, vol. 313, no. 5786, pp. 504–507, 2006.
+ 
+I. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. WardeFarley, S. Ozair, A. Courville, and Y. Bengio, "Generative adversarial nets," in Advances in Neural Information Processing Systems, 2014, pp. 2672–2680.
+ 
+R. Salakhutdinov and G. Hinton, "Semantic hashing," International Journal of Approximate Reasoning, vol. 50, no. 7, pp. 969–978, 
+P. Vincent, H. Larochelle, I. Lajoie, Y. Bengio, and P.-A. Manzagol, "Stacked denoising autoencoders: Learning useful representations in a deep network with a local denoising criterion," Journal of Machine Learning Research, vol. 11, no. Dec, pp. 3371–3408, 2010.
+ 
+L. Katz, "A new status index derived from sociometric analysis,"
+Psychometrika, vol. 18, no. 1, pp. 39–43, 1953.
+ 
+H. H. Song, T. W. Cho, V. Dave, Y. Zhang, and L. Qiu, "Scalable proximity estimation and link prediction in online social networks," in Proceedings of the 9th ACM SIGCOMM Conference on Internet Measurement Conference, 2009, pp. 322–335.
+ 
+A. Rahimi and B. Recht, "Random features for large-scale kernel machines," in Advances in neural information processing systems, 2008, pp. 1177–1184.
+ 
+J. Zhu, A. Ahmed, and E. P. Xing, "MedLDA: Maximum margin supervised topic models," Journal of Machine Learning Research, vol. 13, no. Aug, pp. 2237–2278, 2012.
+ 
+J. Mairal, J. Ponce, G. Sapiro, A. Zisserman, and F. R. Bach, "Supervised dictionary learning," in Advances in Neural Information
+Processing Systems, 2009, pp. 1033–1040.
+ 
+R.-E. Fan, K.-W. Chang, C.-J. Hsieh, X.-R. Wang, and C.-J. Lin, "LIBLINEAR: A library for large linear classification," Journal of Machine Learning Research, vol. 9, no. Aug, pp. 1871–1874, 2008.
+ 
+Q. Le and T. Mikolov, "Distributed representations of sentences and documents," in Proceedings of the 31st International Conference on Machine Learning, 2014, pp. 1188–1196.
+ 
+N. Djuric, H. Wu, V. Radosavljevic, M. Grbovic, and N. Bhamidipati, "Hierarchical neural language models for joint representation of streaming documents and their content," in Proceedings of the 24th International Conference on World Wide Web, 2015, pp.
+248–255.
+ 
+G. E. Hinton, N. Srivastava, A. Krizhevsky, I. Sutskever, and R. R.
+Salakhutdinov, "Improving neural networks by preventing coadaptation of feature detectors," arXiv preprint arXiv:1207.0580, 
+P. Sen, G. Namata, M. Bilgic, L. Getoor, B. Galligher, and T. EliassiRad, "Collective classification in network data," AI Magazine, vol. 29, no. 3, p. 93, 2008.
+ 
+P. Kazienko and T. Kajdanowicz, "Label-dependent node classification in the network," Neurocomputing, vol. 75, no. 1, pp. 199–
+ 
+D. Liben-Nowell and J. Kleinberg, "The link-prediction problem for social networks," Journal of the American Society for Information
+Science and Technology, vol. 58, no. 7, pp. 1019–1031, 2007.
+ 
+V. Martinez, F. Berzal, and J.-C. Cubero, "A survey of link prediction in complex networks," ACM Computing Surveys, vol. 49, no. 4, p. 69, 2017.
+ 
+S. Fortunato, "Community detection in graphs," Physics Reports, vol. 486, no. 3–5, pp. 75–174, 2010.
+ 
+C. H. Q. Ding, X. He, H. Zha, M. Gu, and H. D. Simon, "A minmax cut algorithm for graph partitioning and data clustering," in Proceedings of the 2001 IEEE International Conference on Data
+Mining, 2001, pp. 107–114.
+ 
+J. Shi and J. Malik, "Normalized cuts and image segmentation,"
+IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 22, no. 8, pp. 888–905, 2000.
+ 
+N. M. E. J. and M. Girvan, "Finding and evaluating community structure in networks," Physics Review, vol. 69, no. 026113, 2004.
+ 
+M. E. Newman, "Modularity and community structure in networks," Proceedings of the National Academy of Sciences, vol. 103, no. 23, pp. 8577–8582, 2006.
+ 
+X. Xu, N. Yuruk, Z. Feng, and T. A. J. Schweiger, "SCAN:
+A structural clustering algorithm for networks," in Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
+Discovery and Data Mining, 2007, pp. 824–833.
+ 
+I. Herman, G. Melanc¸on, and M. S. Marshall, "Graph visualization and navigation in information visualization: A survey," IEEE
+Transactions on Visualization and Computer Graphics, vol. 6, no. 1, pp. 24–43, 2000.
+ 
+L. v. d. Maaten and G. Hinton, "Visualizing data using t-SNE,"
+Journal of Machine Learning Research, vol. 9, no. Nov, pp. 2579–
+ 
+Y. Zheng, L. Zhang, X. Xie, and W.-Y. Ma, "Mining interesting locations and travel sequences from GPS trajectories," in Proceedings of the World Wide Web International Conference, 2009, pp. 791–
+ 
+P. Wang, J. Zhang, G. Liu, Y. Fu, and C. Aggarwal, "Ensemblespotting: Prioritizing vibrant communities via POI embedding with multi-view spatial graphs," in Proceedings of the 2018 SIAM
+International Conference on Data Mining, 2018, pp. 351–359.
+ 
+A. Bordes, J. Weston, R. Collobert, Y. Bengio et al., "Learning structured embeddings of knowledge bases." in Proceedings of the 25th AAAI Conference on Artificial Intelligence, 2011, pp. 301–306.
+ 
+J. Feng, M. Huang, Y. Yang et al., "GAKE: Graph aware knowledge embedding," in Proceedings of the 26th International Conference on Computational Linguistics (COLING), 2016, pp. 641–651.
+ 
+A. L. Traud, P. J. Mucha, and M. A. Porter, "Social structure of facebook networks," Physica A: Statistical Mechanics and its
+Applications, vol. 391, no. 16, pp. 4165–4180, 2012.
+ 
+J. Tang, J. Zhang, L. Yao, J. Li, L. Zhang, and Z. Su, "Arnetminer: extraction and mining of academic social networks," in Proceedings of the 14th ACM SIGKDD International Conference on
+Knowledge Discovery and Data Mining, 2008, pp. 990–998.
+ 
+J. Leskovec, J. Kleinberg, and C. Faloutsos, "Graph evolution: densification and shrinking diameters," ACM Transactions on
+Knowledge Discovery from Data (TKDD), vol. 1, no. 1, p. 2, 2007.
+ 
+L. A. Adamic and N. Glance, "The political blogosphere and the 2004 US election: divided they blog," in Proceedings of the 3rd
+International Workshop on Link Discovery, 2005, pp. 36–43.
+ 
+B.-J. Breitkreutz, C. Stark, T. Reguly, L. Boucher, A. Breitkreutz, M. Livstone, R. Oughtred, D. H. Lackner, J. B¨ahler, V. Wood et al., "The BioGRID interaction database: 2008 update," Nucleic Acids
+Research, vol. 36, pp. D637–D640, 2008.
+ 
+A. Liberzon, A. Subramanian, R. Pinchback, H. Thorvaldsd´ottir, P. Tamayo, and J. P. Mesirov, "Molecular signatures database(MSigDB) 3.0," Bioinformatics, vol. 27, no. 12, pp. 1739–1740, 2011.
+ 
+A. Strehl and J. Ghosh, "Cluster ensembles – a knowledge reuse framework for combining multiple partitions," Journal of Machine
+Learning Research, vol. 3, pp. 583–617, 2003.
+ 
+A. Mnih and G. E. Hinton, "A scalable hierarchical distributed language model," in Advances in Neural Information Processing
+Systems, 2009, pp. 1081–1088.
+ 
+F. Morin and Y. Bengio, "Hierarchical probabilistic neural network language model," in Proceedings of the 10th International
+Workshop on Artificial Intelligence and Statistics, vol. 5, 2005, pp.
+246–252.
+ 
+M. U. Gutmann and A. Hyv¨arinen, "Noise-contrastive estimation of unnormalized statistical models, with applications to natural image statistics," Journal of Machine Learning Research, vol. 13, no.
+Feb, pp. 307–361, 2012.
+ 
+M. Hochstenbach, "A Jacobi–Davidson type method for the generalized singular value problem," Linear Algebra and its Applications, vol. 431, no. 3-4, pp. 471–487, 2009.
+ 
+D. I. Shuman, P. Vandergheynst, and P. Frossard, "Chebyshev polynomial approximation for distributed signal processing," in Distributed Computing in Sensor Systems and Workshops (DCOSS), 2011 International Conference on, 2011, pp. 1–8.
+ 
+S. Cavallari, V. W. Zheng, H. Cai, K. C.-C. Chang, and E. Cambria, "Learning community embedding with community detection and node embedding on graphs," in Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, 2017, pp.
+377–386.
+ 
+L. Yang, X. Cao, and Y. Guo, "Multi-facet network embedding:
+Beyond the general solution of detection and representation," in Proceedings of the 32nd AAAI Conference on Artificial Intelligence, 2018, pp. 499–506.
+ Y. Zhang, T. Lyu, and Y. Zhang, "COSINE: Communitypreserving social network embedding from information diffusion cascades," in Proceedings of the 32nd AAAI Conference on Artificial
+Intelligence, 2018, pp. 2620–2627.
+ C. Wang, S. Pan, G. Long, X. Zhu, and J. Jiang, "MGAE: Marginalized hraph autoencoder for graph clustering," in Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, 2017, pp. 889–898.
+ Z. Wang, X. Ye, C. Wang, Y. Wu, C. Wang, and K. Liang, "RSDNE:
+Exploring relaxed similarity and dissimilarity from completelyimbalanced labels for network embedding," in Proceedings of the 32nd AAAI Conference on Artificial Intelligence, 2018, pp. 475–482.
+ X. Huang, Q. Song, J. Li, and X. Hu, "Exploring expert cognition for attributed network embedding," in Proceedings of the 10th
+ACM International Conference on Web Search and Data Mining, 2018.
+ V. Misra and S. Bhatia, "Bernoulli embeddings for graphs," in Proceedings of the 32nd AAAI Conference on Artificial Intelligence, 2018, pp. 3812–3819.
+ J. Qiu, Y. Dong, H. Ma, J. Li, K. Wang, and J. Tang, "Network embedding as matrix factorization: unifying DeepWalk, LINE, PTE, and node2vec," in Proceedings of the 10th ACM International
+Conference on Web Search and Data Mining, 2018.
+ D. Yang, S. Wang, C. Li, X. Zhang, and Z. Li, "From properties to links: Deep network embedding on incomplete graphs," in Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, 2017, pp. 367–376.
+ J. Li, H. Dani, X. Hu, J. Tang, Y. Chang, and H. Liu, "Attributed network embedding for learning in a dynamic environment," in Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, 2017, pp. 387–396.
+ L. Zhou, Y. Yang, X. Ren, F. Wu, and Y. Zhuang, "Dynamic network embedding by modeling triadic closure process," in Proceedings of the 32nd AAAI Conference on Artificial Intelligence, 2018, pp. 571–578.
+ W. Hamilton, Z. Ying, and J. Leskovec, "Inductive representation learning on large graphs," pp. 1025–1035, 2017.
+ J. Ma, P. Cui, and W. Zhu, "DepthLGP: Learning embeddings of out-of-sample nodes in dynamic networks," in Proceedings of the 32nd AAAI Conference on Artificial Intelligence, pp. 370–377.
+ R. A. Rossi, R. Zhou, and N. K. Ahmed, "Deep feature learning for graphs," arXiv preprint arXiv:1704.08829, 2017.
+ M. M. Bronstein, J. Bruna, Y. LeCun, A. Szlam, and P. Vandergheynst, "Geometric deep learning: going beyond euclidean data," IEEE Signal Processing Magazine, vol. 34, no. 4, pp. 18–42, S. Chang, W. Han, J. Tang, G.-J. Qi, C. C. Aggarwal, and T. S.
+Huang, "Heterogeneous network embedding via deep architectures," in Proceedings of the 21th ACM SIGKDD International
+Conference on Knowledge Discovery and Data Mining, 2015, pp. 119–
+ Z. Huang and N. Mamoulis, "Heterogeneous information network embedding for meta path based proximity," in arXiv:1701.05291, 2017.
+ Y. Dong, N. V. Chawla, and A. Swami, "metapath2vec: Scalable representation learning for heterogeneous networks," in Proceedings of the 23th ACM SIGKDD International Conference on
+Knowledge Discovery and Data Mining, 2017, pp. 135–144.
+ K. Tu, P. Cui, X. Wang, F. Wang, and W. Zhu, "Structural deep embedding for hyper-networks," in Proceedings of the 32nd AAAI
+Conference on Artificial Intelligence, 2018, pp. 426–433.
+ Y. Ma, Z. Ren, Z. Jiang, J. Tang, and D. Yin, "Multi-dimensional network embedding with hierarchical structure," in Proceedings of the 10th ACM International Conference on Web Search and Data
+Mining, 2018.
+ Y. Zhang, Y. Xiong, X. Kong, and Y. Zhu, "Learning node embeddings in interaction graphs," in Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, 2017, pp.
+397–406.
+ M. Qu, J. Tang, J. Shang, X. Ren, M. Zhang, and J. Han, "An attention-based collaboration framework for multi-view network representation learning," in Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, 2017, pp. 1767–
+ T.-y. Fu, W.-C. Lee, and Z. Lei, "HIN2Vec: Explore meta-paths in heterogeneous information networks for representation learning," in Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, 2017, pp. 1797–1806.
+ Y. Chen and C. Wang, "HINE: Heterogeneous information network embedding," in International Conference on Database Systems for Advanced Applications, 2017, pp. 180–195.
+ S. Wang, J. Tang, C. Aggarwal, Y. Chang, and H. Liu, "Signed network embedding in social media," in Proceedings of the 2017
+SIAM International Conference on Data Mining, 2017, pp. 327–335.
+ S. Wang, C. Aggarwal, J. Tang, and H. Liu, "Attributed signed network embedding," in Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, 2017, pp. 137–146.
+ H. Wang, F. Zhang, M. Hou, X. Xie, M. Guo, and Q. Liu, "SHINE:
+Signed heterogeneous information network embedding for sentiment link prediction," in Proceedings of the 10th ACM International
+Conference on Web Search and Data Mining, 2018.
+ Q. Dai, Q. Li, J. Tang, and D. Wang, "Adversarial network embedding," in Proceedings of the 32nd AAAI Conference on Artificial
+Intelligence, pp. 2167–2174.
+ S. Pan, R. Hu, G. Long, J. Jiang, L. Yao, and C. Zhang, "Adversarially regularized graph autoencoder," Proceedings of the 26th
+International Joint Conference on Artificial Intelligence, 2018.
+ J. Hu, R. Cheng, Z. Huang, Y. Fang, and S. Luo, "On embedding uncertain graphs," in Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, 2017, pp. 157–166.

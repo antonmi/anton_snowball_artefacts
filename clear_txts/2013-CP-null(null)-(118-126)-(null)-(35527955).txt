@@ -1,0 +1,378 @@
+Fast dropout training
+Sida I. Wang sidaw@cs.stanford.edu
+Christopher D. Manning manning@stanford.edu
+Department of Computer Science, Stanford University, Stanford, CA 94305
+Abstract
+Preventing feature co-adaptation by encouraging independent contributions from different features often improves classification and regression performance.
+Dropout training(Hinton et al., 2012) does this by randomly dropping out (zeroing) hidden units and input features during training of neural networks. However, repeatedly sampling a random subset of input features makes training much slower. Based on an examination of the implied objective function of dropout training, we show how to do fast dropout training by sampling from or integrating a Gaussian approximation, instead of doing Monte Carlo optimization of this objective. This approximation, justified by the central limit theorem and empirical evidence, gives an order of magnitude speedup and more stability. We show how to do fast dropout training for classification, regression, and multilayer neural networks. Beyond dropout, our technique is extended to integrate out other types of noise and small image transformations.
+1. Introduction
+Recent work (Hinton et al., 2012) has shown that preventing feature co-adaptation by dropout training is a promising method for regularization. Applied to neural network training, the idea is to dropout (zero) randomly sampled hidden units and input features during each iteration of optimization.
+Dropout played an important role in the systems that won recent learning competitions such as ImageNet classification(Krizhevsky et al., 2012) and the Merck molecular activity challenge at www.kaggle.com, and improves performance on various tasks. Dropout can be considered
+Proceedings of the 30 th International Conference on Machine Learning, Atlanta, Georgia, USA, 2013.
+JMLR:
+W&CP volume 28. Copyright 2013 by the author(s). another approach to regularization in addition to the widely used parameter shrinkage methods and model averaging. This process lowers the trust in a feature that is only helpful when other specific features are present, since any particular feature may be dropped out and cannot be depended on.
+Alternatively, the procedure can be seen as averaging over many neural networks with shared weights.
+Other observations of harmful co-adaptation and ways to address them exist in the literature. Naive Bayes, by completely ignoring co-adaptation, performs better than discriminative methods when there is little data(Ng & Jordan, 2002), and continues to perform better on certain relatively large datasets (Wang & Manning, 2012).
+In (Sutton et al., 2006), it is observed that training involves trade-offs among weights, where the presence of highly indicative features can cause other useful but weaker features to undertrain. They propose feature bagging: training different models on subsets of features that are later combined, an idea further pursued under the name logarithmic opinion pools by (Smith et al., 2005). Improved performance on Named Entity Recognition and Part-of-Speech Tagging was demonstrated.
+While the effectiveness of these methods in preventing feature co-adaptation has been demonstrated, actually sampling, or training multiple models, make training slower. Moreover, with a dropout rate of p, the proportion of data still not seen after n passes is pn (e.g., 5 passes of the data are required to see 95% of it at p = 0.5). If the data is not highly redundant, and if we make the relevant data only partially observable at random, then the task becomes even harder, and training efficiency may reduce further.
+In this paper, we look at how to achieve the benefit of dropout training without actually sampling, thereby using all the data efficiently.
+The approach uses a Gaussian approximation that is justified by the central limit theorem and empirical evidence. We show the validity of this approximation and how it can provide an order of magnitude speed-up at training time, Fast dropout training while also giving more stability. Fast dropout fits into the general framework of integrating out noise added to the training data (Matsuoka, 1992; Bishop, 1995).
+See (van der Maaten et al., 2013) for an alternative approach to integrating out noise and a survey of related work from that angle. Their approach is exact for loss functions decomposable by the moment generating function of the independent noise such as the exponential loss and squared error loss. Our approach does not require independence: it can integrate out small transformations that an image classifier should be invariant to. We begin with logistic regression for simplicity, then extend the idea to other loss functions, other noise, and neural networks. Code is provided at the author's website.
+2. Fast approximations to dropout
+2.1. The implied objective function
+We illustrate the idea with logistic regression (LR) given training vector x, and label y ∈ {0, 1}. To train
+LR with dropout on data with dimension m, first sample zi ∼ Bernoulli(pi) for i = 1...m. Here pi is the probability of not dropping out input xi. After sampling z = {zi}i=1...m we can compute the stochastic gradient descent (sgd) update as follows:
+∆w = (y − σ(wT Dzx))Dzx where Dz = diag(z) ∈ Rm×m, and σ(x) = 1/(1 + e−x) is the logistic function.
+This update rule, applied over the training data for multiple passes, can be seen as a Monte Carlo approximation to the following gradient:
+∆ ¯w = Ez;zi∼Bernoulli(pi)[(y − σ(wT Dzx))Dzx]
+The objective function with the above gradient is the expected conditional log-likelihood of the label given the data with dropped out dimensions indicated by z, for y ∼ Bernoulli(σ(wT Dzx))).
+This is the implied objective function for dropout training:
+L(w) = Ez[log(p(y|Dzx; w)]
+= Ez[y log(σ(wT Dzx)) + (1 − y) log(1 − σ(wT Dzx))]
+Since we are just taking an expectation, we still have a convex optimization problem provided that the negative log-likelihood is convex.
+Evaluating the expectation in (1) naively by summing over all possible z has complexity O(2mm). Rather than directly computing the expectation with respect to z, we propose a variable transformation that allows us to approximately compute the expectation with respect to a simple random variable Y ∈ R, instead of z ∈ {0, 1}m. In the next subsection, we describe an efficient O(m) approximation that is accurate for machine learning applications where wixi usually come from a unimodal or bounded distribution.
+2.2. The Gaussian approximation
+−20
+−15
+−10
+−5
+4 x 10
+Figure 1. Illustration of the fast dropout idea: The numbers at the bottom are the dropout indicator variables z1...z5. As z is repeatedly sampled, the resulting inputs to the top unit are close to being normally distributed.
+We make the observation that evaluating the objective function L(w) involves taking the expectation with respect to the variable Y (z) = wT Dzx = �m i wixizi, a weighted sum of Bernoulli random variables.
+For most machine learning problems, {wi} typically forms a unimodal distribution centered at 0, {xi} is either unimodal or in a fixed interval. In this case, Y can be well approximated by a normal distribution even for relatively low dimensional data with m = 10. More technically, the Lyapunov condition is generally satisfied for a weighted sum of Bernoulli random variables of the form Y that are weighted by real data(Lehmann, 1998). Then, Lyapunov's central limit theorem states that Y (z) tends to a normal distribution as m → ∞ (see figure 1). We empirically verify that the approximation is good for typical datasets of moderate dimensions, except when a couple of dimensions dominate all others (see figure 3). Finally, let S be the approximating Gaussian (Y d→ S)
+S = Ez[Y (z)] +
+�
+Var[Y (z)]ϵ = µS + σSϵ(3) where ϵ ∼ N(0, 1), Ez[Y (z)] = �m i=1 piwixi, and Var [Y (z)] = �m i=1 pi(1 − pi)(wixi)2.
+In the following subsections, based on the Gaussian assumption above, we present several approximations at
+Fast dropout training different tradeoff points between speed and accuracy.
+In the end, we present experimental results showing that there is little to no performance loss when using the faster, less accurate approximations.
+2.3. Gradient computation by sampling from the Gaussian
+Given good convergence, we note that drawing samples of the approximating Gaussian S of Y (z), a constant time operation, is much cheaper than drawing samples of Y (z) directly, which takes O(m). This effect is very significant for high dimensional datasets. So without doing much, we can already approximate the objective function (2) m times faster by sampling from
+S instead of Y (z). Empirically, this approximation is within the variance of the direct MC approximation of(2) by taking 200 samples of z.
+Approximating the gradient introduces a complication when using samples from the Gaussian. The gradient(1) involves not only Y (z) d−→ S, but also Dzx directly:
+∇L(w) = Ez[(y − σ(Y (z)))Dzx]
+Let f(Y (z)) = y − σ(Y (z)) and let g(z) = Dzx.
+Naively approximating
+Ez[f(Y (z))g(z)] by either
+ES[f(S)]Ez[g(z)], or worse, by f(Es[S])Ez[g(z)] works poorly in terms of both approximation error and final performance. Note that g(z) is a linear function and therefore Ez[g(z)] = g(Ez[z]) = diag(p)x. A good way to approximate (4) is by analytically taking the expectation with respect to zi and then using a linear approximation to the conditional expectation. More precisely, consider dimension i of the gradient:
+∂L(w)
+∂wi
+= Ez[f(Y (z))xizi]
+=
+� zi∈{0,1} p(zi)zixiEz−i|zi[f(Y (z))]
+= p(zi = 1)xiEz−i|zi=1[f(Y (z))]
+≈ pixi
+�
+ES∼N (µS,σ2
+S)[f(S)]
++ Ƶi
+∂ES∼N (µ,σ2
+S)[f(S)]
+∂µ
+���� µ=µS
++ ∆σ2 i
+∂ES∼N (µS,σ2)[f(S)]
+∂σ2
+���� σ2=σ2
+S
+�
+= pixi(α(µS, σ2
+S) + ∆µiβ(µS, σ2
+S) + ∆σ2 i γ(µS, σ2
+S)) where z−i is the collection of all other zs except zi, µS, σS is defined in (3), ∆µi = (1 − pi)xiwi, ∆σ2 i =
+−pi(1−pi)x2 i w2 i are the changes in µS, σ2
+S due to conditioning on zi. Note that the partial derivatives as well as ES∼N (µS,σ2
+S)[f(S)] only need to be computed once per training case, since they are independent of i. α, β, γ can be computed by drawing K samples from
+S, taking time O(K) (whereas K samples of Y (z) take time O(mK)). Concretely, α(µ, σ2) = y − ES∼N (0,1)
+�
+1 + e−µ−σSS
+� β(µ, σ2) =
+∂α(µ,σ2)
+∂µ, and γ(µ, σ2) =
+∂α(µ,σ2)
+∂σ2 can be computed by differentiating inside the expectation.
+One can combine (5) and what we do in (7) below to obtain a more accurate yet relatively cheap approximation to the derivative. However, in practice, using only β approximates the derivative to within the variance of successive MC computations of the objective
+L (see figure 4). Empirically, this is 2–30 times faster compared to MC dropout (see figure 5 and table 1).
+At a slightly higher loss in accuracy, we can get rid of z completely by re-parameterizing the problem in µs and σs and taking derivatives with respect to them instead of approximating the derivative directly. So the objective function (2) becomes
+L(w) ≈ ES∼N (µS,σS)[y log(σ(S))+(1−y) log(1−σ(S))]
+2.4. A closed-form approximation
+In the binary classification case, we can avoid sampling by tabulating α, β, γ, and their partial derivatives (they are just functions of 2 arguments). Interestingly, an accurate closed-from approximation is also possible by using the Gaussian cumulative distribution function Φ(x) =
+√
+2π
+� x
+−∞ e−t2/2dt to approximate the logistic function. It can be shown by parameter differentiation with respect to µ and then integrating with respect to µ that
+� ∞
+−∞
+Φ(λx)N(x|µ, s)dx = Φ
+� µ
+√ λ−2 + s2
+�
+Substituting in σ(x) ≈ Φ(
+� π/8x), we get
+� ∞
+−∞ σ(x)N(x|µ, s2)dx ≈ σ
+� µ
+�
+1 + πs2/8
+�
+This is an approximation that is used for Bayesian prediction when the posterior is approximated by a Gaussian (MacKay, 1992). As we now have a closed-form approximation of α, one can also obtain expressions for β and γ by differentiating.
+Furthermore, by substituting x = µ+st, differentiating with respect to µ, and (7), we can even approximate
+Fast dropout training the objective function (6) in a closed-form:
+EX∼N (µ,s2)[log(σ(X))] =
+� ∞
+−∞ log(σ(x))N(x|µ, s2)dx
+≈
+�
+1 + πs2/8 log σ
+� µ
+�
+1 + πs2/8
+�
+The actual objective as defined in (2) can be obtained from the above by observing that 1 − σ(x) = σ(−x).
+The gradient and Hessian with respect to w can be found by analytically differentiating.
+3. Generalizations
+3.1. Least squares regression
+In contrast to all the approximations so far, dropout training of regression with squared error loss can be computed exactly. Let y be the true label and ˆY =
+� i wixizi be the predicted label with µ = E ˆY
+= p �m i=1 wixi and s2 = Var ˆY = p(1 − p) �m i=1 w2 i x2 i
+By the bias-variance decomposition, the expected squared error loss is E ˆY ∼N (µ,s2)[( ˆY − y)2] =
+� ∞
+−∞(ˆy − y)2N(ˆy|µ, s2)dˆy
+= (µ − y)2 + s2
+Since (9) is completely determined by the mean and variance of ˆY, it does not matter which distribution
+ˆY comes from as long as µ and s2 are matched. As a result, (9) is also the exact loss function of the original dropout objective if we summed over zi instead. So over the whole dataset of size n, dropout regression has the following equivalent objective:
+L(w) = 1 n n
+� j=0(ˆy(w, x(j)) − y)2 + λ m
+� i=1 ciw2 i
+This is a form of L2 regularization depending on ci =
+1/n �n j=1 x(j)2 i so that weights of larger features are regularized more strongly.
+Alternatively, let X ∈ Rn×m be the design matrix, then the normal equations for dropout training and ridge regression are, respectively, w = (XT X + λ diag(XT X))−1XT y w = (XT X + λI)−1XT y(10) where diag(A) represents the diagonal matrix with the same diagonal as A. The diagonal of XT X is stronger by a multiplicative factor 1 + λ for dropout instead of the additive λI for L2. The equivalent value for λ determined by dropout is (1 − p)/p.
+3.2. Hinge loss and the Maxout unit
+Our apporach can be applied to the classical hinge loss and the recently proposed maxout network (Goodfellow et al., 2013). The structured SVM loss is L(w) = max
+ˆy∈Y {ℓ(y, ˆy) + (wT
+ˆy x) − (wT y x)}. where Y is the set of possible predictions and ℓ(y, y′) is the loss incurred by predicting ˆy when the true label is y. The maxout unit computes h(x) = max j wT j x
+Under the fast dropout approach, both of these reduce to the problem of computing the maximum of Gaussians maxi Xi for Xi ∼ N(µ(x, wi), σ2(x, wi)) not necessarily indepedent. Several approaches to this problem is presented in (Ross, 2010).
+3.3. Softmax and general loss
+Unfortunately, the best way to compute the crossentropy loss for softmax seems to be sampling from the input Gaussian directly with S ∈ R|Y| where Y is the set of possible predictions.
+L = ES∼N (µ,Σ)[
+|Y|
+� i=1 ti log(softmax(S)i)]
+= ES′∼N (0,I)[
+|Y|
+� i=1 ti log(softmax(µ + US′)i)] where softmax(s)i = esi/ �|Y| j=1 esj and Σ = UU T.
+The required partial derivatives can again be computed by differentiating inside the expectation. This is also the general way to do fast dropout training on output units that may be vector-valued functions of vectors.
+3.4. Transformation invariance as noise
+More image data can be generated by applying transformations like small translations, rotations, shearing etc. to the original training data. A transformation of magnitude ϵ can be approximated locally by its Lie derivative as Tα(x) = x + ϵLT,x (Simard et al., 1996).
+For translation, rotation, shearing, we can generate more data by randomly sampling ϵi ∼ N(0, σ2 i ) and computing X = x+� i ϵiLi. Notice that wT X is again normally distributed and the techniques presented in this paper can be used to integrate out these transformations without actually generating the transformed data. Here we do not need the central limit theorem and the noise is not independent.
+Fast dropout training
+3.5. Other noise
+Like the exact approach in (van der Maaten et al., 2013), the Gaussian approximation can be applied to other noise models (Poisson, Gaussian, etc). We just need to characterize the noise in terms of its mean and variance and rely on the central limit theorem.
+4. Fast dropout for neural networks
+Dropout training, as originally proposed, was intended for neural networks where hidden units are dropped out, instead of the data. Fast dropout is directly applicable to dropping out the final hidden layer of neural networks. In this section, we approximately extend our technique to deep neural networks and show how they apply to several popular types of hidden units.
+For the last layer of a neural network, any output unit outlined in section 3 can be used.
+4.1. The hidden layers
+Under dropout training, each hidden unit takes a random variable as input, and produces a random variable as output. When the number of hidden units is more than 10 or so, we may again approximate their inputs as Gaussians and characterize their outputs by the output means and variances.
+A complication is that the inputs to hidden units have a covariance as shown in figure 2.
+Consider any hidden unit in dropout training.
+We may approximate its input as a Gaussian variable X ∼
+N(x|µ, s2), and let its output mean and variance be ν and τ 2. E.g., for the commonly used sigmoid unit ν =
+� ∞
+−∞ σ(x)N(x|µ, s2)dx ≈ σ
+� µ
+�
+1 + πs2/8
+�
+This integral can be evaluated exactly for the rectified linear unit f(x) = max(0, x). Let r = µ/s, then ν =
+� ∞
+−∞ f(x)N(x|µ, s2)dx = Φ(r)µ + sN(r|0, 1)
+The rectified linear unit is a special case of the maxout unit, for which techniques in (Ross, 2010) can be used to compute its mean and variance.
+With dropout training, each hidden unit also has an output variance.
+Sigmoid squared can be approximated by a translatedscaled version of the sigmoid: τ 2 =
+Var
+X∼N (µ,s2)[σ(X)] = E[σ(X)2] − E[σ(X)]2
+≈ E[σ(a(X − b))] − E[σ(X)]2
+Figure 2.
+MC dropout covariance matrices of the inputs of 50 random hidden units: left: at random initialization; right: trained to convergence. The covariance is not completely diagonal once trained to convergence.
+−20
+−15
+−10
+−5
+−0.1
+Figure 3.
+Empirical input distribution of the input of a hidden unit: left: random initialization; right: trained to convergence. We lose almost nothing here. a,b can be found by matching the values and derivatives (a = 4 − 2
+√
+2 and b = − log(
+√
+2 − 1)).
+4.2. Training with backpropagation
+The resulting neural network can be trained by backpropagation with two sets of partial derivatives.
+In normal backpropagation, one only needs to keep
+∂L
+∂µi for each hidden unit i with input µi. For fast dropout training, we need
+∂L
+∂s2 i as well for input variance s2 i.
+Where µi = p � j wijν′ j and s2 i = � j p(1 − p)ν′2 j w2 ij + pτ ′2 j w2 ij and ν′ j and τ ′ j are the output mean and variance of the previous layer.
+In practice, the method still works well if we ignore the output variance τ, so the input variance to the next layer is generated by dropout alone.
+5. Relation to Bayesian model selection
+Once we make the Gaussian approximation, there is an alternative interpretation of where the variance comes from. In the dropout framework, the variance comes from the dropout variable z.
+Under the alternative interpretation where w is a random variable, we can view dropout training as maximizing a lower bound on the Bayesian marginal likelihood among a class of Fast dropout training models Mµ indexed by µ ∈ Rm. Concretely, let µi = pwi, then the dropout objective
+L(w) = Ez;zi∼Bernoulli(pi)[log p(y|wT Dzx)]
+≈ EY ∼N (E[wT Dzx],Var[wT Dzx])[log p(y|Y )]
+= Ev:vi∼N (µi,αµ2 i )[log p(y|vT x)]
+≤ log Ev:vi∼N (µi,αµ2 i )[p(y|vT x)]
+= log(Mµ) where Mµ =
+� p(D|v)p(v|µ)dv is the Bayesian evidence. p(vi|µi) = N(vi|µi, αµ2 i ) and p(y|vT x) = σ(vT x)y(1 − σ(vT x))1−y is the logistic model.
+For dropout training, µ = w/p and α = (1 − p)/p.
+Here the variance of v is tied to its magnitude, so a larger weight is only beneficial when it is robust to noise. While α can be determined by the dropout process, we are also free to choose α and we find empirically that using a slightly larger α than that determined by dropout often performs slightly better.
+6. Experiments
+6.1. Evaluating the assumptions and speed
+For logistic regression (LR), figure 4 shows that the quality of the gradient approximation using Gaussian samples is comparable to the difference between different MC dropout runs with 200 samples. Figure 5 shows that, under identical settings, the Gaussian approximation is much faster than MC dropout, and has a very similar validation error profile. Both Gaussian dropout training and real dropout training reduce validation error rate by about 30% over plain LR when trained to convergence, without ever overfitting.
+6.2. Experiments on document classification
+We show the performance of fast dropout LR on several sentiment and topic document classification tasks, both accuracy and time taken, in the top half of table
+1. Sampling from the Gaussian is generally around 10 times faster than MC dropout and performs comparably to NBSVM in (Wang & Manning, 2012), which is a method specifically engineered for document classification. Further speedup is achieved by directly optimizing the objective in (8) and that is only 30% slower than plain logistic regression. While each iteration of fast dropout is still slower than LR, fast dropout sometimes reaches a better validation performance in less time as seen in figure 5.
+Note that for the MPQA dataset where the average number of non-zero dimensions is m ≈ 4, the Gaussian assumption is unjustifiable, but the derived method works empirically anyways. We compare to other papers in the bottom half
+−1
+−2
+−1
+MC dropout value
+Approximate value
+Naive
+Gaussian approx.
+MC dropout
+Figure 4. Scatterplot of various approximations (y-axis) vs. direct MC dropout for LR: Each point is a random dimension of the gradient, with its x-value computed from MC dropout with 200 samples of z, and its y-value computed by the method in the legend. MC dropout and Gaussian approximation used 200 samples. Naive is the approximation defined after (4), by assuming that f(z) and g(z) are independent. The green line is the reference y = x. of the table 1, using either a test/train split or Nfold cross validation, depending on what is the most standard for the dataset. With the right regularization parameters and bigram features, our plain LR baseline is itself quite strong relative to previous work.
+6.3. Experiments on MNIST
+Experimental results on MNIST using 2-hidden-layer neural networks are shown in table 2 and the validation error curves with a slight smaller net are shown in figure 6. Here is a case where the data is fairly redundant so that dropping out input features does not make the problem much harder and MC dropout on minibatches converges fairly quickly. We replicate the original experiment using the exact settings described in (Hinton et al., 2012) with a 20% dropout of the inputs, an exponentially decaying learning rate, a momentum schedule, and minibatch stochastic gradient descent. Under the learning schedule in the original experiment, no improvement resulted from doing fast dropout in the minibatch setting. In fact, each minibatch of fast dropout takes 1.5 times as much time as real dropout with 1 sample. However, the fast dropout objective is suitable for standard optimization technology, and we were able to train faster using L-BFGS where it converged in less than 100 epochs as opposed to over 500 epochs (see figure 6).
+160 errors is the previous best result without pre-training or weightsharing or enhancement of the training data.
+Fast dropout training
+0.5 seconds spent in training error rate in the validation set
+0.5 training iterations error rate in the validation set
+Plain LR
+Gaussian approx.
+MC dropout
+Figure 5. Validation errors vs. time spent in training (left), and number of iterations (right): trained using batch gradient descent on the 20-newsgroup subtask alt.atheism vs. religion.misc. 100 samples are used for both MC and Gaussian dropout. For MC dropout, zi is sampled only for non-zero xi.
+Methods\ Datasets
+MR-2k
+IMDB
+RTs
+Subj
+AthR
+CR
+MPQA
+Average
+Real (MC) dropout
+86.88 training time
+Gaussian dropout
+86.99 training time
+Fast (closed-form) dropout
+86.87 training time
+120 plain LR
+84.97 training time
+Previous results
+TreeCRF(Nakagawa et al., 2010)Vect. Sent.(Maas et al., 2011)RNN(Socher et al., 2011)NBSVM(Wang & Manning, 2012)
+|{i : xi > 0}|
+Table 1. Results on document classification: 100 samples are used for both MC dropout and the Gaussian dropout. The last row shows the average number of non-sparse dimensions in the dataset. See Wang & Manning (2012) for more details on the datasets and experimental procedures.
+Method
+2NN
+FD
++Var
++Tr
+Real
+Errors
+105-120
+Table 2. Test errors of neural networks on MNIST: 2NN:
+2-hidden-layer neural net with 784-1200-1200-10. FD: fast dropout. +Var: more artificial variance by increasing α in FD. +Tr: integrating out translation, rotation and scaling described in 3.4. MC: real dropout.
+6.4. The test time utility of fast dropout
+For the case of real dropout, at test time, Hinton et al. (2012) propose using all features, with weights scaled by p.
+This weight scaling heuristic does not exactly match the training objective being optimized, but greatly speeds run time performance. If we are not concerned about run time, we can still apply dropout at test time.
+In contrast, the test time procedure for fast dropout is exactly the same as the training time procedure. One shortcoming of fast dropout is that the implementation of training does become more complicated, mainly in the backpropagation stage, while the forward computation of the network function is still straightforward.
+One compromise here is to use fast dropout at test time, even if we want to train with real dropout for
+Fast dropout training
+200 epochs
+# validation errors
+MC dropout sgd fast dropout sgd fast dropout batch plain sgd
+Figure 6. Validation errors vs. epochs: we used the exact
+SGD training schedule described in (Hinton et al., 2012) and a 784-800-800-10 2-hiden-layer neural network. This training schedule is presumably tuned for real dropout. fast dropout performs similarly to real dropout but with less variance. fast dropout batch: use batch L-BFGS and fast dropout, with validation error evaluated every 10 epochs. simplicity. Table 3 compares several test time methods on neural networks trained for MNIST and CIFAR using real dropout. Multiple real dropout samples and fast dropout provide a small but noticeable improvement over weight scaling.
+6.5. Other experiments
+The normal equations (10) show the contrast between additive and multiplicative L2 regularization.
+For linear regression, L2 regularization outperformed dropout on 10 datasets from UCI that we tried.1 Results on 5 of them are shown in table 4.
+Classification results using neural networks on small
+UCI datasets are shown in table 5 where fast dropout does better than plain neural networks in most cases.
+7. Conclusions
+We presented a way of getting the benefits of dropout training without actually sampling, thereby speeding up the process by an order of magnitude. For high dimensional datasets (over a few hundred), each iteration of fast dropout is less than 2 times slower than normal training.
+We provided a deterministic and easy-to-compute objective function approximately equivalent to that of real dropout training. One can optimize this objective using standard optimization
+1 http://archive.ics.uci.edu/ml/
+Full
+Scale
+D1
+D10
+D100
+FD
+MNIST number of errors
+Test
+Train
+Time(s)
+1.1K
+CIFAR-10 percent error
+Test
+Train
+Time(s)
+2.2K
+Table 3. Different test time methods on networks trained with real dropout:
+A 784-800-800-10 neural network is trained with real dropout on MNIST (3072-1000-1000-10 for CIFAR-10) and tested using: Full: use all weights without scaling; Scale: w ← pw; D(n): take n real dropout samples; FD: fast dropout.
+Dataset
+L2 train
+L2 test
+FDtrain
+FDtest
+Autos
+Cardio
+House
+Liver
+Webgrph
+Table 4. Linear regression using eq. (10).
+Dropout performs worse than L2 regularization (recall that fast dropout is exact). While a digit is still easily recognizable when half of its dimensions are dropped out, dropout noise is excessive for the low dimensional regressors.
+Classification accuracy
+Dataset
+L2 train
+L2 test
+FDtrain
+FDtest
+SmallM
+USPS
+Isolet
+Hepatitis
+Soybean
+Table 5. Classification results on various datasets: we used a M-200-100-K neural network, and cross validated the parameters. methods, whereas standard methods are of limited use in real dropout because we only have a noisy measurement of the gradient. Furthermore, since fast dropout is not losing any information in individual training cases from sampling, it is capable of doing more work in each iteration, often reaching the same validation set performance in a shorter time and in less iterations.
+Acknowledgments
+We thank Andrej Karpathy, Charlie Tang and Percy
+Liang for helpful discussions. Sida Wang was partially funded by a NSERC PGS-M scholarship and a Stanford School of Engineering fellowship.
+Fast dropout training
+References
+Bishop, Christopher M. Training with noise is equivalent to Tikhonov regularization. Neural Computation, 7(1):108–116, 1995.
+Goodfellow, Ian J., Warde-Farley, David, Mirza, Mehdi, Courville, Aaron C., and Bengio, Yoshua.
+Maxout networks. CoRR, abs/1302.4389, 2013.
+Hinton, Geoffrey E., Srivastava, Nitish, Krizhevsky, Alex, Sutskever, Ilya, and Salakhutdinov, Ruslan.
+Improving neural networks by preventing co-adaptation of feature detectors.
+CoRR, abs/1207.0580, 2012.
+Krizhevsky, Alex, Sutskever, Ilya, and Hinton, Geoffrey E.
+ImageNet classification with deep convolutional neural networks. In Proceedings of NIPS, Lehmann, Erich L. Elements of Large-Sample Theory.
+Springer, 1998. ISBN 03873985956.
+Maas, Andrew L., Daly, Raymond E., Pham, Peter T., Huang, Dan, Ng, Andrew Y., and Potts, Christopher. Learning word vectors for sentiment analysis.
+In Proceedings of the ACL, 2011.
+MacKay, David J.C. The evidence framework applied to classification networks. Neural Computation, 5(4):720–736, 1992.
+Matsuoka, Kiyotoshi.
+Noise injection into inputs in back-propagation learning.
+IEEE Transactions on Systems, Man, and Cybernetics, 22(3):436–440, Nakagawa, Tetsuji, Inui, Kentaro, and Kurohashi, Sadao. Dependency tree-based sentiment classification using CRFs with hidden variables. In Proceedings of ACL:HLT, 2010.
+Ng, Andrew Y. and Jordan, Michael I. On discriminative vs. generative classifiers: A comparison of logistic regression and naive bayes. In Proceedings of NIPS, volume 2, pp. 841–848, 2002.
+Ross, Andrew.
+Computing bounds on the expected maximum of correlated normal variables. Methodology and Computing in Applied Probability, 12:111–
+138, 2010. ISSN 1387-5841.
+Simard, Patrice, LeCun, Yann, Denker, John, and Victorri, Bernard. Transformation invariance in pattern recognition-tangent distance and tangent propagation. In Neural Networks: Tricks of the Trade, pp.
+239–27, 1996.
+Smith, Andrew, Cohn, Trevor, and Osborne, Miles.
+Logarithmic opinion pools for conditional random fields. In Proceedings of the ACL, pp. 18–25, 2005.
+Socher, Richard, Pennington, Jeffrey, Huang, Eric H., Ng, Andrew Y., and Manning, Christopher D. SemiSupervised Recursive Autoencoders for Predicting
+Sentiment Distributions. In Proceedings of EMNLP, Sutton, Charles, Sindelar, Michael, and McCallum, Andrew. Reducing weight undertraining in structured discriminative learning.
+In Proceedings of HLT-NAACL), 2006. van der Maaten, Laurens, Chen, Minmin, Tyree, Stephen, and Weinberger, Kilian.
+Learning with marginalized corrupted features. In Proceedings of ICML, 2013.
+Wang, Sida and Manning, Christopher. Baselines and bigrams: Simple, good sentiment and topic classification. In Proceedings of the ACL, pp. 90–94, 2012.

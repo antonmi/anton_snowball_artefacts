@@ -1,0 +1,357 @@
+Deeply-Supervised Nets
+Chen-Yu Lee ∗
+Saining Xie ∗
+Patrick W. Gallagher
+Dept. of ECE, UCSD chl260@ucsd.edu
+Dept. of CSE and CogSci, UCSD s9xie@ucsd.edu
+Dept. of CogSci, UCSD patrick.w.gallagher@gmail.com
+Zhengyou Zhang
+Zhuowen Tu
+Microsoft Research zhang@microsoft.com
+Dept. of CogSci, UCSD ztu@ucsd.edu
+Abstract
+We propose deeply-supervised nets (DSN), a method that simultaneously minimizes classification error and improves the directness and transparency of the hidden layer learning process. We focus our attention on three aspects of traditional convolutional-neuralnetwork-type (CNN-type) architectures: (1) transparency in the effect intermediate layers have on overall classification; (2) discriminativeness and robustness of learned features, especially in early layers; (3) training effectiveness in the face of "vanishing" gradients. To combat these issues, we introduce
+"companion" objective functions at each hidden layer, in addition to the overall objective function at the output layer (an integrated strategy distinct from layer-wise pretraining). We also analyze our algorithm using techniques extended from stochastic gradient methods. The advantages provided by our method are evident in our experimental results, showing state-of-the-art performance on MNIST, CIFAR-10, CIFAR-100, and SVHN.
+Introduction
+Neural networks have recently resurged, most prominently in deep learning (DL). The application of DL techniques to large training sets has yielded significant performance gains in image classification and speech recognition.
+However, even though hierarchical neural networks have shown great promise in automatically learning thousands or Appearing in Proceedings of the 18th International Conference on Artificial Intelligence and Statistics (AISTATS)
+2015, San Diego, CA, USA.
+JMLR: W&CP volume 38.
+Copyright 2015 by the authors. [*equal contribution] even millions of features for pattern recognition, there nonetheless remain many fundamental open questions about DL.
+These open questions arise with various aspects of current DL frameworks: the features learned at hidden layers (early hidden layers in particular) are not always "transparent" in their meaning and at times display reduced discriminativeness ; "vanishing" gradients can sometimes lead to training difficulty ; despite some theoretical work, mathematical understanding of DL is at an early stage.
+Notwithstanding such issues, DL has proven capable of automatically learning rich hierarchical features combined within an integrated network. Recent techniques such as dropout, dropconnect, pre-training, and data augmentation bring enhanced performance from various perspectives. Beyond this, recent codeand experience-sharing has greatly sped the adoption and advance of DL in and out of machine learning.
+In this paper, we present a new DL approach we call deeply-supervised nets (DSN). The central idea of DSN is to provide integrated direct supervision to the hidden layers, rather than the standard approach of providing supervision only at the output layer and propagating this supervision back to earlier layers. We provide this integrated direct hidden layer supervision by introducing companion objective functions for each hidden layer; these companion objective functions can be seen as an additional (soft) constraint (or as a new regularization) within the learning process. Our experiments show significant performance gains relative to existing methods. In addition, we use analysis techniques from stochastic gradient methods to investigate a restricted setting in which incorporating companion objective functions directly leads to improved convergence rate.
+The advantage of such integrated deep
+Deeply-Supervised Nets supervision is evident: (1) for small training data and relatively shallower networks, deep supervision functions as a strong "regularization" for classification accuracy and learned features; (2) for large training data and deeper networks deep supervision makes it convenient to exploit the significant performance gains that extremely deep networks can bring by improving otherwise problematic convergence behavior.
+The major characteristic of DSN is its integrated formulation of deep supervision via companion objectives, which in the simplest case are of a form nearly identical to the objective function at the output layer, as shown in Eq.
+This integrated formulation of deep supervision by means of companion objectives immediately sets us apart from all previous approaches. In effect, we perform network optimization incorporating companion objectives as a proxy for hidden layer feature quality. The combined learning in our integrated formulation stands in contrast to previous research in which greedy layer-wise pre-training was performed separately as either initialization or fine-tuning, a strategy that resulted in overfitting.
+There are a few other relevant examples: in, they introduce an additional term only at the output layer(to use the discriminative label information to assist with learning the generative model), in strong distinction to our approach of deep supervision in a supervised learning setting; in semi-supervised learning is carried out by way of an embedding and no supervised labels are involved, in contrast to our supervised approach; the emphasis of is on providing the output classifier with features learned from the hidden layers — crucially, their technique does not target the training and regularization benefits of our DSN. We also note a parallel development bearing some similarity to DSN: GoogLeNet uses supervision on 2 hidden layers in a 22-layer CNN, but the two approaches differ in focus, formulation, emphasis, and analysis.
+On the theoretical side, analysis of deep learning is still at an early stage of development; we mention as a recent example. Finally, we mention : this work reexpresses the original output layer classification problem in an equivalent decouple-able form. Their purpose is to apply a standard optimization technique to this decoupled equation; this approach is thus quite distinct from ours. In particular, this approach does not leverage any label information to achieve benefits such as regularization. Our experiments are primarily based on L2SVM objectives, previously used in DL by
+ for the output layer only; we also show that our approach of introducing companion objectives is not dependent on the use of L2SVM objectives — when using softmax we find similar performance improvements. Our experiments show consistent improvement of DSN-L2SVM and DSN-Softmax over CNN-L2SVM and CNN-Softmax, respectively.
+We use MNIST as the primary dataset in our experiments; in these MNIST experiments we build DSN on top of Theano. For experiments on non-MNIST datasets we build DSN on top of NIN. Our DSN framework achieves state-of-the-art results on each of the datasets investigated: MNIST, CIFAR-10, CIFAR100, and SVHN. Finally, we note that our approach is independent of techniques such as averaging, dropconnect, and Maxout ; thus, we expect that combining DSN with these techniques might result in even greater classification error reduction.
+Deeply-Supervised Nets
+Our approach is built using the infrastructure provided by existing supervised CNN-type frameworks. We extend them by introducing a classifier, either
+SVM or Softmax, at hidden layers.
+Motivation
+Our motivation for introducing classifiers at hidden layers comes from the following observation: in general, a discriminative classifier trained on highly discriminative features will display better performance than a discriminative classifier trained on less discriminative features. If the features in question are the hidden layer feature maps of a deep network, this observation means that the performance of a discriminative classifier trained using these hidden layer feature maps can serve as a proxy for the quality/discriminativeness of those hidden layer feature maps. We also expect this deep supervision to alleviate the common problem of "vanishing" gradients. One concern with direct pursuit of feature discriminativeness at all hidden layers is that this might interfere with the overall network performance; our experimental results indicate that this is not the case. Our additional deep feedback is brought in by associating a "companion" classification output with each hidden layer. We may think of this companion output as analogous to the final output that a truncated network would have produced. Backpropagation of error proceeds as usual, with the crucial difference that we backpropagate not only from the final layer but also from our local companion output. The empirical results suggest the following main properties of the companion objective: (1) it is a type of feature regularization (albeit an unusual one) — it leads to reduction in testing error, while not necessarily reducing the training error; (2) it results in improved convergence behavior, requiring much less manual tweaking(particularly for very deep networks).
+Chen-Yu Lee*, Saining Xie*, Patrick W. Gallagher, Zhengyou Zhang, Zhuowen Tu
+Formulation
+Here we focus on the supervised learning case. We denote our input training data set by S = {(Xi, yi), i =
+1... N}, where sample Xi ∈ Rn denotes the raw input data and yi ∈ {1,..., K} denotes the corresponding ground truth label for sample Xi. We subsequently drop the subscript i for notational simplicity, since we consider each sample independently. The goal of deep neural networks, specifically convolutional neural networks (CNN), is to learn layers of filters and weights for minimization of output layer classification error. In our present discussion, we absorb the bias term into the weight parameters and do not differentiate weights from filters. Furthermore, we denote a recursive function for each layer m = 1... M as
+Z(m) = f(Q(m)), and Z(0) ≡ X, Q(m) = W(m) ∗ Z(m−1), (2) where M denotes the total number of layers, W(m), m = 1... M are the filters/weights to be learned, Z(m−1) is the feature map produced at layer m − 1, Q(m) refers to the convolved/filtered responses on the previous feature map, and f(·) is a pooling function on Q. Combining all layers of weights gives
+W = (W(1),..., W(M)).
+We next associate one classifier with each hidden layer1. We denote the corresponding weights by w = (w(1),..., w(M−1)), in addition to the W from the standard CNN framework. For ease of reference, we write the total objective function as
+F(W) ≡ P(W) + Q(W), (3) in which we have the output objective P(W)
+≡
+∥w(out)∥2 + L(W, w(out)) and the summed companion objectives Q(W) ≡ ∑M−1 m=1 αm[∥w(m)∥2+ℓ(W, w(m))− γ]+. We denote the classifier weights for the output layer by w(out). Our total combined objective function is then
+∥w(out)∥2+L(W,w(out))+∑M−1 m=1 αm[∥w(m)∥2+ℓ(W,w(m))−γ]+, (4) where L(W,w(out))=∑ yk̸=y[1−<w(out),ϕ(Z(M),y)−ϕ(Z(M),yk)>]2(5) and ℓ(W,w(m))=∑ yk̸=y[1−<w(m),ϕ(Z(m),y)−ϕ(Z(m),yk)>]2
+1Our derivation is stated for L2SVM but we later show experimental results for both L2SVM and softmax.
+We also tested L1SVM, finding results that differed negligibly from those of L2SVM.
+We train the DSN model using SGD. The gradient w.r.t W follows the conventional CNN-based model, plus the gradient that comes from the hidden layer direct supervision; we also use companion objective zero-ing, described in the following.
+We refer to L(W, w(out)) as the overall loss (associated with the output layer) and to ℓ(W, w(m)) as the companion loss (associated with the hidden layers); in the L2SVM setting these are both (squared) hinge losses of prediction errors. Intuitively, in addition to learning convolution kernels and weights, W(as in the standard CNN model ) we incorporate an additional objective at each hidden layer associated with good label prediction for that layer; this additional objective strongly favors features that are discriminative/sensible at each hidden layer. In Eq. (4), ∥w(out)∥2 and L(W, w(out)) are, respectively, the margin and the (squared) hinge loss of the classifier output layer; we omit the balance parameter C in front of the (squared) hinge loss for notational simplicity.
+In Eq. (5), ∥w(m)∥2 and ℓ(W, w(m)) are, respectively, the margin and the (squared) hinge loss of the hidden layer classifier.
+Note that for each ℓ(W, w(m)), the w(m) directly depends on Z(m), which is in turn dependent on
+W1,.., Wm up to the mth layer.
+Analogously, L(W, w(out)) depends on w(out), which is decided by the entire W.
+The second term in Eq.(4) often is sent to zero in the course of training; this means that the overall goal of producing good classification of the output layer is not fundamentally altered and the companion objective acts as a type of regularization or as a proxy for discriminative features. One method by which we pursue this companion objective zero-ing is by having γ as a threshold (a hyper parameter) in the second term of Eq. (4): once the companion objective of each hidden layer falls to γ (or below), it vanishes and no longer contributes to the gradient update in the learning process.
+The mth balance parameter αm represents a trade-off between the output objective and the corresponding companion objective. An alternative approach to companion objective zero-ing is to use of a simple decay function such as αm × 0.1 × (1 − t/N) → αm to enforce that the second term vanish after a certain number of iterations, where t is the epoch step and N is the total number of epochs. We have obtained promising preliminary results from each of these two approaches; this issue remains to be more fully explored.
+The main difference between Eq.(4) and previous research using layer-wise supervised training is that we perform the optimization together with a term serving as a proxy for the hidden layer feature quality. This integrated learning is in contrast to previous
+Deeply-Supervised Nets
+��������: Filters
+������: ���������
+������: ��������� maps
+��������: Filters
+������: ���������
+������: ��������� maps
+Input
+Output
+…
+���
+���
+������������ ���
+������
+Q�����
+�������)(a) DSN illustration(b) functions
+Figure 1: Network architecture for the proposed deeply-supervised nets (DSN). The total objective function F(W) ≡
+P(W) + Q(W), in which we have the output objective P(W) ≡ ∥w(out)∥2 + L(W, w(out)) and the summed companion objectives Q(W) ≡ ∑M−1 m=1 αm[∥w(m)∥2 + ℓ(W, w(m)) − γ]+. research in which greedy layer-wise pre-training was performed separately as either initialization or finetuning, a strategy that resulted in overfitting. The state-of-the-art benchmark results show that the deep supervision approach does not display harmful levels of overfitting: as seen in Figure (2.c), while the training error for both CNN and DSN is eventually near zero, DSN shows lower test error and so demonstrates its advantage in generalization over standard CNN. This is a matter for further investigation, but the present results are very promising.
+Stochastic Gradient Descent View
+In addition to the present observation that learned features in CNN are not always intuitive or discriminative, broader discussion of deep neural network training difficulties has appeared in. As seen in Eq.(1) and (2), the change of the bottom layer weights gets propagated through many layers; this can lead to "vanishing" gradients. Various techniques and parameter tuning tricks have been proposed to better train deep neural networks, such as pre-training. This difficulty in training partially raises some concerns about the DL frameworks. Here we provide analysis of our proposed formulation, in a hope to understand some aspects of its experimentally-observed advantage in effectiveness and efficiency over existing CNN-style approaches.
+The objective function in deep neural networks is highly non-convex, a characteristic contributing to the current lack of a clear mathematical/statistical analysis of DL frameworks. A common approach is to sacrifice some realism for increased tractability, typically by restricting attention only to settings in which local convexity holds. Here we follow this example by supposing that our objective functions are locally λstrongly convex and following analysis techniques from stochastic gradient descent.
+The definition of λ-strong convexity is standard: A function F(W) is λ-strongly convex on a set W if ∀ W, W′ ∈ W and any subgradient g at W, F(W′) ≥ F(W)+ < g, W′ − W > +λ
+2 ∥W′ − W∥2. (7)
+The Stochastic Gradient Descent (SGD) update rule at step t is Wt+1 = ΠW(Wt − ηtˆg), where ηt = Θ(1/t) refers to the step factor and ΠW denotes projection onto the set W. Let W⋆ be the optimal solution, suppose that there are upper bounds for E[∥WT − W⋆∥2] and E[F(WT ) − F(W⋆)] in the strongly convex function setting, or for E[F(WT ) − F(W⋆)] in the convex function setting.
+Here we make an attempt to understand the convergence of Eq. (3) w.r.t.
+E[∥WT − W⋆∥2] keeping in mind the assumed characteristics roughly illustrated in Figure (1.b). In, a convergence rate is given for M-estimators with locally convex function with compositional loss and regularization terms.
+Definition We denote by Sγ(F) = {W | F(W) ≤ γ} the γ-sublevel set, stated here for the function F(W) ≡
+P(W) + Q(W).
+First we show that W ∈ Sγ (Q) implies that W ∈
+Sγ (P). That is:
+Lemma 1 ∀m, m′ = 1... M − 1, and m′ > m if ∥w(m)∥2 + ℓ(( ˆW(1),.., ˆW(m)), w(m)) ≤ γ then there exists ( ˆW(1),.., ˆW(m),.., ˆW(m′)) such that
+∥w(m′)∥2 + ℓ(( ˆW(1),.., ˆW(m).., ˆW(m′)), w(m′)) ≤ γ. 2
+2Note that we drop the W(j), j > m since the filters
+Chen-Yu Lee*, Saining Xie*, Patrick W. Gallagher, Zhengyou Zhang, Zhuowen Tu
+Proof As we can see from an illustration of our network architecture shown in fig.(1.a), for all( ˆW(1),.., ˆW(m)) such that ℓ(( ˆW(1),.., ˆW(m)), w(m)) ≤ γ there is a "trivial" way to achieve this performance at the output layer: for each layer j > m up to m′, we let ˆW(j) = I and w(j) = w(m), meaning that the filters will be identity matrices.
+This results in ℓ(( ˆW(1),.., ˆW(m).., ˆW(m′)), w(m′)) ≤ γ.
+□
+Remark Lemma 1 shows that a good solution for
+Q(W) is also a good one for P(W); of course, the converse needs not be the case.
+That is: a W that makes P(W) small may not necessarily produce features for which the hidden layers will have a small
+Q(W). As mentioned previously, Q(W) can be viewed as a regularization term. If it happens that P(W) possesses an essentially flat area (relative to the training data) in the vicinity of some local optimum of interest and it is ultimately the test error that we really care about, we would be able to focus on the setting of W, W⋆, that will make both Q(W) and P(W) small. Therefore, it is not unreasonable to assume that
+F(W) ≡ P(W) + Q(W) and P(W) share the same optimal W⋆.
+Let P(W) and Q(W) be locally strongly convex around
+W⋆, ∥W′ − W⋆∥2 ≤ D and ∥W − W⋆∥2 ≤ D, with
+P(W′) ≥ P(W)+ < gp, W′ −W > + λ1
+2 ∥W′ −W∥2 and Q(W′) ≥ Q(W)+ < gq, W′ − W > + λ2
+2 ∥W′ − W∥2, where gp and gq are subgradients for W for P and Q, respectively. It can be directly seen that F(W) is also strongly convex and that gf = gp+gq is a subgradient of F(W) at W.
+Lemma 2 Suppose E[∥ ˆ gpt∥2] ≤ G2 and E[∥ ˆ gqt∥2] ≤
+G2, and we use the update rule of Wt+1 = ΠW(Wt − ηt( ˆ gpt + ˆ gqt)) where E[ ˆ gpt] = gpt and E[ ˆ gqt] = gqt.
+If we use ηt = 1/(λ1 + λ2)t, then at iteration T
+E[∥WT − W⋆∥2] ≤
+4G2(λ1 + λ2)2T
+Proof Since F(W) = P(W)+Q(W), it can be directly seen that
+F (W′)≥F (W)+<gp+gq,W′−W>+ λ1+λ2
+∥W′−W∥2.
+Based on lemma 1 in, this upper bound directly holds.
+□
+Lemma 3 We follow the assumptions in lemma 2, with the exception that we assume ηt = 1/t since λ1 and λ2 are not always readily available; as we discuss in the appendix, we also expect the combined λ to be above layer m do not participate in the computation for the loss function of this layer. small. When we begin in the region ∥W1 − W⋆∥2 ≤ D and the assumptions used in the appendix hold, the convergence rate is bounded by
+E[∥WT −W⋆∥2]≤e−2λ(ln(T −1)+0.578)D+4G2 ∑T −1 t=1
+1 t2 ( t
+T −1)
+2λ
+Proof See appendix.
+Theorem 1 Let P(W) be λ1-strongly convex and Q(W) be λ2-strongly convex near optimal W⋆ and denote by W(F )
+T and W(P)
+T the solution after T iterations when following SGD on F(W) and P(W), respectively.
+Then DSN framework in Eq. (4) improves the relative convergence speed E[∥W(P)
+T
+−W⋆∥2]
+E[∥W(F )
+T
+−W⋆∥2], viewed from the ratio of their upper bounds as Θ( (λ1+λ2)2 λ2
+), when ηt = 1/λt.
+Proof Lemma 1 shows the compatibility of the companion objective of Q w.r.t the output objective P.
+This equation can be directly derived from lemma 2.
+Remark When ηt = 1/t, T is large, and the first term of Eq. (9) dominates, the upper bound ratio for
+E[∥W(P)
+T
+−W⋆∥2]
+E[∥W(F )
+T
+−W⋆∥2] is roughly at the order of Θ(e2 ln(T )λ2).
+If the second term of Eq. (9) dominates, the convergence of F(W) over P(W) is also advantageous with the ratio at an order of Θ(e2 ln((T −1)/(T −2))λ2) loosely.
+In general we might expect λ2 ≫ λ1 which would lead to a great improvement in convergence speed.
+□
+Experiments
+We evaluate our proposed DSN on four datasets:
+MNIST, CIFAR-10, CIFAR-100, and SVHN. We also use ImageNet to assess the behavior of DSN on a large dataset. We use MNIST as our primary running example. For our MNIST experiments we used an implementation of DSN built on top of the Theano platform. The rest of the experiments are performed using
+DSN built on top of, except for ImageNet where we use due to its parallel computing infrastructure.
+We use the SGD solver with mini-batch size of 128 and fixed momentum of 0.9. Initial values for learning rate and weight decay factor are determined from the validation set. For fair comparison and clear illustration of the effectiveness of DSN, we match the complexity of our model to the complexity of the network architectures used in and so that there are a comparable number of parameters. We also incorporate two dropout layers with dropout rate 0.5. Companion objective at the convolutional layers is imposed to back-propagate the classification error guidance at the associated layer. Our proposed DSN framework is not difficult to train and no particular engineering tricks are adopted.
+Deeply-Supervised Nets
+−2 epoch error
+MNIST testing error
+CNN−Softmax [0.56%]
+DSN−Softmax (ours) [0.51%]
+CNN−SVM [0.48%]
+DSN−SVM (ours) [0.39%]
+10 number of training samples (k) error (%)
+MNIST testing error
+CNN−Softmax
+DSN−Softmax (ours)
+CNN−SVM
+DSN−SVM (ours)
+0.03 epoch error
+Training and testing error
+CNN−SVM: Training error [0.03%]
+CNN−SVM: Testing error [0.50%]
+DSN−SVM: Training error [0.03%]
+DSN−SVM: Testing error [0.39%](a)(b)(c)
+Figure 2: Classification error on MNIST test. (a) shows test error of competing methods; (b) shows test error versus training sample size. (c) train and test error comparison.
+DSN can be equipped with different types of classifier objective functions; we consider L2SVM and softmax and show DSN-L2SVM and DSN-Softmax yield gains over corresponding CNN-L2SVM and CNN-Softmax approaches (see Figure (2.a)). The performance gain is more evident in the small training data regime (see
+Figure (2.b)); this might partially ease the burden of requiring large training data for DL. Overall, we observe state-of-the-art classification error on all four datasets. All results are achieved without using averaging, which could lead to further improvement in classification accuracy. Figure (4) gives an illustration of some learned features. The ImageNet classification result is also very encouraging (recent winning systems used many specific engineering steps and a cluster for training). Again, our DSN method can be combined with many existing CNN-type methods. Overall, as stated before: for small training data and relatively shallow networks, DSN functions as a strong "regularization"; for large training data and very deep networks, DSN makes the training process convenient, which might be otherwise problematic in standard CNN.
+MNIST
+The MNIST dataset consists of 28 × 28 images from
+10 different classes (0 to 9) with 60,000 training and 10,000 test samples.
+We use a fairly standard network containing 2 convolutional layers followed by a fully-connected layer.
+Both convolutional layers use
+5 × 5 filter size with 32 and 64 channels, respectively.
+Relu hidden units and 2 × 2 max pooling with stride
+2 are used after each convolutional layer. The fullyconnected layer has 500 hidden nodes that uses Relu activation with dropout rate 0.5.
+Figure (2.a) and (b) show results from four methods, namely: (1) conventional CNN with softmax loss(CNN-Softmax), (2) the proposed DSN with softmax loss (DSN-Softmax), (3) CNN with L2SVM objective (CNN-L2SVM), and (4) the proposed DSN with
+L2SVM objective (DSN-L2SVM). DSN-Softmax and DSN-L2SVM outperform their respective competing
+CNN algorithms (DSN-L2SVM shows classification error of 0.39% under a single model without data whitening and augmentation). Figure (2.b) shows the classification error of the competing methods when trained with varying sizes of training samples (26% gain of DSN-L2SVM over CNN-Softmax at 500 samples. Figure (2.c) shows a comparison of generalization error between CNN and DSN.
+We also plot averaged absolute values of gradient matrices during training on MNIST for both CNN and DSN, shown in Figure (3). DSN backpropagates stronger feedback than CNN for both weights and biases, thanks to deep supervision. Table 1 compares performance.
+To investigate the difference between DSN and layer-wise pre-training (shown as CNN with pre-training in Table 1), we train a CNN model using greedy layer-wise pre-training as in. Under the same network architecture, layer-wise pre-training performs better than CNN without pre-training but worse than DSN.
+Table 1: MNIST classification result (without using data augmentation and model averaging).
+Method
+Error(%)
+CNN 
+Stochastic Pooling 
+Network in Network 
+Maxout Networks 
+CNN (layer-wise pre-training)
+DSN (ours)
+CIFAR-10 and CIFAR-100
+The CIFAR-10 dataset consists of 32×32 color images.
+A collection of 60,000 images is split into 50,000 trainChen-Yu Lee*, Saining Xie*, Patrick W. Gallagher, Zhengyou Zhang, Zhuowen Tu
+2.5 x 10
+−3 epoch gradient magnitude
+Mean gradient of all weights
+CNN−SVM gradients
+DSN−SVM gradients
+2.5 x 10
+−3 epoch gradient magnitude
+Mean gradient of all bias
+CNN−SVM gradients
+DSN−SVM gradients(a)(b)
+Figure 3: Average absolute value of gradient matrices during the training on MNIST for (a) weights; (b) biases. ing and 10,000 testing images. The dataset is preprocessed by global contrast normalization. To compare our results to previous state-of-the-art, for this dataset we also augmented the dataset by zero-padding 4 pixels on each side; we also perform corner cropping and random flipping on the fly during training. For a fair comparison, we adopt a network architecture similar to that contains 3 convolutional layers with 192 filter channels. We also use the mlpconv layer after each convolutional layer and a global averaged pooling scheme with kernel size 8 for the output prediction.
+Relu neuron with 0.5 dropout rate and 3 × 3 max pooling with stride 2 are used after the first two convolutional layers.
+No model averaging is done at test phase. Table (2) shows our results. Our DSN model achieves an error rate of 9.69% without data augmentation and of 7.97% with data augmentation (the best result to our knowledge). Note that DSN still outperforms greedy layerwise pre-training (shown as CNN with pre-training in Table 2) under the same network architecture.(a) by DSN(b) by CNN
+Figure 4: Visualization of the feature maps learned in the convolutional layer.
+DSN also provides added robustness to hyperparameter choice, in that the early layers are guided with direct classification loss, leading to a faster convergence rate and reduced dependence on heavy hyperparameter tuning. We also compared the gradients in DSN with those in CNN, observing 4.55 times greater gradient variance of DSN over CNN in the first convolutional layer. This is consistent with an observation in and with the assumptions and motivations we make in this work. To see what features have been learned in DSN vs. CNN, we select one example image from each of the ten categories of CIFAR-10, run one forward pass, and show the feature maps learned from the bottom convolutional layer in Figure (4). Only the top 30% of activations are shown in each of the feature maps. Feature maps learned by DSN appear to be more intuitive than those learned by CNN.
+Table 2: CIFAR-10 classification error.
+Method
+Error(%)
+No Data Augmentation
+Stochastic Pooling 
+Maxout Networks 
+Network in Network 
+NIN (layer-wise pre-training)
+DSN (ours)
+With Data Augmentation
+Maxout Networks 
+Dropconnect 
+Network in Network 
+DSN (ours)
+CIFAR-100 is similar to CIFAR-10, but with 100 classes rather than 10.
+The number of images for each class is then 500 instead of 5, 000 as in CIFAR10, which makes the classification task more challenging. We use the same network settings as in CIFAR10. The consistent performance boost (shown on both
+CIFAR-10 and CIFAR-100) again demonstrates the advantage of the DSN method.
+Table 3: CIFAR-100 classification error.
+Method
+Error(%)
+Stochastic Pooling 
+Maxout Networks 
+Tree based Priors 
+Network in Network 
+DSN (ours)
+Street View House Numbers
+The Street View House Numbers (SVHN) dataset consists of 32×32 color images: 73, 257 digits for training, 26, 032 digits for testing, and 531, 131 extra training samples. We prepared the data in keeping with previous work, namely: we select 400 samples per class from the training set and 200 samples per class from the extra set. The remaining 598,388 images are used for training. We followed to preprocess the dataset by Local Contrast Normalization (LCN). We do not do data augmentation in training and use only a single model in testing. Table 4 shows recent comparable results. Note that Dropconnect uses data augmentation and multiple model voting.
+Deeply-Supervised Nets
+Table 4: SVHN classification error.
+Method
+Error(%)
+Stochastic Pooling 
+Maxout Networks 
+Network in Network 
+Dropconnect 
+DSN (ours)
+ImageNet Challenge
+To further illustrate the effectiveness of DSN on large training datasets and with deeper networks, we test both CNN and DSN (8-layer and 11-layer networks) on the ImageNet 2012 dataset, which consists of 1.2 million training images, 50, 000 validation, and 100, 000 testing. We emphasize that our intention here is not to directly compete with the best performing result in the challenge (since the winning methods require many additional aspects), but to provide an illustrative comparison of the relative benefits of DSN versus
+CNN on this data set. That said, it is worth noting that the supervision applied to two hidden layers in is a suggestive indication of additional support for our method.
+The 8-layer network's configuration is based on the AlexNet with 5 convolutional layers and 3 fully-connected layers, while the 11-layer network's infrastructure contains 8 convolutional layers and 3 fully-connected layers. To decouple the effect of parameter tuning, we use the same network and parameter setup as in for both CNN and DSN. We simply add three more convolutional layers for the 11layer networks. We start with learning rate 0.01 and lower by a factor of 10 when validation error stops decreasing. This procedure is repeated until learning rate reaches 10−5. All results are tested under a single net without multi-scale training/testing in order to reduce the effect of model/prediction averaging. Table
+5 shows a direct comparison between CNN and DSN.
+When the depth of the network increases to 11 layers, standard backpropagation for training CNN faces a big challenge.
+We observe that the average absolute gradient of the weight matrix of conv1 layer to be at magnitude of 10−10, even during the first few epochs of the training process, making the networks significantly difficult to converge. Therefore, we have to adopt a pre-training strategy suggested in : we first pre-train an 8-layer network and then restart the training process with another three convolutional layers for the 11-layer CNN configuration. In contrast, our DSN of 11 layers behaves regularly during training and the objective function moves down directly starting at the first few epochs without pre-training;
+CNN converges for 95 epochs with pre-training while
+DSN converges for 58 epochs. Table 5 shows the performance advantage of DSN over CNN, in addition to a significant gain in training convenience and saved manual adjustments.
+Table 5: ImageNet 2012 classification error.
+Method top-1 val. error(%) top-5 val. error(%)
+CNN 8-layer 
+DSN 8-layer (ours)
+CNN 11-layer
+DSN 11-layer (ours)
+Acknowledgments
+This work is supported by NSF awards IIS-1216528(IIS-1360566) and IIS-0844566(IIS-1360568).
+We thank Min Lin, Naiyan Wang, Baoyuan Wang, Jingdong Wang, Liwei Wang, Ying Nian Wu, and David
+Wipf for helpful discussions. We gratefully acknowledge the support of NVIDIA Corporation with their donation of the GPUs used for this research.
+Appendix
+Proof for Lemma 3. Letting λ = λ1 + λ2, we have
+F(W⋆)−F(Wt) ≥ < gf t, W⋆ −Wt > +λ
+2 ∥W⋆ −Wt∥2, and F(Wt) − F(W⋆) ≥ λ
+2 ∥Wt − W⋆∥2.
+Thus, < gf t, Wt − W⋆ > ≥ λ∥Wt − W⋆∥2.
+Therefore, with ηt = 1/t, E[∥Wt+1 − W⋆∥2] = E[∥ΠW(Wt − ηt ˆgf t) − W⋆∥2]
+≤
+E[∥Wt − ηt ˆgf t − W⋆∥2]
+=
+E[∥Wt−W⋆∥2]−2ηtE[<gf t,Wt−W⋆>]+η2 t E[∥ ˆ gf t∥2]
+≤(1 − 2λ/t)E[∥Wt − W⋆∥2] + 4G2/t2
+Since our focus is on the setting of "nearly flat" objective behavior, we expect 2λ/t to be small; in such a case 1 − 2λ/t ≈ e−2λ/t.
+E[∥WT − W⋆∥2]
+≤ e−2λ( 1
+2 +···
+T −1 )D +
+T −1
+∑ t=1
+4G2 t2 e−2λ( 1 t +
+1 t+1 +···
+T −1 )
+= e−2λ(ln(T −1)+0.578)D + 4G2
+T −1
+∑ t=1
+1 t2 e−2λ ln(T −1)+2λ ln(t)
+≤ e−2λ(ln(T −1)+0.578)D + 4G2
+T −1
+∑ t=1
+1 t2( t
+T − 1
+)2λ
+□
+Further, we can approximate
+E[∥Wt+1−W⋆∥2]<e−2λ(ln(T −1)+0.578)D+e−2λ(ln((T −1)/(T −2)))4G2ζ(2), (11) where ζ(2) is the Riemann zeta function.
+Chen-Yu Lee*, Saining Xie*, Patrick W. Gallagher, Zhengyou Zhang, Zhuowen Tu
+References
+ Y.
+Bengio, P.
+Lamblin, D.
+Popovici, and H. Larochelle.
+Greedy layer-wise training of deep networks. In NIPS, 2007.
+ J. Bergstra, O. Breuleux, F. Bastien, P. Lamblin, R. Pascanu, G. Desjardins, J. Turian, D. WardeFarley, and Y. Bengio.
+Theano: a CPU and GPU math expression compiler.
+In Proceedings of the Python for Scientific Computing Conference (SciPy), June 2010.
+ L. Bottou. Online algorithms and stochastic approximations. Cambridge University Press, 1998.
+ M. Carreira-Perpinan and W. Wang. Distributed optimization of deeply nested systems.
+In AISTATS, G. E. Dahl, D. Yu, L. Deng, and A. Acero. Contextdependent pre-trained deep neural networks for largevocabulary speech recognition. IEEE Tran. on Audio, Speech, and Lang. Proc., 20(1):30–42, 2012.
+ J. Donahue, Y. Jia, O. Vinyals, J. Hoffman, N. Zhang, E. Tzeng, and T. Darrell. Decaf: A deep convolutional activation feature for generic visual recognition.
+In arXiv, 2013.
+ D. Eigen, J. Rolfe, R. Fergus, and Y. LeCun. Understanding deep architectures using a recursive convolutional network. In arXiv:1312.1847v2, 2014.
+ J. L. Elman. Distributed representations, simple recurrent networks, and grammatical. Machine Learning, 7:195–225, 1991.
+ X. Glorot and Y. Bengio. Understanding the difficulty of training deep feedforward neural networks. In AISTAT, 2010.
+ I. J. Goodfellow, D. Warde-Farley, M. Mirza, A. C.
+Courville, and Y. Bengio. Maxout networks. In ICML, G. E. Hinton, S. Osindero, and Y. W. Teh. A fast learning algorithm for deep belief nets. Neural computation, 18:1527–1554, 2006.
+ G.
+E.
+Hinton, N.
+Srivastava, A.
+Krizhevsky, I. Sutskever, and R. Salakhutdinov. Improving neural networks by preventing co-adaptation of feature detectors. In CoRR, abs/1207.0580, 2012.
+ K. Jarrett, K. Kavukcuoglu, M. Ranzato, and Y. LeCun.
+What is the best multi-stage architecture for object recognition? In ICCV, 2009.
+ A. Krizhevsky, I. Sutskever, and G. E. Hinton. Imagenet classification with deep convolutional neural networks. In NIPS, 2012.
+ Q. Le, J. Ngiam, Z. Chen, D. Chia, P. W. Koh, and A. Ng. Tiled convolutional neural networks. In NIPS, Y. LeCun, B. Boser, J. S. Denker, D. Henderson, R. Howard, W. Hubbard, and L. Jackel. Backpropagation applied to handwritten zip code recognition.
+In Neural Computation, 1989.
+ W. Li, M. Zeiler, S. Zhang, Y. LeCun, and R. Fergus.
+Regularization of neural networks using dropconnect.
+In ICML, 2013.
+ M. Lin, Q. Chen, and S. Yan. Network in network. In
+ICLR, 2014.
+ P.-L. Loh and M. J. Wainwright.
+Regularized mestimators with nonconvexity : statistical and algorithmic theory for local optima. In arXiv:1305.2436v1, R. Pascanu, T. Mikolov, and Y. Bengio.
+On the difficulty of training recurrent neural networks.
+In arXiv:1211.5063v2, 2014.
+ A. Rakhlin, O. Shamir, and K. Sridharan.
+Making gradient descent optimal for strongly convex stochastic optimization. In ICML, 2012.
+ J. Schmidhuber. Multi-column deep neural networks for image classification. In CVPR, 2012.
+ P. Sermanet and Y. LeCun. Traffic sign recognition with multi-scale convolutional networks. In International Joint Conference on Neural Networks (IJCNN), O. Shamir and T. Zhang.
+Stochastic gradient descent for non-smooth optimization: Convergence results and optimal averaging schemes. In ICML, 2013.
+ K. Simonyan and A. Zisserman. Very deep convolutional networks for large-scale image recognition. In arXiv:1409.1556, Sept. 4, 2014.
+ J. Snoek, R. P. Adams, and H. Larochelle. Nonparametric guidance of autoencoder representations using label information. J. of Machine Learning Research, 13:2567–2588, 2012.
+ N. Srivastava and R. Salakhutdinov. Discriminative transfer learning with tree-based priors.
+In NIPS, C. Szegedy, W. Liu, Y. Jia, P. Sermanet, S. Reed, D. Anguelov, D. Erhan, V. Vanhoucke, and A. Rabinovich.
+Going deeper with convolutions.
+In arXiv:1409.4842, Sept. 17, 2014.
+ Y. Tang. Deep learning using linear support vector machines. In Workshop on Representational Learning, ICML, 2013.
+ J. Weston and F. Ratle.
+Deep learning via semisupervised embedding. In ICML, 2008.
+ M. Zeiler and R. Fergus. Visualizing and understanding convolutional networks. In arXiv 1311.2901, 2013.
+ M. D. Zeiler and R. Fergus.
+Stochastic pooling for regularization of deep convolutional neural networks.
+In ICLR, 2013.

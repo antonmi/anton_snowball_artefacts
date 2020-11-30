@@ -1,0 +1,1718 @@
+arXiv:1411.7783v2  [stat.ML]  2 Feb 2015
+From Neural PCA to Deep Unsupervised Learning
+Harri Valpola
+ZenRobotics Ltd.
+Vilhonkatu 5 A
+00100 Helsinki, Finland
+harri@zenrobotics.com
+Abstract
+A network supporting deep unsupervised learning is presented. The network is an
+autoencoder with lateral shortcut connections from the encoder to decoder at each
+level of the hierarchy. The lateral shortcut connections allow the higher levels of
+the hierarchy to focus on abstract invariant features. While standard autoencoders
+are analogous to latent variable models with a single layer of stochastic variables,
+the proposed network is analogous to hierarchical latent variables models.
+Learning combines denoising autoencoder and denoising sources separation
+frameworks. Each layer of the network contributes to the cost function a term
+which measures the distance of the representations produced by the encoder and
+the decoder. Since training signals originate from all levels of the network, all
+layers can learn efficiently even in deep networks.
+The speedup offered by cost terms from higher levels of the hierarchy and the
+ability to learn invariant features are demonstrated in experiments.
+1
+Introduction
+Ever since Hubel and Wiesel (1962) published their findings about a hierarchy of increasingly
+abstract invariant visual features in the cat neocortex, researchers have been trying to mimic the
+same hierarchy of feature extraction stages with artificial neural networks. An early example is the
+neocognitron by Fukushima (1979).
+Nowadays the art of estimating deep feature extraction hierachies is called deep learning (for a thor-
+ough overview of the history of the field, including recent developments, see the review by Schmid-
+huber 2015). The topic has received a lot of attention after Hinton and Salakhutdinov (2006); Hin-
+ton et al. (2006) proposed an unsupervised1 pre-training scheme which made subsequent supervised
+learning efficient for a deeper network than before.
+What is somewhat embarrasing for the field, though, is that recently purely supervised learning
+has achieved as good or better results as unsupervised pre-training schemes (e.g., Ciresan et al.
+2010; Krizhevsky et al. 2012). In most classification problems, finding and producing labels for the
+samples is hard. In many cases plenty of unlabeled data exist and it seems obvious that using them
+should improve the results. For instance, there are plenty of unlabeled images available and in most
+image classification tasks there are vastly more bits of information in the statistical structure of input
+images than in their labels2.
+1Unsupervised learning aims at representing structure in the input data, often by means of features. The
+resulting features can be used as input for classification tasks or as initialization for further supervised learning.
+2Consider, for example, the ImageNet classification problem that Krizhevsky et al. (2012) tackled. With
+1000 target classes, each label carries less than 10 bits of information. Compare this with the amount of
+information contained in the 256 × 256 RGB images used as input. It is impossible to say exactly how many
+bits of information each image carries but certainly several orders of magnitude more than 10 bits.
+1
+It is argued here that the reason why unsupervised learning has not been able to improve results is
+that most current versions are incompatible with supervised learning. The problem is that many un-
+supervised learning methods try to represent as much information about the original data as possible
+whereas supervised learning tries to filter out all the information which is irrelevant for the task at
+hand.
+This chapter presents an unsupervised learning network whose properties make it a good fit with
+supervised learning. First, learning is based on minimizing a cost function much the same way as
+in stochastic gradient descent of supervised feedforward networks. Learning can therefore continue
+alongside supervised learning rather than be restricted to a pre-training phase. Second, the network
+can discard information from the higher layers and leave the details for lower layers to represent.
+This means that the approach allows supervised learning to select the relevant features. The proposed
+unsupervised learning can filter out noise from the selected features and come up with new features
+that are related to the selected features.
+The two main new ideas presented in this chapter are as follows:
+1. Section 2 explains how adding lateral shortcut connections to an autoencoder gives it the
+same representational capacity as hierarchical latent variable models. This means that
+higher layers no longer need to represent all the details but can concentrate on abstract
+invariant representations. The model structure is called a ladder network because two ver-
+tical paths are connected by horizontal lateral connections at regular intervals.
+2. Learning of deep autoencoders can be slow since training signals need to travel a long
+distance from the decoder output through both the decoder and encoder. Lateral shortcuts
+tend to slow it down even further since the shortcuts learn first, shunting the training sig-
+nals along the longer paths. Section 3 explains how this can be remedied by adding training
+targets to each level of the hierarchy. The novel idea is to combine denoising source sep-
+aration (DSS) framework (S¨arel¨a and Valpola 2005) with training denoising functions to
+remove injected noise (Vincent et al. 2008).
+The experiments presented in Section 4 demonstrate that the higher levels of a ladder network can
+discard information and focus on invariant representations and that the training targets on higher lay-
+ers speed up learning. The results presented here are promising but preliminary. Section 5 discusses
+potential extensions and related work.
+2
+Ladder network: an autoencoder which can discard information
+As argued earlier, unsupervised learning needs to tolerate discarding information in order to work
+well with supervised learning. Many unsupervised learning methods are not good at this but one
+class of models stands out as an exception: hierarchical latent variable models. Unfortunately their
+derivation can be quite complicated and often involves approximations which compromise their per-
+formance. A simpler alternative is offered by autoencoders which also have the benefit of being
+compatible with standard supervised feedforward networks. They would be a promising candidate
+for combining supervised and unsupervised learning but unfortunately autoencoders normally corre-
+spond to latent variable models with a single layer of stochastic variables, that is, they do not tolerate
+discarding information.
+This section summarizes the complementary roles of supervised and unsupervised learning, reviews
+latent variable models and their relation to standard autoencoder networks and proposes a new net-
+work structure, the ladder network, whose lateral shortcut connections give it the same representa-
+tional capacity as hierarchical latent variable models.
+2.1
+Complementary roles of supervised and unsupervised learning
+Consider the roles of supervised and unsupervised learning in a particular task, such as classification,
+prediction or regression. Further assume that 1) there are input-output pairs which can be used for
+supervised learning but far more unlabeled samples that are lacking the output, with only the inputs
+available and 2) inputs have far more information than the outputs.
+2
+In general, this typical setup means that unsupervised learning should be used for anything it works
+for because the precious bits of information in the available output samples should be reserved for
+those tasks that unsupervised learning cannot handle.
+The main role for supervised learning is clear enough: figure out which type of representations are
+relevant for the task at hand. Only supervised learning can do this because, by definition, unsuper-
+vised learning does not have detailed information about the task.
+One obvious role, the traditional one, for unsupervised learning is to act as a pre-processing or pre-
+training step for supervised learning. However, the key question is: what can unsupervised learning
+do after supervised learning has kicked in. This is important because in many problems there is so
+much information in the inputs that it cannot possibly be fully summarized by unsupervised learning
+first. Rather, it would be useful for unsupervised learning to continue tuning the representations even
+after supervised learning has started to tune the relevant features and filter out the irrelevant ones.
+The combination of supervised and unsupervised learning is known as semi-supervised learning. As
+argued earlier, it can be a happy marriage only if unsupervised learning is content with discarding
+information and concentrating on the features which supervised learning deems relevant.
+What unsupervised learning should be able to do efficiently is to find new features which correlate
+with and predict the features selected by supervised learning. This improves generalization to new
+samples. As an example, consider learning to recognize a face. Suppose supervised learning has
+figured out that an eye is an important feature for classifying faces vs. non-faces from a few samples.
+What unsupervised learning can do with all the available unlabeled samples, is find other features
+which correlate with the selected one. Such new features could be, for instance, a detector for nose,
+eye brow, ear, mouth, and so on. These features improve the generalization of a face detector in cases
+where the eye feature is missing, for instance due to eyes being closed or occluded by sunglasses.
+Specifically, what unsupervised learning must not do is keep pushing new features to the repre-
+sentation intended for supervised learning simply because these features carry information about
+the inputs. While such behavior may be reasonable as a pre-training or pre-processing step, it is
+not compatible with semi-supervised learning. In other words, before unsupervised learning knows
+which features are relevant, it is reasonable to select features which carry as much information as
+possible about the inputs. However, after supervised learning starts showing a preference of some
+features over some others, unsupervised learning should follow suite and present more of the kind
+that supervised learning seems to be interested in.
+2.2
+Latent variable models
+Many unsupervised learning methods can be framed as latent variable models (see, e.g., Bishop
+1999) where unknown latent varibles s(t) are assumed to generate the observed data x(t). A com-
+mon special case with continuous variables is that the latent variables predict the mean of the obser-
+vations:
+x(t) = g(s(t); ξ) + n(t) ,
+(1)
+where n(t) denotes the noise or modeling error and ξ the parameters of mapping g. Alternatively,
+the same can be expressed through a probability model
+px(x(t)|s(t), ξ) = pn(x(t) − g(s(t); ξ)) ,
+(2)
+where pn denotes the probability density function of the noise term n(t). Inference of the unknown
+latent variables s(t) and parameters ξ can then be based simply on minimizing the mismatch between
+the observed x(t) and its reconstruction g(s(t); ξ), or more generally on probabilistic modeling.
+The models defined by Eqs. (1) or (2) have just one layer of latent variables which tries to represent
+everything there is to represent about the data. Such models have trouble letting go of any piece
+of information since this would increase the reconstruction error. Also, in many cases an abstract
+invariant feature (such as "a face") cannot reduce the reconstruction error alone without plenty of
+accompanying details such as position, orientation, size, and so on. All of those details need to be
+represented alongside the relevant feature to show any benefit in reducing the reconstruction error.
+This means that latent variable models with a single layer of latent variables have trouble discarding
+information and focusing on abstract invariant features.
+3
+It is possible to fix the situation by introducing a hierarchy of latent variables:
+p(s(l)(t)|s(l+1)(t), ξ(l)) ,
+(3)
+where the superscript (l) refers to variables on layer l. The observations can be taken into the
+equation by defining s(0) := x. Now the latent variables on higher levels no longer need to represent
+everything. Lower levels can take care of representing details while higher levels can focus on
+selected features, abstract or not.
+In such hierarchical models, higher-level latent variables can still represent just the mean of the
+lower-level variables,
+s(l)(t) = g(l)(s(l+1)(t); ξ(l)) + n(l)(t) ,
+(4)
+but more generally, the higher-level variables can represent any properties of the distribution, such as
+the variance (Valpola et al. 2004). For binary variables, sigmoid units are often used for representing
+the dependency (for a recent example of such a model, see Gregor et al. 2014).
+Exact inference, that is, computing the posterior probability of the unknown variables (latent vari-
+ables and the parametes of the mappings) is typically mathematically intractable. Instead, approx-
+imate inference techniques such as variational Bayesian methods are employed (e.g., Valpola et al.
+2004; Gregor et al. 2014). They amount to approximating the intractable exact posterior probability
+with a simpler tractable approximation. Learning then corresponds to iteratively minimizing the cost
+function with respect to the posterior approximation. For instance, in the case of continuous latent
+variables, the posterior could be approximated as Gaussian with a diagonal covariance. For each
+unknown variable, the mean and variance would then be estimated in the course learning. These
+posterior means and variances typically depend on the values on both lower and higher layers and
+inference would therefore proceed iteratively.
+If hierarchical latent variable models were easy to define and learn, the problem would be solved.
+Unfortunately hierarchical models often require complex probabilistic methods to train them. They
+often involve approximations which compromise their performance (Ilin and Valpola 2003) or are
+limited to restricted model structures which are mathematically tractable.
+Also, many training
+schemes require the latent variable values to be updated layer-wise by combining bottom-up in-
+formation with top-down priors. This slows down the propagation of information in the network.
+2.3
+Autoencoders and deterministic and stochastic latent variables
+Autoencoder networks resemble in many ways single-layer latent variable models. The key idea is
+that the inference process of mapping observations x(t) to the corresponding latent variables, now
+called hidden unit activations h(t), is modeled by an encoder network f and the mapping back to
+observations is modeled by a decoder network g:
+h(t)
+=
+f(x(t); ξf)
+(5)
+ˆx(t)
+=
+g(h(t); ξg) .
+(6)
+The mappings f and g are called encoder and decoder mappings, respectively. In connection to
+latent variable models, analogous mappings are called the recognition and reconstruction mappings.
+Learning of autoencoders is based on minimizing the difference between the observation vector
+x(t) and its reconstruction ˆx(t), that is, minimizing the cost ||x(t) − ˆx(t)||2 with respect to the
+parameteres ξf and ξg. For the remainder of this chapter, all mappings f and g are assumed to have
+their own parameters but they are omitted for brevity.
+Just like latent variable models, autoencoders can be stacked together:
+h(l)(t)
+=
+f (l)(h(l−1)(t))
+(7)
+ˆh(l−1)(t)
+=
+g(l)(ˆh(l)(t)) .
+(8)
+As before, the observations are taken into the equation by defining h(0) := x. Furthermore, now
+ˆh(L) := h(L) for the last layer L, connecting the encoder and decoder paths.
+Typically over the course of learning, new layers are added to the previously trained network. After
+adding and training the last layer, training can continue in a supervised manner using just the map-
+pings f (l), which define a multi-layer feedforward network, and minimizing the squared distance
+between the actual outputs h(L) and desired targets outputs.
+4
+It is tempting to assume that the hierarchical version of the autoencoder in Eqs. (7–8) corresponds
+somehow to the hierarchical latent variable model in Eq. (4). Unfortunately this is not the case be-
+cause the intermediate hidden layers 0 < l < L act as so called deterministic variables while the
+hierarchical latent variable model requires so called stochastic variables. The difference is that
+stochastic variables have independent representational capacity. No matter what the priors tell,
+stochastic latent variables s(l) can overrule this and add their own bits of information to the re-
+construction. By contrast, deterministic variables such as ˆh(l) add zero bits of information and,
+assuming the deterministic mappings g(l) are implemented as layered networks, correspond to the
+hidden layers of the mappings g(l) between the stochastic variables s(l) in Eq. (3).
+In order to fix this, we are going to take cue from the inference structure of the hierarchical latent
+variable model in Eq. (3). The main difference to Eq. (8) is that inference of ˆs(l)(t) combines
+information from bottom-up likelihood and top-down prior but Eq. (8) only depends on top-down
+information. In other words, ˆh(t) in Eq. (8) cannot add any new information to the representation
+because it does not receive that information from the bottom-up path. The fix is to add a shortcut
+connection from the bottom-up encoder path to the modified top-down decoder path:
+ˆh(l−1)(t) = g(l)(ˆh(l)(t), h(l−1)(t)) .
+(9)
+Now ˆh(l) can recover information which is missing in ˆh(>l). In other words, the higher layers do not
+need to represent all the details. Also, the mapping g(l) can learn to combine abstract information
+from higher levels, such as "face", with detailed information about position, orientation, size, and
+so on, from lower layers3. This means that the higher layers can focus on representing abstract
+invariant features if they seem more relevant to the task at hand than the more detailed information.
+Figure 1 shows roughly the inference structure of a hierarchical latent variable model and compares
+it with a standard autoencoder and the ladder network. Note that while ˆh(l)(t) combines information
+both from bottom-up and top-down paths in the ladder network, h(l)(t) does not. This direct path
+from inputs to the highest layer means that training signals from the highest layers can propagate
+directly through the network in the same way as in supervised learning. Gradient propagation al-
+ready combines information from bottom-up activations and top-down gradients so there is no need
+for extra mixing of information.
+3
+Parallel learning on every layer
+A general problem with deep models which have an error function only at the input layer (autoen-
+coder) or at the output layer (supervised feedforward models) is that many parts of the network are
+far away from the source of training signals. In fact, if the ladder model shown in Fig. 1 is trained
+in the same fashion as regular autoencoders, that is, by minimizing the difference between x(t) and
+ˆx(t), the problem only becomes worse. That is because each shortcut connection has a chance of
+contributing to the reconstruction ˆx(t), leaving a shrinking share of the error for the higher layers.
+Standard autoencoders force all training signals to pass through all levels in the hierarchy and even
+then learning through multiple layers of nonlinear functions is difficult and slow.
+By contrast, hierarchical latent variable models have cost functions for all stochastic variables. Since
+the ladder network shares many properties with hierarchical latent variable models, it seems reason-
+able to try to find a way to introduce training signals at each level of the hierarchy of the ladder
+network. This section shows how this can be done by combining denoising source separation (DSS)
+framework (S¨arel¨a and Valpola 2005) with training denoising functions to remove injected noise
+(Vincent et al. 2008).
+3The shortcut connections are only part of the solution since adding them actually short-circuits standard
+autoencoder learning: mapping g(l) can simply copy the shortcut input h(l−1)(t) into its output so there is no
+incentive to use any of the higher layers. This is related to the inability of standard autoencoder training to
+learn over-complete representations. Fortunately, denoising autoencoders can overcome this problem simply
+by adding noise to inputs as will be explained in Section 3.2.
+5
+...
+...
+...
+x(t)
+h(L)(t)
+h(2)(t)
+h(1)(t)
+ˆh(L)(t)
+ˆh(2)(t)
+ˆh(1)(t)
+ˆx(t)
+...
+...
+x(t)
+h(L)(t)
+h(2)(t)
+h(1)(t)
+x(t)
+ˆs(2)(t)
+ˆs(1)(t)
+ˆh(L)(t)
+ˆh(2)(t)
+ˆh(1)(t)
+ˆx(t)
+=
+Hierarchical
+latent variable
+model
+Standard
+autoencoder
+network
+Ladder
+autoencoder
+network
+Figure 1: The inference structure of a hierarchical latent variable model is compared with the stan-
+dard autoencoder and the proposed ladder network. The details of inference in latent variable models
+are often complex and the posterior distribution approximation is more complex than just the poste-
+rior mean ˆs(l)(t), but overall the picture is approximately as shown in the left. Since all information
+in the standard autoencoder network has to go through the highest layer, it needs to represent all the
+details of the input x(t). Intermediate hidden layer activations ˆh(l)(t) cannot independently repre-
+sent information because they only receive information from the highest layer. In the ladder network,
+by constrast, lateral connections at each layer give a chance for each ˆh(l)(t) to represent information
+independently from the higher layers. Also, abstract invariant representations at the higher levels can
+be interpreted in the context of detailed information without the higher levels having to represent all
+the details.
+6
+3.1
+From neural PCA to denoising source separation
+In order to develop a system where learning is distributed rather than guided by gradients propagat-
+ing from a single error term, we shall turn our attention to competitive unsupervised learning.
+The starting point for the algorithms we will study is the neural principal component analysis (PCA)
+learning rule by Oja (1982) which can utilize second order statistics of the input data to find principal
+component projections. When slight nonlinear modifications are made to the learning rule and input
+data are whitened, the method becomes sensitive to higher-order statistics and performs independent
+component analysis (ICA) (Oja 1997).
+The nonlinearity used in the algorithm can be interpreted as a constrast function which measures the
+non-Gaussianity of the source distribution. This is the interpretation originally given to the popular
+FastICA algorithm (Hyv¨arinen and Oja 1997). However, there is an alternative view: the nonlinearity
+can be interpreted as a denoising function. Hyv¨arinen (1998) derived this as a maximum likelihood
+estimate but we are going to follow the derivation by Valpola and Pajunen (2000) who showed that
+the nonlinearity can be interpreted as the expectation step of the expectation maximization algorithm.
+Overall, nonlinear PCA learning rule, combined with input whitening and orthogonalization of the
+projections, can be interpreted as an efficient approximation to the expectation maximization (EM)
+algorithm applied to a linear latent variable model tuned for ICA (Valpola and Pajunen 2000). This
+interpretation led to the development of denoising source separation framework (S¨arel¨a and Valpola
+2005).
+The EM algorithm (Dempster et al. 1977) is a method for optimizing the parametric mappings of
+latent variable models. It operates by alternating the E step (expectation of latent variables) and M
+step (maximization of likelihood of the parameters). The E step assumes the mapping fixed and
+updates the posterior distribution of s(t) for all t while the M step does the reverse, updating the
+mapping while assuming the posterior distribution of s(t) fixed.
+The derivation by Valpola and Pajunen (2000) assumed a linear reconstruction model
+ˆx(t) = g(0)(s(t)) = As(t) ,
+(10)
+which means that the E step boils down to
+ˆs(t) = g(1)(A−1x(t)) = g(1)(s0(t)) ,
+(11)
+where we have denoted s0(t) = A−1x(t). The mapping g(1) depends on the prior distribution of
+s(t) and the noise distribution pn. When the noise has low variance σ2
+n, it can be approximated as
+ˆs(t) = g(1)(s0(t)) ≈ s0(t) + σ2
+n
+∂ log ps(s(t))
+∂s(t)
+s(t)=s0(t)
+.
+(12)
+The M step amounts to solving the regression problem in Eq. (10) with ˆs(t) substituting s(t), that
+is, minimizing the cost
+C = 1
+T
+T
+�
+t=1
+||x(t) − g(0)(ˆs(t))||2 .
+(13)
+The problem with the above EM algorithm for estimating the model is that its convergence scales
+with σ2
+n. Without noise, the algorithm stalls completely.
+Valpola and Pajunen (2000) showed that this can be remedied by considering the fixed point of the
+algorithm. At the same time, it is useful to parametrize the inverse mapping
+s0(t) = f (1)(x(t)) = Wx(t)
+(14)
+and for M step minimize
+C = 1
+T
+T
+�
+t=1
+||s0(t) − ˆs(t)||2 = 1
+T
+T
+�
+t=1
+||f (1)(x(t)) − ˆs(t)||2
+(15)
+instead of Eq. (13). Equation (15) needs to be accompanied by constraints on the covariance of s0(t)
+because the trivial solution W = 0 and ˆs(t) = 0 yields C = 0.
+7
+The algorithm resulting from these assumptions is essentially the same as the nonlinear PCA learn-
+ing rule. When the input data are whitened, the M step becomes simple matrix multiplication just
+as in the nonlinear PCA learning rule, amounting to essentially Hebbian learning. The nonlinear-
+ity g(1)(s0(t)) has the interpretation that it is the expected value of the latent variables given noisy
+observations, that is denoising.
+What will be crucial for our topic, learning deep models, is that the cost function (15) does not
+directly refer to the input x(t) but only to the latent variable s(t) and its denoised version. In a
+hierarchical model this will mean that each layer contributes terms to the cost function, bringing the
+source of training signals close to the parameters on each layer.
+Just as with the nonlinear PCA learning rule, there needs to be an additional constraint which im-
+plements competition between the latent variables because they could otherwise all converge to the
+same values. In case of a linear model, the easiest approach is to require W to be orthogonal. This
+does not apply to nonlinear models. Instead, it is possible to require that the covariance matrix of
+the latent variables s(t) is a unit matrix (Almeida et al. 2006).
+3.2
+Denoising autoencoders and generative stochastic networks
+The denoising function used in Eq. (11) can be derived from the prior distribution ps of the latent
+variables. There are many techniques for learning such distributions but a particularly useful tech-
+nique that directly learns the denoising function was proposed by Vincent et al. (2008) in connection
+with autoencoders. The idea is to corrupt the inputs fed into the autoencoder with noise and ask the
+network to reconstruct the original uncorrupted inputs. This forces the autoencoder to learn how to
+denoise the corrupted inputs.
+Bengio et al. (2013) further showed that it is possible to sample from these so called denoising au-
+toencoders simply by iterating corruption and denoising. The distribution of the denoised samples
+converges to the original data distribution because during training, the denoising function learns to
+cancel the diffusion resulting from the corruption of input data. The diffusive forces are proportional
+to − ∂ log px(x)
+∂x
+and, on average, carry samples from areas of high density towards lower densities.
+The denoising function learns to oppose this, with the same force but opposite sign4. When sam-
+pling starts with any given distribution, the combined steps of corruption and denoising produce an
+average flow of samples which only disappears when the diffusion flow caused by corruption ex-
+actly cancels the flow caused by denoising, that is, when the sample distribution follows the original
+training distribution. Bengio et al. (2013) suggested that sampling is more efficient in hierarchical
+models if corruption takes place not only on inputs but on all levels of the encoder path and called
+such networks generative stochastic networks (GSN).
+What is surprising is that from denoising functions it is even possible to derive probability estimates
+for the data. Note that the denoising function loses information about absolute probability and only
+conserves information about relative probabilities because the logarithm first turns multiplication
+into summation and the constant normalization term then disappears in differentiation. Such a rep-
+resentation bears similarity to energy-based probability models where only relative probabilities can
+be readily accessed. It turns out, however, that any model which can reconstruct missing data can be
+turned into a probability density estimator (Uria et al. 2014). By using input erasure as corruption,
+the autoencoder can thus be used for deriving normalized probability estimates even if denoising
+function loses information about the normalization factor of the probability.
+For our purposes, a particularly important feature of denoising autoencoders is that they can handle
+over-complete representations, including the shortcut connections in Eq. (9). The reason for this is
+that it is not enough for the network to simply copy its inputs to outputs since the inputs are corrupted
+by noise. Rather, the network has to find a representation which makes removing noise as easy as
+possible.
+3.3
+Recursive derivation of the learning rule
+We are now ready to derive a learning rule with a distributed cost function for the ladder network.
+The basic idea is to apply a denoising autoencoder recursively. The starting point is the standard
+4Notice the similarity to the denoising in Eq. (12).
+8
+denoising autoencoder which minimizes the following cost C:
+˜x(t)
+=
+corrupt(x(t))
+(16)
+ˆx(t)
+=
+g(˜x(t))
+(17)
+C
+=
+1
+T
+T
+�
+t=1
+||x(t) − ˆx(t)||2 .
+(18)
+During learning the denoising function g learns to remove the noise which we are injecting to corrupt
+x(t). Now assume that the denoising function uses some internal variables h(1)(t) for implementing
+a multi-layer mapping:
+˜h(1)(t)
+=
+f (1)(˜x(t))
+(19)
+ˆx(t)
+=
+g(˜h(1)(t)) .
+(20)
+Rather than giving all the responsibility of denoising to g, it is possible to learn first how to denoise
+h(1) and then use that result for denoising x:
+h(1)(t)
+=
+f (1)(x(t))
+(21)
+˜h(1)(t)
+=
+f (1)(˜x(t))
+(22)
+ˆh(1)(t)
+=
+g(1)(˜h(1)(t))
+(23)
+ˆx(t)
+=
+g(0)(ˆh(1)(t))
+(24)
+C(1)
+=
+1
+T
+T
+�
+t=1
+||h(1)(t) − ˆh(1)(t)||2
+(25)
+C(0)
+=
+1
+T
+T
+�
+t=1
+||x(t) − ˆx(t)||2 .
+(26)
+Training could alternate between training the mapping g(1) by minimizing C(1) and training all the
+mappings by minimizing C(0).
+We can continue adding layers and also add the lateral connections of the ladder network:
+h(l)(t)
+=
+f (l)(h(l−1)(t))
+(27)
+˜h(l)(t)
+=
+f (l)(˜h(l−1)(t))
+(28)
+ˆh(l)(t)
+=
+g(l)(˜h(l)(t), ˆh(l+1)(t))
+(29)
+C(l)
+=
+1
+T
+T
+�
+t=1
+||h(l)(t) − ˆh(l)(t)||2 .
+(30)
+As before, we assume that h(0) refers to the observations x.
+This derivation suggests that the cost functions C(l) should only be used for learning the encoding
+mappings f (>l) of the layers above but not f (≤l), those of the layers below, because C(l) is derived
+assuming h(l)(t) is fixed. This is problematic because it means that there cannot be a single consis-
+tent cost function for the whole learning process and learning has to continuously alternate between
+learning different layers.
+However, recall that in the DSS framework it is precisely the forward mapping f (l) which is updated
+using Eq. (15), practically the same equation as Eq. (30). This means that we can in fact minimize a
+single cost function
+C = C(0) +
+L
+�
+l=1
+αlC(l) ,
+(31)
+where the coefficients αl determine the relative weights of the cost terms originating in different
+layers.
+The DSS framework assumes that ˆh(l) is constant and optimizes using gradients stemming from h(l)
+while in the denoising autoencoder framework the roles are reversed. This means that by combining
+9
+the cost functions and learning everything by minimizing the cost with respect to all the parameters
+of the model, we are essentially making use of both types of learning.
+Just like in hierarchical latent variable models, higher level priors offer guidance to lower-level
+forward mappings (cf. EM algorithm). Since the gradients propagate backward along the encoding
+path, this model is fully compatible with supervised learning: the standard supervised cost function
+can simply be added to the top-most layer L, measuring the distance between h(L)(t) and the target
+output.
+3.4
+Decorrelation term for the cost function
+There is one final thing we must take care of: the decorrelation term needed by DSS algorithms.
+Recall that Eq. (30) is minimized if h(l)(t) = ˆh(l)(t) = constant. Minimization of Eq. (30) with
+respect to ˆh(l)(t) actually typically promotes decorrelation because it amounts to regression and any
+extra information can be used to reduce the reconstruction error. Minimization of Eq. (30) with
+respect to h(l)(t) promotes finding projections that can be predicted as well as possible and, since
+mutual information is symmetric, therefore also help predicting other features as long as the entropy
+of the hidden unit activations is kept from collapsing by avoiding the trivial solution where h(t) =
+constant.
+We are going to assume that the mappings f (l) and g(l) are sufficiently general that we can, without
+loss of generality, assume that the covariance matrix Σ(l) of the hidden unit activations on layer l
+equals the unit matrix: Σ(l) = I, where
+Σ(l) = 1
+T
+T
+�
+t=1
+h(l)(t)[h(l)(t)]T .
+(32)
+Here we assumed that the average activation is zero, a constraint which we can also enforce without
+any loss of generality as long as the first stages of mappings f (l) and g(l) are affine transformations.
+A very simple cost function to promote Σ(l) ≈ I would be �
+i,j[Σ(l)
+ij − δij]2, where δij is the
+Kronecker delta. In other words, this measures the sum of squares of the difference between Σ(l)
+and I. However, this cost function does not distinguish between too small and too large eigenvalues
+of Σ(l) but from the viewpoint of keeping the DSS-style learning from collapsing the representation
+of h(l)(t), only too small eigenvalues pose a problem. To analyse the situation, note that
+�
+i,j
+[Σ(l)
+ij − δ(i, j)]2 = tr
+�
+[Σ(l) − I]2�
+=
+�
+i
+(λ(l)
+i
+− 1)2 ,
+(33)
+where λ(l)
+i
+are the eigenvalues of Σ(l). The first equality follows from the definition of the trace of
+a matrix and the second from the fact that the trace equals the sum of eigenvalues.
+Since Eq. (33) is symmetric about λ = 1, it penalizes λ = 0 just as much as λ = 2 while the former
+is infinitely worse from the viewpoint of keeping h from collapsing.
+A sound measure for the information content of a variable is the determinant of the covariance
+matrix because it measures the square of the (hyper)volume of the (hyper)cuboid whose sides have
+the length determined by the standard deviations of the distribution along its eigenvectors. Since
+the determinant of a matrix equals the product of its eigenvalues, the logarithm of the determinant
+equals the sum of the logarithms of the eigenvalues:
+log det Σ(l) =
+�
+i
+log λ(l)
+i
+= tr
+�
+log Σ(l)�
+.
+(34)
+The latter equality follows from the fact that any analytical function can be defined for square matri-
+ces so that it applies to the eigenvalues of the matrix. This is because
+�
+EΛE−1�k = EΛkE−1 and
+therefore any power series expansion of a matrix turns into the same power series expansion of the
+eigenvalues. Note that log Σ is the matrix logarithm, not the logarithm of the elements of the matrix.
+Equation (34) is a measure which grows smaller when the information content diminishes but it can
+be turned into a sensible cost function which reaches its minimum value of zero when λ = 1:
+C(l)
+Σ =
+�
+i
+(λ(l)
+i
+− log λ(l)
+i
+− 1) = tr
+�
+Σ(l) − log Σ(l) − I
+�
+(35)
+10
+This cost penalizes λ = 0 infinitely and grows relatively modestly for λi > 1.
+It is relatively simple to differentiate this cost with respect to Σ(l) since, for any analytical function
+φ, it holds
+∂tr (φ(Σ))
+∂Σ
+= φ′(Σ) .
+(36)
+In our case φ(a) = a − log a − 1 and thus φ′(a) = 1 − a−1. We therefore have
+∂C(l)
+Σ
+∂Σ(l) = I − [Σ(l)]−1 .
+(37)
+The rest of the formulas required for computing the gradients with the chain rule are straight-forward
+since Eq. (32) has a simple quadratic form.
+Note that all twice differentiable cost functions that are minimized when λi = 1 have the same
+second-order behaviour (up to scaling) close to the minimum so the simpler Eq. (33) works just as
+well if all λi are sufficiently close to 1. However, to avoid any potential problems, Eq. (35) was used
+in the experiments presented in this chapter.
+Finally, as suggested earlier, we will add a simple term to the cost function to make sure that the
+hidden unit activations really have a zero mean:
+µ(l)
+=
+1
+T
+T
+�
+t=1
+h(l)(t)
+(38)
+C(l)
+µ
+=
+||µ(l)||2 .
+(39)
+While DSS algorithms require decorrelation of the output representation, it is now also important to
+decorrelate (i.e., whiten) the inputs. Normally denoising autoencoders have a fixed input but now
+the cost functions on the higher layers can influence their input mappings and this creates a bias
+towards PCA-type solutions. This is because the amount of noise injected to x is relatively smaller
+for projections for which the variance of x is larger. The terms C(≥1) are therefore smaller if the
+network extracts mainly projections with larger variance, that is, PCA-type solutions. While PCA
+may be a desirable in some cases, often it is not.
+3.5
+Learning rule for the ladder network
+We are now ready to collect together the recipe for learning the ladder network. Given (typically
+pre-whitened) observations h(0)(t) := x(t), the cost function C is computed using the following
+11
+formulas:
+h(l)(t)
+=
+f (l)(h(l−1)(t))
+for 1 ≤ l ≤ L
+(40)
+˜h(0)(t)
+=
+corrupt(h(0)(t))
+(41)
+˜h(l)(t)
+=
+f (l)(˜h(l−1)(t))
+for 1 ≤ l ≤ L
+(42)
+ˆh(L)(t)
+=
+g(L)(˜h(L)(t))
+(43)
+ˆh(l)(t)
+=
+g(l)(˜h(l)(t), ˆh(l+1)(t))
+for 0 ≤ l ≤ L − 1
+(44)
+C(l)
+=
+1
+T
+T
+�
+t=1
+||h(l)(t) − ˆh(l)(t)||2
+(45)
+Σ(l)
+=
+1
+T
+T
+�
+t=1
+h(l)(t)[h(l)(t)]T
+(46)
+C(l)
+Σ
+=
+tr
+�
+Σ(l) − log Σ(l) − I
+�
+(47)
+µ(l)
+=
+1
+T
+T
+�
+t=1
+h(l)(t)
+(48)
+C(l)
+µ
+=
+||µ(l)||2
+(49)
+C
+=
+C(0) +
+L
+�
+l=1
+αlC(l) + βlC(l)
+Σ + γlC(l)
+µ .
+(50)
+Learning the parameters of the mappings f (l) and g(l) is based on minimizing C. The simple
+solution is to apply gradient descent (stochastic or batch version) but basically any optimization
+method can be used, for example nonlinear conjugate gradient or quasi-Newton methods. Whichever
+method is chosen, the existence of a single cost function to be minimized guarantees that learning
+converges as long as the minimization method performs properly.
+Equation (42) could include corruption in the same manner as in GSN. However, to keep things
+simple, the experiments reported in this chapter only applied corruption to the input layer.
+Figure 2 depicts the computational diagram of the cost function of the ladder network. The two
+f paths going upward share their mappings f (l) and the only difference is that the inputs on the
+corrupted path are corrupted by noise. Each layer of the network adds its own term to the cost
+function, measuring how well the clean activations h(l)(t) are reconstructed from the corrupted
+activations. During forward computations, information will flow from the observations towards the
+cost function terms along the arrows. During learning, gradients will flow from the cost function
+terms in the opposite direction. Training signals arriving along the clean f path correspond to DSS-
+style learning while the training signals in the denoising g path and corrupted f path correspond to
+the type of learning taking place in denoising autoencoders. The terms C(l)
+Σ and C(l)
+µ which promote
+unit covariance and zero mean of the clean activations h(l)(t), respectively, are not shown. They are
+required for keeping DSS-style learning from collapsing the representations and are functions of the
+clean f path only.
+From the perspective of learning deep networks, it is important that any mapping, f (l) or g(l), is
+close to one of the cost function terms C(l). This means that learning is efficient even if propagating
+gradients through the mappings would not be efficient.
+4
+Experiments
+This section presents a few simple experiments which demonstrate the key aspects of the ladder
+network:
+• How denoising functions can represent probability distributions.
+• How lateral connections relieve the pressure to represent every detail at the higher layers
+of the network and allow them to focus on abstract invariant features.
+12
+...
+...
+x(t)
+h(L)(t)
+h(2)(t)
+h(1)(t)
+...
+ˆh(L)(t)
+ˆh(2)(t)
+ˆh(1)(t)
+ˆx(t)
+C(0)
+C(1)
+C(2)
+C(L)
+˜h(L)(t)
+˜h(2)(t)
+˜h(1)(t)
+˜x(t)
+Denoising
+g path
+Corrupted
+f path
+Clean
+f path
+Figure 2: Ladder network's cost computations are illustrated. The clean f path shares exactly the
+same mappings f (l) as the corrupted f path. The only difference is that corruption noise is added
+in the corrupted path. The resulting corrupted activations are denoted by ˜h(l)(t). On each layer,
+the cost function has a term C(l) which measures the distance between the clean activations h(l)(t)
+and their reconstructions ˆh(l)(t). The terms C(l)
+Σ and C(l)
+µ
+which measure how well the activations
+ˆh(l)(t) are normalized are not shown.
+• How the cost function terms on higher layers speed up learning.
+The three following sections will gradually develop a two-layered ladder network which can learn
+abstract invariant features. First, simple distributions are modeled. Then this is put into use in a linear
+ICA model with one hidden layer. Finally, a second layer is added which models the correlations
+between the variances of the first layer activations. All the experiments used the set of learning rules
+described in Eqs. (40–50). The hyperparameters βl were automatically adjusted to keep the smallest
+eigenvalue of Σl above 0.7. The hyperparameter γl was set to the the same value as βl.
+4.1
+Representing distributions with denoising functions
+We will start by a simple experiment which elucidates the relation between the prior distribution
+of activations and their denoising functions, illustrated in Fig. 3. Three different distributions were
+tested, super-Gaussian, sub-Gaussian and Gaussian distribution. Each of them had a unit variance
+and zero mean. Each plot shows five different results overlaid on top of each other.
+The super-Gaussian distribution was a Laplace distribution whose probability density function (pdf)
+is
+p(x) =
+1
+√
+2e−
+√
+2|x| .
+On a logarithmic scale, it behaves as −
+√
+2|x| plus constant.
+The sub-Gaussian distribution was generated by scaling a sinusoidal signal by
+√
+2 to obtain a vari-
+able with unit variance. The pdf of this distribution is
+p(x) =
+1
+π
+√
+2 − x2
+for |x| <
+√
+2.
+13
+˜x
+ˆx
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+3
+2
+1
+0
+-1
+-2
+-3
+p(x)
+x
+100
+10−1
+10−2
+3
+2
+1
+0
+-1
+-2
+-3
+˜x
+ˆx
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+3
+2
+1
+0
+-1
+-2
+-3
+p(x)
+x
+100
+10−1
+10−2
+3
+2
+1
+0
+-1
+-2
+-3
+˜x
+ˆx
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+3
+2
+1
+0
+-1
+-2
+-3
+p(x)
+x
+100
+10−1
+10−2
+3
+2
+1
+0
+-1
+-2
+-3
+Figure 3: Illustration of the connection between the marginal distribution and denoising function.
+On the left, three different probability distributions are shown on a logarithmic scale. From top:
+super-Gaussian, sub-Gaussian and Gaussian distribution. Each distribution has a unit variance and
+zero mean. On the right, denoising functions have been been trained to remove corruptive noise
+with unit variance. In the Gaussian case, theoretically the optimal solution is ˆx = ˜x/2. Each plot
+shows five different random samples plotted on top of each other. Note that in the plots showing the
+pdf or the data, x is plotted on the vertical axis to help side-by-side comparison with the denoising
+function.
+14
+For this experiment, the model did not have any hidden layers (L = 0) and therefore there are no
+forward functions f, only one denoising function which was implemented as a single hidden neuron
+with tanh activation and a bypass connection:
+ˆx = g(˜x) = ξ1˜x + ξ2 tanh(ξ3˜x + ξ4) + ξ5 ,
+where ξi are scalar parameters. All parameters were optimized by minimizing C(0) = �
+t ||ˆx(t) −
+x(t)||2.
+With small enough noise, the denoising functions should theoretically approach
+ˆx ≈ ˜x + σ2
+n
+∂ log p(x)
+x
+x=˜x ,
+where σ2
+n is the variance of the noise used for corrupting ˜x. With small corruption noise, this would
+then mean that the denoising function of the Laplacian input would be a sum of x and a scaled step
+function. This is not the case now since σ2
+n is as large as the variance of the input. This tends to
+smoothen the denoising function.
+As can be readily seen from Fig. 3, the denoising function for a Gaussian observation is linear.
+Theoretically, the function should be
+ˆx =
+σ2
+x
+σ2x + σ2n
+˜x ,
+where σ2
+x is the variance of the observations. Since both variances equal one in these experiments,
+the theoretical optimum is ˆx = ˜x/2. The estimated denoising function follows this very closely.
+4.2
+ICA model
+We will now move on to a simple linear ICA model which serves as an example of how statisti-
+cal modeling will be translated into function approximation in this framework. It also gives some
+intuition on how the lateral connections help higher levels to focus on relevant features.
+In linear independent component analysis, the data is assumed to be a linear mixture of independent
+identically distributed sources. Unlike in principal component analysis, the mixing is not restricted
+to be orthogonal because sources with non-Gaussian marginal distributions can be recovered. If
+more than one source has a Gaussian distribution, these sources cannot be expected to be recov-
+ered and will remain mixed. However, the subspace spanned by the Gaussian sources should be
+recoverable and separate from all the non-Gaussian sources.
+One limitation is that unless there is some extra information available, the sources can only be re-
+covered up to scaling and permutation. Scaling is usually fixed by assuming that source distributions
+have a unit variance. This will still leave permutation and sign of the sources ambiguous.
+The dataset was generated by linearly mixing 10,000 samples from 15 sources into 15 observations.
+The elements of the mixing matrix were sampled from a zero-mean Gaussian distribution. The
+souces had the same distributions as in the previous example: five super-Gaussian, five sub-Gaussian
+and five Gaussian sources. The data were not whitened because one purpose of the experiments was
+to demonstrate that normal autoencoders have a bias towards PCA solution even if the cost function
+terms C(≥1) are not used. In these experiments, αl in Eq. (50) were set to zero.
+4.2.1
+Model structure
+The model had one hidden layer (L = 1) and the only nonlinearity was on the hidden layer denoising
+which was a simplified version of the model used in the previous experiment. With essentially zero
+mean observations, there is no need for bias terms in the model. The mappings of the model are as
+follows:
+f(x)
+=
+Wx
+(51)
+g(1)
+i
+(h)
+=
+aihi + bi tanh(hi)
+(52)
+g(0)(x, h)
+=
+Ah + Bx
+(53)
+15
+The parameters to be estimated are the three matrices W, A and B and the two vectors a and b
+which were used for the denoising functions of individual hidden units.
+Note that the underlying assumption of ICA models is that the sources are independent. This is
+incorporated in the model by making the denoising on the hidden layer unit-wise. Also, the lateral
+linear mapping with matrix B can model any covariance structure in the observation data. This
+means that the hidden layer should be able to focus on representing the non-Gaussian sources.
+4.2.2
+Results
+Experiments verify that the model structure defined by Eqs. (51–53) is indeed able to recover the
+original sources that were used for generating the observed mixtures (up to permutation and scal-
+ing). This is apparent when studying the normalized loading matrix which measures how much the
+original sources contribute the the values of the hidden units. The loading matrix is obtained from
+the product WAorig where W is the unmixing matrix learned by the model and Aorig is the original
+mixing matrix. Rows of this matrix measure how much contribution from the original source there
+is in each of the recovered hidden neuron activation. In the normalized loading matrix, the rows are
+scaled so that the squares sum up to one, that is, the row vectors have unit lengths. A successful
+unmixing is characterized by a single dominant loading in each row and can be measured by the
+average angle of each vector to the dominant source. In the experiments, a typical value was around
+10 which corresponds to the contribution cos(10) ≈ 0.985 from the dominant source.
+The denoising mappings g(1)
+i
+(h) for each source depend on the distribution of the source just as
+expected. In particular, the sign of the parameter bi is determined by the super- or sub-Gaussianity
+of the sources. When there are more hidden units than non-Gaussian sources, the model will also
+represent Gaussian sources but the preference is for non-Gaussian sources. This is to be expected
+because the lateral mapping B at the lowest level of the network can already represent any Gaussian
+structure. In other words, the model performs just as expected.
+What is more interesting is what happens if the lateral mapping B is missing. Since the reconstruc-
+tion ˆx(t) can then only contain information which is present in the hidden units, the network has
+a strong pressure to conserve as much information as possible. Essentially the dominant mode of
+operation is then PCA: the network primarily extracts the subspace spanned by the eigenvectors of
+the data covariance matrix corresponding to the largest eigenvalues. The network can only secon-
+darily align the representation along independent components. If the independent components do
+not happen to align with the principal subspace, PCA wins over ICA.
+In one experiment, for instance, a network with B and 11 hidden units was able to retrieve the ten
+non-Gaussian sources with loadings between 0.958 and 0.994, averaging 0.981. By contrast, the ten
+best loadings in exactly the same setting but without B were between 0.499 and 0.824 and averaged
+0.619 after the same number of iterations. This is not significantly different from random mappings
+which yield average loadings around 0.613 ± 0.026 (average ± std).
+It turned out that the network was able to do better but it convereged tremendously slowly, requiring
+about 100 times more iterations than with B. Still, even after the network had seemingly converged,
+the ten best loadings were between 0.645 and 0.956 and averaged 0.870. While this is clearly better
+than random, even the best loading was worse than the worst loading when the lateral connections
+B were used.
+That this is due to the network's tendency to extract a principal subspace can be seen by analysing
+how large portion of the subspace spanned by W falls outside the subspace spanned by the 11
+largest eigenvectors of the data covariance matrix. In the network with B this was 28 % whereas in
+the network lacking B this was just 0.03 %.
+To be fair, it should be noted that pre-whitening the inputs x(t) restores the autoencoder's ability to
+recover independent components just as it allows nonlinear PCA learning rule to perform indepen-
+dent component analysis rather than principal subspace analysis. However, in more complex cases
+it may not be as easy to normalize away the information that is not wanted.
+16
+4.3
+Hierarchical variance model
+We shall now move on to expanding the ICA model by adding a new layer to capture the nonlinear
+dependencies remaining in the hidden unit activations in the ICA model. This makes sense because
+it is usually impossible to produce truly statistically independent components simply by computing
+different linear projections of the observations. Even if the resulting feature activations lack linear
+correlations, there are normally higher-orderdependencies between the features (for more discussion
+of such models, see Valpola et al. 2004; Hyv¨arinen and Hoyer 2000).
+One typical example is that the variances of the activations are correlated because the underlying
+cause of a feature activation is likely to generate other activations, too. In order to find a network
+structure that could represent such correlated variances, let us recall that the optimal denoising of a
+Gaussian variable h with prior variance σh and Gaussian corruption noise σn is
+ˆh =
+σ2
+h
+σ2
+h + σ2n
+˜h .
+This can be written as
+ˆh =
+1
+1 + σ2n/σ2
+h
+˜h = sigmoid(log σ2
+h − log σ2
+n)˜h ,
+where the sigmoidal activation function is defined as
+sigmoid(x) =
+1
+1 + e−x .
+What this means is that information about the variance of h translates to a modulation of the con-
+nection strength in the denoising function mapping ˜h to ˆh.
+The experiments in this section demonstrate that all we need to do to represent correlations in the
+variances in the hidden unit activations is add modulatory connections from the layer above and give
+enough flexibility for the forward mapping to the highest layer. The network will then find a way
+to use the representations of the highest layer. Moreover, lateral connections on the middle layer
+now play a crucial role because they allow the higher layers to focus on representing higher-order
+correlations. Unlike in the case with the ICA model in the previous section, this could not have been
+replaced by whitening the inputs. The experiments also demonstrate how the cost function terms on
+the higher layers speed up learning.
+4.3.1
+Data
+The dataset of 10,000 samples was generated as a random linear mixture of sources si just as in
+the ICA experiment. This time, however, the sources were Gaussian with a changing variance. The
+variances of the sources were determined by higher-order variance sources, each of which was used
+by a group of four sources. There were four such groups, in other words, four higher-order variance
+sources which determined the variances of 16 sources. Such groups of dependent sources mean that
+the data follows the model used in independent subspace analysis (Hyv¨arinen and Hoyer 2000).
+The variance sources vj were sampled from a Gaussian distribution and the variance σ2
+i of the
+lower-level sources i ∈ Gj was obtained by computing evj. The set Gj contain all the indices i for
+which the lower-level sources si are are modulated by the variance source vj. Since there were four
+non-overlapping groups of four sources, G1 = {1, 2, 3, 4}, G2 = {5, 6, 7, 8}, and so on.
+Note that although the sources are sampled from a Gaussian distribution, their marginal distribution
+is super-Gaussian since the variance is changing. In these experiments, the dataset was pre-whitened.
+4.3.2
+Model structure
+The linear mappings between the observations and the first layer were the same as with the ICA
+model but now a second nonlinear layer was added and denoising g(1) of the first layer was modified
+17
+16
+14
+12
+10
+8
+6
+4
+2
+16
+14
+12
+10
+8
+6
+4
+2
+Index of original source
+Index of hidden unit
+Figure 4: The squares of the normalized loading matrix from a hierarchical ladder network. Black
+corresponds to one and white to zero. As is evident from the plot, the four subspace Gj have been
+cleanly separated from each other but remain internally mixed. This is because the distribution of
+the sources within each subspace is spherically symmetric which makes it impossible to determine
+the rotation within the subspace. This is reflected in the blocky structure of the matrix of loadings.
+The hidden units were ordered appropriately to reveal the block structure.
+to make use of it:
+f (1)(x)
+=
+W(1)x
+(54)
+f (2)(h(1))
+=
+MLP(h(1))
+(55)
+g(2)
+i
+(h(2))
+=
+aih(2)
+i
+(56)
+g(1)
+i
+(h(1), h(2))
+=
+sigmoid(A(2)
+i
+h(2) + b(1)
+i )h(1)
+i
+(57)
+g(0)(x, h(1))
+=
+A(0)h(1) + Bx .
+(58)
+The multi-layer perceptron (MLP) network used in the second-layer encoder mapping f (2) was
+MLP(h) = W(2b)ψ(W(2a)h + b(2a)) + b(2b) ,
+(59)
+where the activation function ψ(x) = log(1 + ex) operates on the elements of the vector sepa-
+rately. Note that we have included the bias term b(2b) to make sure that the network can satisfy the
+constraint of having zero mean activitions.
+4.3.3
+Results
+Experiments verified that the network managed to separate individual source subspaces (Fig. 4) and
+learned to model the correlations between the variances of different sources (Fig. 5). The figures
+correspond to an experiment where the dimension of the first layer was 16 and second layer 10.
+The MLP network used for modeling f (2) had 50 hidden units. The figures show results after 1000
+training for iterations. The results were relatively good already after 300 iterations and after 1000
+iterations the network had practically converged.
+Figure 4 shows squares of the loadings, that is, elementwise squares of the matrix W(1)Aorig,
+scaled such that the squares sum up to one for each hidden unit. Since the data was generated
+by modulating the variance of the Gaussian sources of each subspace, the data distribution was
+spherically symmetric within each subspace. This is reflected in the blocky appearance of the the
+matrix of loadings as the network has settled on a random rotation within the subspace. Note that
+such rotation indeterminacy is a property of the input data. In other experiments the model was fed
+with the ICA data from the previous section and readily separated the sources (results not shown
+here).
+18
+sigmoid(h(1))
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+sigmoid(h(1))
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+sigmoid(h(1))
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+h(1)
+sigmoid(h(1))
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+h(1)
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+h(1)
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+h(1)
+4
+3
+2
+1
+0
+-1
+-2
+-3
+-4
+1
+0.8
+0.6
+0.4
+0.2
+0
+Figure 5: Illustration of one of the denoising functions learned by a hierarchical ladder network.
+Each plot shows how the term sigmoid(A(2)
+1 h(2) + b(1)
+1 ) modulating ˜h(1)
+1
+in Eq. (57) behaves as a
+function of one of the hidden neurons h(1)
+i . In each plot, h(1)
+i
+for just one i takes nonzero values.
+The top row shows how sigmoid changes as a function of the hidden units which belong to the same
+subspace G1 as h(1)
+1
+whose sigmoid is shown. The rest of the plots correspond to hidden units from
+other groups G̸=1.
+19
+Figure 5 depicts the learned denoising functions. Each plot shows how the term sigmoid(A(2)
+1 h(2)+
+b(1)
+1 ) belonging to the first hidden unit in Eq. (57) behaves as a function of one of the hidden neurons
+h(1)
+i . The sigmoid term is a function of all the hidden neuron activations through the second layer
+hidden unit activations. Theoretically, the sigmoid term modulating the mapping from ˜h(1)
+1
+to ˆh(1)
+1
+should be a function of the norm of the activation vector of subspace G1, that is, a function of
+�
+i∈G1[h(1)
+i ]2. As is readily seen from the plots, the second layer activations have apparently learned
+to represent such quadratic terms of first layer activations because the sigmoid indeed appears to be a
+function of the norm of the activation vector of the first subspace. When ICA data was used (results
+not shown here), the sigmoid term learned to neglect all the other hidden units and developed to be
+a function of h(1)
+1
+only (assuming we are looking at the sigmoid of hidden unit 1).
+The variance features developing on the second layer of the model can only improve the recon-
+struction of ˆx if they are combined with h(1) because variance alone cannot say anything about
+the direction where the reconstruction should be changed. Without the shortcut connections in the
+ladder model, the highest layer with only ten hidden units5 could not have learned to represent the
+variance sources because there would not have been enough space to also represent the activations
+h(1) which are also needed to make use of the variance sources. The higher layers can only let go
+of the details because they are recovered again when denoising proceeds from the highest layers
+towards the lowest.
+Another important question was whether the terms of the cost function originating in the higher
+layers of the network really are useful for learning. To investigate this, 100 simulations were run
+with different datasets and random initializations of the network. It turned out that in this particular
+model, the higher layer cost function term C(2) was not important but C(1) could speed up learning
+considerably particularly during the early stages of learning. As expected, it was crucial to combine
+it with a proper decorrelation term C(1)
+Σ . The success of the model was measured by the value C(0)
+that was reached. Note that it is not a priori clear that adding other cost function terms could help
+reduce C(0). Nevertheless, this turned out to be the case. By iteration 100, the network consistently
+reached a lower value of C(0) than by iteration 200 when minimizing C(0) alone (as in standard
+denoising autoencoders). Subsequent learning continued approximately at the same pace which
+seems reasonable as denoising autoencoders should be able to optimize the model after it has been
+initialized close to a sensible solution.
+Another interesting finding was that about one third of the improvement seems to be attributable to
+the decorrelation term C(1)
+Σ . It was able to speed up learning alone without C(1) despite initializ-
+ing the network with mappings which ensure that all the representations start out as decorrelated.
+Whereas the speedup of C(1) was most pronounced in the beginning of learning, the speedup offered
+by C(1)
+Σ
+was more important during the middle phases of learning. Presumably this is because the
+representations start diverging from the uncorrelated initialization gradually.
+At the optimum of the cost function C(0), the addition of any extra term can only make the situation
+worse from the viewpoint of minimizing C(0). It is therefore likely that optimally the weights αl
+and βl in Eq. (50) should be gradually decreased throughout training and could be set to zero for a
+final finetuning phase. For simplicity, all αl were kept fixed in the simulations presented here.
+5
+Discussion
+The experiments verified that the ladder model with lateral shortcut connections and cost function
+terms at every level of the hierarchy is indeed able to learn abstract invariant features efficiently.
+Although the networks studied here only had a few layers (no more than six between ˜x and ˆx
+no matter how they are counted), what is important is that the representations were abstract and
+invariant already on the second layer. In fact, the model with two layers, linear features on the
+first and variance features on the second, corresponds roughly to the architecture with simple and
+complex cells found by Hubel and Wiesel (1962) (for a more detailed discussion, see Hyv¨arinen and
+5In principle the highest layer only needs four hidden units to represent the four variance sources. The
+network was indeed able to learn such a compact representation but learning tended to be slower than with ten
+hidden units.
+20
+Hoyer 2000). Promising as the results are, it is clearly necessary to conduct far larger experiments
+to verify that the ladder network really does support learning in much deeper hierarchies.
+Similarly, it will be important to verify that the ladder network is indeed compatible with supervised
+learning and can therefore support useful semi-supervised learning. All the experiments reported in
+this chapter were unsupervised. However, all the results supported the notion that the shortcut con-
+nections of the ladder network allow it to discard information, making it a good fit with supervised
+learning.
+The approach proposed here is not the only option for semi-supervised learning with autoencoders.
+Another alternative is to split the representation on the higher levels to features which are also used
+by supervised learning and to features which are only used by the decoder (Rifai et al. 2012). Re-
+cently Kingma et al. (2015) obtained good results with a model which combined this idea with
+hierarchical latent variable models. Their model included a trainable recognition mapping in ad-
+dition to the generative model, so the overall structure resembles an autoencoder. Only additive
+interactions were included between the encoder and decoder and it remains to be seen whether their
+approach can be extended to include more complex interactions, such as the modulatory interaction
+in Eq. (57).
+A somewhat similar approach, motivated by variational autoencoders and target propagation, was
+proposed by Bengio (2014). It also includes exchange of information between the decoder and en-
+coder mappings on every level of the hierarchy, though only during learning.
+One of the most appealing features of the approach taken here is that it replaces all probabilistic
+modeling with function approximation using a very simple cost function. In these experiments, an
+MLP network learned to extract higher-level sources that captured the dependencies in the first-level
+sources. This model corresponded to independent subspace analysis not because the model was
+tailored for it but because the input data had that structure. The forward mapping f (2) was very
+general, an MLP network. In these experiments the denoising mapping g(1) had a somewhat more
+limited structure mainly to simplify analysis of the results. It will be interesting to study whether
+g(l) can also be replaced by a more general mapping.
+Another important avenue for research will be to take advantage of all the machinery developed for
+GSN and related methods, such as sampling, calculating probability densities and making use of
+multiple rounds of corruption and denoising during learning (Bengio et al. 2013; Uria et al. 2014;
+Raiko et al. 2014). Particularly the ability to sample from the model should be very useful. In order
+to make full use of these possibilities, the corruption procedure should be extended. Now simple
+Gaussian noise was added to the inputs. Noise could be added at every layer to better support
+sampling (Bengio et al. 2013) and could also involve masking out some elements of the input vector
+completely (Uria et al. 2014). If different types of corruption are needed at different times, it might
+be possible to extend the denoising functions to handle different types of corruption (information
+about the corruption strategy could be provided as side information to the denoising functions) or it
+might be possible to relearn just the denoising functions g(l) while keeping the previously learned
+forward mappings f (l) fixed.
+A crucial aspect of the ladder network is that it captures the essential features of the inference
+structure of hierarchical latent variable models. Along the same line, it should be possible to extend
+the model to support even more complex inferences, such as those that take place in Kalman filters.
+The model studied by Yli-Krekola (2007) takes even one step further: it implements a dynamical
+biasing process which gives rise to an emergent attention-like selection of information in a similar
+fashion as in the model suggested by Deco and Rolls (2004). The model studied by Yli-Krekola
+(2007) is derived from the DSS framework and already has a structure which is reminiscent of the
+ladder architecture presented here. The model is otherwise very elegant but is prone to overfit its
+lateral connections and exaggerate the feedback loops between units. By using the same tricks as
+here, injecting noise for the benefit of learning lateral and top-down denoising, it might be possible
+to learn the lateral connections reliably.
+21
+6
+Conclusions
+In this chapter, a ladder network structure was proposed for autoencoder networks. The network's
+lateral shortcut connections give each layer the same representational capacity as stochastic latent
+variables have in hierarchical latent variable models. This allows the higher levels of the network to
+discard information and focus on representing more abstract invariant features.
+In order to support efficient unsupervised learning in deep ladder networks, a new type of cost
+function was proposed. The key aspect is that each layer of the network contributes its own terms
+to the cost function. This means that every mapping in the network receives training signals directly
+from some term which measures local reconstruction errors. In addition to the immediate training
+information, the network also propagates gradient information throughout the network. This means
+that it is also possible to add terms which correspond to supervised learning.
+The price to pay is that each higher-level cost function needs to be matched with a decorrelation
+term which prevents the representation from collapsing. This is analogous to the competition used in
+unsupervised competitive learning. Additionally, it is often useful to decorrelate the inputs because
+otherwise the network is biased towards finding a PCA solution.
+Preliminary experiments verified that the network was able to learn abstract invariant features and
+that the extra terms in the cost function speed up learning. The experiments support the notion that
+the model scales to very deep models and works well together with supervised learning but much
+larger experiments are still required to verify these claims.
+Acknowledgments
+I would like to thank Tapani Raiko, Antti Rasmus and Yoshua Bengio for useful discussions. Antti
+Rasmus has been running experiments in parallel to this work and his input on how different versions
+performed has been invaluable. J¨urgen Schmidhuber, Kyunghyun Cho and Miquel Perell´o Nieto
+have made available collections of citations which has saved plenty of my time when preparing the
+manuscript.
+Last but certainly not least, I would like to thank Erkki Oja for creating the environment where the
+ideas which underly the work presented here have been able to develop. Erkki has always supported
+my research. His example has shown how it is possible to follow intuition in designing unsupervised
+learning algorithms but he has also always emphasized the importance of rigorous analysis of the
+convergence and other properties of the resulting algorithms. Without this combination and his
+pioneering work in neural PCA, nonlinear PCA learning rule and ICA, none of the research reported
+here would have gotten very far.
+References
+Almeida, M. S. C., H. Valpola, and J. S¨arel¨a (2006). "Separation of nonlinear image mixtures by
+denoising source separation". In: Proceedings of the 6th International Conference on Independent
+Component Analysis and Blind Signal Separation, ICA 2006, Charleston, SC, USA, pp. 8–15.
+Bengio, Y. (2014). How auto-encoders could provide credit assignment in deep networks via target
+propagation. Tech. rep. arXiv:1407.7906 [cs.LG].
+Bengio, Y., L. Yao, G. Alain, and P. Vincent (2013). "Generalized denoising auto-encoders as gener-
+ative models". In: Advances in Neural Information Processing Systems 26 (NIPS'13). Ed. by C. J. C.
+Burges, L. Bottou, M. Welling, Z. Ghahramani, and K. Q. Weinberger, pp. 899–907.
+Bishop, C. (1999). "Latent variable models". In: Learning in Graphical Models. Ed. by M. Jordan.
+Cambridge, MA, USA: The MIT Press, pp. 371–403.
+Ciresan, D. C., U. Meier, L. M. Gambardella, and J. Schmidhuber (2010). "Deep big simple neural
+nets for handwritten digit recogntion". In: Neural Computation 22.12, pp. 3207–3220.
+Deco, G. and E. T. Rolls (2004). "A neurodynamical cortical model of visual attention and invariant
+object recognition". In: Vision Research 44, pp. 621–642.
+Dempster, A. P., N. M. Laird, and D. B. Rubin (1977). "Maximum likelihood from incomplete data
+via the EM algorithm". In: J. of the Royal Statistical Society, Series B (Methodological) 39.1, pp. 1–
+38.
+22
+Fukushima, K. (1979). "Neural network model for a mechanism of pattern recognition unaffected
+by shift in position - Neocognitron". In: Trans. IECE J62-A(10), pp. 658–665.
+Gregor, K., I. Danihelka, A. Mnih, C. Blundell, and D. Wierstra (2014). "Deep autoregressive net-
+works". In: Proceedings of the 31st International Conference on Machine Learning, ICML'14, Bei-
+jing, China, pp. 1242–1250.
+Hinton, G. and R. Salakhutdinov (2006). "Reducing the dimensionality of data with neural net-
+works". In: Science 313.5786, pp. 504–507.
+Hinton, G. E., S. Osindero, and Y.-W. Teh (May 2006). "A fast learning algorithm for deep belief
+nets". In: Neural Computation 18.7, pp. 1527–1554.
+Hubel, D. H. and T. Wiesel (1962). "Receptive fields, binocular interaction, and functional architec-
+ture in the cat's visual cortex". In: Journal of Physiology (London) 160, pp. 106–154.
+Hyv¨arinen, A. and P. Hoyer (2000). "Emergence of phase and shift invariant features by decomposi-
+tion of natural images into independent feature subspaces". In: Neural Computation 12.7, pp. 1705–
+1720.
+Hyv¨arinen, A. (1998). "Independent component analysis in the presence of Gaussian noise by max-
+imizing joint likelihood". In: Neurocomputing 22.1–3, pp. 49–67.
+Hyv¨arinen, A. and E. Oja (1997). "A fast fixed-point algorithm for independent component analy-
+sis". In: Neural Computation 9.7, pp. 1483–1492.
+Ilin, A. and H. Valpola (2003). "On the effect of the form of the posterior approximation in varia-
+tional learning of ICA models". In: Proc. of the 4th Int. Symp. on Independent Component Analysis
+and Blind Signal Separation (ICA2003). Nara, Japan, pp. 915–920.
+Kingma, D. P., D. J. Rezende, S. Mohamed, and M. Welling (2015). "Semi-supervised learning with
+deep generative models". In: Advances in Neural Information Processing Systems (NIPS 2014). To
+appear.
+Krizhevsky, A., I Sutskever, and G. E Hinton (2012). "ImageNet classification with deep convo-
+lutional neural networks". In: Advances in Neural Information Processing Systems (NIPS 2012),
+pp. 1106–1114.
+Oja, E. (1997). "The nonlinear PCA learning rule in independent component analysis". In: Neuro-
+computing 17.1, pp. 25–46.
+Oja, E. (1982). "A simplified neuron model as a principal component analyzer". In: Journal of
+Mathematical Biology 15, pp. 267–273.
+Raiko, T., L. Yao, K. Cho, and Y. Bengio (2014). "Iterative neural autoregressive distribution estima-
+tor (NADE-k)". In: Advances in Neural Information Processing Systems 27 (NIPS 2014), pp. 325–
+333.
+Rifai, S., Y. Bengio, A. Courville, P. Vincent, and M. Mirza (2012). "Disentangling factors of vari-
+ation for facial expression recognition". In: Proceedings of the 12th European Conference on Com-
+puter Vision (ECCV'12) Part VI, pp. 808–822.
+Schmidhuber, J. (2015). "Deep learning in neural networks: an overview". In: Neural Networks 61,
+pp. 85–117.
+S¨arel¨a, J. and H. Valpola (2005). "Denoising source separation". In: Journal of Machine Learning
+Research 6, pp. 233–272.
+Uria, B., I. Murray, and H. Larochelle (2014). "A deep and tractable density estimator". In: Proceed-
+ings of the 31st International Conference on Machine Learning, ICML'14, Beijing, China, pp. 467–
+475.
+Valpola, H. and P. Pajunen (2000). "Fast algorithms for Bayesian independent component anal-
+ysis". In: Proc. Int. Workshop on Independent Component Analysis and Blind Signal Separation
+(ICA2000). Helsinki, Finland, pp. 233–237.
+Valpola, H., M. Harva, and J. Karhunen (2004). "Hierarchical models of variance sources". In:
+Signal Processing 84.2, pp. 267–282.
+Vincent, P., L. Hugo, Y. Bengio, and P.-A. Manzagol (2008). "Extracting and composing robust
+features with denoising autoencoders". In: Proceedings of the 25th International Conference on
+Machine Learning. ICML '08. Helsinki, Finland, pp. 1096–1103.
+Yli-Krekola, A. (2007). "A bio-inspired computational model of covert attention and learning". MA
+thesis. Helsinki University of Technology, Finland.
+23

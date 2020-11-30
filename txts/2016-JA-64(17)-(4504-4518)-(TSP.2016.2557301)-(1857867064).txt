@@ -1,0 +1,2128 @@
+1
+Distributed Compressive Sensing: A Deep
+Learning Approach
+Hamid Palangi, Rabab Ward, Li Deng
+Abstract—Various studies that address the compressed
+sensing
+problem
+with
+Multiple
+Measurement
+Vectors
+(MMVs) have been recently carried. These studies assume
+the vectors of the different channels to be jointly sparse.
+In this paper, we relax this condition. Instead we assume
+that these sparse vectors depend on each other but that
+this dependency is unknown. We capture this dependency
+by computing the conditional probability of each entry
+in each vector being non-zero, given the "residuals" of
+all previous vectors. To estimate these probabilities, we
+propose the use of the Long Short-Term Memory (LSTM)
+[1], a data driven model for sequence modelling that is deep
+in time. To calculate the model parameters, we minimize
+a cross entropy cost function. To reconstruct the sparse
+vectors at the decoder, we propose a greedy solver that uses
+the above model to estimate the conditional probabilities.
+By performing extensive experiments on two real world
+datasets, we show that the proposed method significantly
+outperforms the general MMV solver (the Simultaneous
+Orthogonal Matching Pursuit (SOMP)) and a number of
+the model-based Bayesian methods. The proposed method
+does not add any complexity to the general compressive
+sensing encoder. The trained model is used just at the
+decoder. As the proposed method is a data driven method, it
+is only applicable when training data is available. In many
+applications however, training data is indeed available, e.g.
+in recorded images and videos.
+Index Terms—Compressive Sensing, Deep Learning,
+Long Short-Term Memory.
+I. INTRODUCTION
+C
+OMPRESSIVE Sensing (CS) [2],[3],[4] is an ef-
+fective approach for acquiring sparse signals where
+both sensing and compression are performed at the same
+time. Since there are numerous examples of natural
+and artificial signals that are sparse in the time, spatial
+or a transform domain, CS has found numerous ap-
+plications. These include medical imaging, geophysical
+data analysis, computational biology, remote sensing and
+communications.
+Copyright (c) 2015 IEEE. Personal use of this material is permitted.
+However, permission to use this material for any other purposes
+must be obtained from the IEEE by sending a request to pubs-
+permissions@ieee.org.
+H. Palangi and R. Ward are with the Department of Electrical and
+Computer Engineering, University of British Columbia, Vancouver,
+BC, V6T 1Z4 Canada (e-mail: {hamidp,rababw}@ece.ubc.ca)
+L. Deng is with Microsoft Research, Redmond, WA 98052 USA
+(e-mail: {deng}@microsoft.com)
+In the general CS framework, instead of acquiring N
+samples of a signal x ∈ ℜN×1, M random measure-
+ments are acquired where M < N. This is expressed by
+the underdetermined system of linear equations:
+y = Φx
+(1)
+where y ∈ ℜM×1 is the known measured vector and Φ ∈
+ℜM×N is a random measurement matrix. To uniquely
+recover x given y and Φ, x must be sparse in a given
+basis Ψ. This means that
+x = Ψs
+(2)
+where s is K−sparse, i.e., s has at most K non-zero el-
+ements. The basis Ψ can be complete; i.e., Ψ ∈ ℜN×N,
+or over-complete; i.e., Ψ ∈ ℜN×N1 where N < N1
+(compressed sensing for over-complete dictionaries is
+introduced in [5]). From (1) and (2):
+y = As
+(3)
+where A = ΦΨ. Since there is only one measurement
+vector, the above problem is usually called the Single
+Measurement Vector (SMV) problem in compressive
+sensing.
+In distributed compressive sensing , also known as the
+Multiple Measurement Vectors (MMV) problem, a set of
+L sparse vectors {si}i=1,2,...,L is to be jointly recovered
+from a set of L measurement vectors {yi}i=1,2,...,L.
+Some application areas of MMV include magnetoen-
+cephalography, array processing, equalization of sparse
+communication channels and cognitive radio [6].
+Suppose that the L sparse vectors and the L mea-
+surement vectors are arranged as columns of matrices
+S = [s1, s2, . . . , sL] and Y = [y1, y2, . . . , yL] respec-
+tively. In the MMV problem, S is to be reconstructed
+given Y:
+Y = AS
+(4)
+In (4), S is assumed to be jointly sparse, i.e., non-
+zero entries of each vector occur at the same locations
+as those of other vectors, which means that the sparse
+vectors have the same support. Assume that S is jointly
+sparse. Then, the necessary and sufficient condition to
+obtain a unique S given Y is [7]:
+|supp(S)| < spark(A) − 1 + rank(S)
+2
+(5)
+arXiv:1508.04924v3  [cs.LG]  11 May 2016
+2
+where |supp(S)| is the number of rows in S with non-
+zero energy and spark of a given matrix is the smallest
+possible number of linearly dependent columns of that
+matrix. spark gives a measure of linear dependency
+in the system modelled by a given matrix. In the
+SMV problem, no rank information exists. In the MMV
+problem, the rank information exists and affects the
+uniqueness bounds. Generally, solving the MMV prob-
+lem jointly can lead to better uniqueness guarantees than
+solving the SMV problem for each vector independently
+[8].
+In the current MMV literature, a jointly sparse matrix
+is recovered typically by one of the following methods:
+1) greedy methods [9] like Simultaneous Orthogonal
+Matching Pursuit (SOMP) which performs non-optimal
+subset selection, 2) relaxed mixed norm minimization
+methods [10], or 3) Bayesian methods like [11], [12],
+[13] where a posterior density function for the values of
+S is created, assuming a prior belief, e.g., Y is observed
+and S should be sparse in basis Ψ. The selection of
+one of the above methods depends on the requirements
+imposed by the specific application.
+A. Problem Statement
+The MMV reconstruction methods stated above do
+not rely on the use of training data. However, for many
+applications, a large amount of data similar to the data to
+be compressed by CS is available. Examples are camera
+recordings of the same environment, images of the same
+class (e.g., flowers, buildings, ....), electroencephalogram
+(EEG) of different parts of the brain, etc. In this paper,
+we address the following questions in the MMV problem
+when training data is available:
+1) Can we learn the structure of the sparse vectors in
+S by a data driven bottom up approach using the
+already available training data? If yes, then how
+can we exploit this structure in the MMV problem
+to design a better reconstruction method?
+2) Most of the reconstruction algorithms for the
+MMV problem rely on the joint sparsity of S.
+However, in some practical applications, the sparse
+vectors in S are not exactly jointly sparse. This
+can be due to noise or due to sources that create
+different sparsity patterns. Examples are images
+of different scenes captured by different cameras,
+images of different classes, etc. Although S is
+not jointly sparse, there may exist a possible de-
+pendency among the columns of S, however, due
+to lack of joint sparsity, the above methods will
+not give satisfactory performance. The question
+is, can we design the aforementioned data driven
+method in a way that it captures the dependencies
+among the sparse vectors in S? The type of such
+dependencies may not be necessarily that of joint
+sparsity. And then how can we use the learned de-
+pendency structure in the reconstruction algorithm
+at the decoder?
+Please note that we want to address the above ques-
+tions "without adding any complexity or adaptability"
+to the encoder. In other words, our aim is not to design
+an optimal encoder, i.e., optimal sensing matrix Φ or
+the sparsifying basis Ψ, for the given training data. The
+encoder would be as simple and general as possible.
+This is specially important for applications that use
+sensors having low power consumption due to a limited
+battery life. However, the decoder in these cases can be
+much more complex than the encoder. For example, the
+decoder can be a powerful data processing machine.
+B. Proposed Method
+To address the above questions, we propose the use of
+a two step greedy reconstruction algorithm. In the first
+step, at each iteration of the reconstruction algorithm,
+and for each column of S represented as si, we first find
+the conditional probability of each entry of si being non-
+zero, given the residuals of all previous sparse vectors
+(columns) at that iteration. Then we select the most
+probable entry and add it to the support of si. The
+definition of the residual matrix at the j−th iteration is
+Rj = Y − ASj where Sj is the estimate of the sparse
+matrix S at the j−th iteration. Therefore in the first
+step, we find the locations of the non-zero entries. In the
+second step we find the values of these non-zero entries.
+This can be done by solving a least squares problem that
+finds si given yi and AΩi. AΩi is a matrix that includes
+only those atoms (columns) of A that are members of
+the support of si.
+To find the conditional probabilities at each iteration,
+we propose the use of a Recurrent Neural Network
+(RNN) with Long Short-Term Memory (LSTM) cells
+and a softmax layer on top of it. To find the model
+parameters, we minimize a cross entropy cost function
+between the conditional probabilities given by the model
+and the known probabilities in the training data. The de-
+tails on how to generate the training data and the training
+data probabilities are explained in subsequent sections.
+Please note that this training is done only once. After
+that, the resulting model is used in the reconstruction
+algorithm for any test data that has not been observed by
+the model before. Therefore, the proposed reconstruction
+algorithm would be almost as fast as the greedy methods.
+The block diagram of the proposed method is presented
+in Fig. 1 and Fig. 2. We will explain these figures in
+detail in subsequent sections.
+To the best of our knowledge, this is the first model-
+based method in MMV sparse reconstruction that is
+3
+𝒓2 
+LSTM 
+𝒄1 
+𝒓1 
+LSTM 
+𝒓𝐿 
+LSTM 
+𝒄𝐿−1 
+… 
+… 
+LSTM cells and gates 
+𝒗1 
+𝒗2 
+𝒗𝐿 
+𝑼 
+𝑼 
+𝑼 
+𝒛1 
+𝒛2 
+𝒛𝐿 
+softmax 
+softmax 
+softmax 
+… 
+… 
+… 
+𝑃(𝒔1|𝒓1) 
+𝑃(𝒔2|𝒓1, 𝒓2) 
+𝑃(𝒔𝐿|𝒓1, 𝒓2, … , 𝒓𝐿) 
+… 
+… 
+Ω1 update 
+Ω2 update 
+Ω𝐿 update 
+Updating support of 𝒔𝐿 
+Least Squares 
+Least Squares 
+Least Squares 
+… 
+𝒔 1 
+𝒔 2 
+𝒔 𝐿 
+Estimation of L-th 
+sparse vector 
+𝒓1 = 𝒚1 − 𝑨Ω1𝒔 1 
+𝒓2 = 𝒚2 − 𝑨Ω2𝒔 2 
+… 
+𝒓𝐿 = 𝒚𝐿 − 𝑨Ω𝐿𝒔 𝐿 
+Residual vector for L-th 
+sparse vector 
+Vector of LSTM cells' state 
+Fig. 1. Block diagram of the proposed method unfolded over channels.
+LSTM 
+𝒓(𝑡) 
+𝑾3 
+𝒓(𝑡) 
+𝑾4 
+𝒓(𝑡) 
+𝑾2 
+𝒓(𝑡) 
+𝑾1 
+𝑔(. ) 
+𝜎(. ) 
+𝜎(. ) 
+Input Gate 
+Output Gate 
+𝜎(. ) Forget Gate 
+Cell 
+× 
+𝒚𝑔(𝑡) 
+𝒊(𝑡) 
+𝒇(𝑡) 
+𝒄(𝑡 − 1) 
+× 
+ℎ(. ) 
+× 
+𝒄(𝑡) 
+𝒐(𝑡) 
+𝒗(𝑡) 
+𝒄(𝑡 − 1) 
+𝑾𝑝2 
+𝑾𝑝3 
+𝑾𝑝1 
+𝒗(𝑡 − 1) 
+𝑾𝑟𝑒𝑐4 
+𝟏 
+𝒃4 
+𝒗(𝑡 − 1) 
+𝟏 
+𝑾𝑟𝑒𝑐3 
+𝒃3 
+𝟏 
+𝒃1 
+𝑾𝑟𝑒𝑐1 
+𝒗(𝑡 − 1) 
+𝟏 
+𝒃2 
+𝒗(𝑡 − 1) 
+𝑾𝑟𝑒𝑐2 
+Fig. 2. Block diagram of the Long Short-Term Memory (LSTM).
+based on a deep learning bottom up approach. Similar
+to all deep learning methods, it has the important feature
+of learning the structure of S from the raw data auto-
+matically. Although it is based on a greedy method that
+selects subsets that are not necessarily optimal, we ex-
+perimentally show that by using a properly trained model
+and only one layer of LSTM, the proposed method sig-
+nificantly outperforms well known MMV baselines (e.g.,
+SOMP) as well as the well known Bayesian methods
+for the MMV problem (e.g., Multitask Bayesian Com-
+pressive Sensing (MT-BCS)[12] and Sparse Bayesian
+Learning for temporally correlated sources (T-SBL)[13]).
+We show this on two real world datasets.
+We emphasize that the computations carried at the en-
+coder mainly include multiplication by a random matrix.
+The extra computations are only needed at the decoder.
+Therefore an important feature of compressive sensing
+(low power encoding) is preserved.
+C. Related Work
+Exploiting data structures besides sparsity for com-
+pressive sensing has been extensively studied in the
+literature [14], [6], [15], [12], [11], [13], [16], [17],
+[18], [19], [20], [21]. In [14], it has been theoreti-
+cally shown that using signal models that exploit these
+structures will result in a decrease in the number of
+measurements. In [6], a thorough review on CS methods
+that exploit the structure present in the sparse signal or
+in the measurements is presented. In [15], a Bayesian
+framework for CS is presented. This framework uses a
+prior information about the sparsity of s to provide a
+posterior density function for the entries of s (assuming
+y is observed). It then uses a Relevance Vector Machine
+4
+(RVM) [22] to estimate the entries of the sparse vector.
+This method is called Bayesian Compressive Sensing
+(BCS). In [12], a Bayesian framework is presented for
+the MMV problem. It assumes that the L "tasks" in the
+MMV problem in (4), are not statistically independent.
+By imposing a shared prior on the L tasks, an empirical
+method is presented to estimate the hyperparameters
+and extensions of RVM are used for the inference step.
+This method is known as Multitask Compressive Sensing
+(MT-BCS). In [12], it is experimentally shown that the
+MT-BCS outperforms the method that applies Orthogo-
+nal Matching Pursuit (OMP) on each task, the Simul-
+taneous Orthogonal Matching Pursuit (SOMP) method
+which is a straightforward extension of OMP for the
+MMV problem, and the method that applies BCS for
+each task. In [11], the Sparse Bayesian Learning (SBL)
+[22], [23] is used to solve the MMV problem. It was
+shown that the global minimum of the proposed method
+is always the sparsest one. The authors in [13], address
+the MMV problem when the entries in each row of S are
+correlated. An algorithm based on SBL is proposed and
+it is shown that the proposed algorithm outperforms the
+mixed norm (ℓ1,2) optimization as well as the method
+proposed in [11]. The proposed method is called T-
+SBL. In [16], a greedy algorithm aided by a neural
+network is proposed to address the SMV problem in
+(3). The neural network parameters are calculated by
+solving a regression problem and are used to select the
+appropriate column of A at each iteration of OMP. The
+main modification to OMP is replacing the correlation
+step with a neural network. They experimentally show
+that the proposed method outperforms OMP and ℓ1
+optimization. This method is called Neural Network
+OMP (NNOMP). In [17], an extension of [16] with
+a hierarchical Deep Stacking Netowork (DSN) [24] is
+proposed for the MMV problem. "The joint sparsity of S
+is an important assumption in the proposed method". To
+train the DSN model, the Restricted Boltzmann Machine
+(RBM) [25] is used to pre-train DSN and then fine tuning
+is performed. It has been experimentally shown that
+this method outperforms SOMP and ℓ1,2 in the MMV
+problem. The proposed methods are called Nonlinear
+Weighted SOMP (NWSOMP) for the one layer model
+and DSN-WSOMP for the multilayer model. In [18], a
+feedforward neural network is used to solve the SMV
+problem as a regression task. Similar to [17] (if we
+assume that we have only one sparse vector in [17]), a
+pre-training phase followed by a fine tuning is used. For
+pre-training, the authors have used Stacked Denoising
+Auto-encoder (SDA) [26]. Please note that an RBM with
+Gaussian visible units and binary hidden units (i.e., the
+one used in [17]) has the same energy function as an
+auto-encoder with sigmoid hidden units and real valued
+observations [27]. Therefore the extension of [18] to the
+MMV problem will give similar performance as that
+of [17]. In [19], a reconstruction method is proposed
+for sparse signals whose sparsity patterns change slowly
+with time. The main idea is to replace Compressive
+Sensing (CS) on the observation y with CS on the
+Least Squares (LS) residuals. LS residuals are calculated
+using the previous estimation of the support. In [20],
+a reconstruction method is proposed to recover sparse
+signals with a sparsity pattern that slowly changes over
+time. The main idea is to use Sparse Bayesian Learning
+(SBL) framework. Similar to SBL, a set of hyperpa-
+rameters are defined to control the sparsity of signals.
+The main difference is that the prior for each coefficient
+also involves the coefficients of the adjacent temporal
+observations. In [21], a CS algorithm is proposed for
+time-varying sparse signals based on the least-absolute
+shrinkage and selection operator (Lasso). A dynamic
+Lasso algorithm is proposed for the signals with time-
+varying amplitudes and support.
+The rest of the paper is organized as follows: In
+section II, the basics of Recurrent Neural Networks
+(RNN) with Long Short-Term Memory (LSTM) cells are
+briefly explained. The proposed method and the learning
+algorithm are presented in section III. Experimental
+results on two real world datasets are presented in section
+IV. Conclusions and future work directions are discussed
+in section V. Details of the final gradient expressions
+for the learning section of the proposed method are
+presented in Appendix A.
+II. RNN WITH LSTM CELLS
+The RNN is a type of deep neural networks [28], [29]
+that are "deep" in the temporal dimension. It has been
+used extensively in time sequence modelling [30], [31],
+[32], [33], [34], [35], [36], [37], [38]. If we look at the
+sparse vectors (columns) in S as a sequence, the main
+idea of using RNN for the MMV problem is to predict
+the sparsity patterns over different sparse vectors in S.
+Although RNN performs sequence modelling in a
+principled manner, it is generally difficult to learn the
+long term dependency within the sequence due to the
+vanishing gradients problem. One of the effective solu-
+tions for this problem in RNNs is to employ memory
+cells instead of neurons that is originally proposed in
+[1] as Long Short-Term Memory (LSTM). It is further
+developed in [39] and [40] by adding forget gate and
+peephole connections to the architecture.
+We use the architecture of LSTM illustrated in Fig.
+2 for the proposed sequence modelling method for the
+MMV problem. In this figure, i(t), f(t) , o(t) , c(t)
+are input gate, forget gate, output gate and cell state
+vector respectively, Wp1, Wp2 and Wp3 are peephole
+connections, Wi, Wreci and bi, i = 1, 2, 3, 4 are
+input connections, recurrent connections and bias values,
+5
+respectively, g(·) and h(·) are tanh(·) function and σ(·)
+is the sigmoid function. We use this architecture to find
+v for each channel and then use the proposed method in
+Fig. 1 to find the entries that have a higher probability
+of being non-zero. Considering Fig. 2, the forward pass
+for LSTM model is as follows:
+yg(t) = g(W4r(t) + Wrec4v(t − 1) + b4)
+i(t) = σ(W3r(t) + Wrec3v(t − 1) + Wp3c(t − 1) + b3)
+f(t) = σ(W2r(t) + Wrec2v(t − 1) + Wp2c(t − 1) + b2)
+c(t) = f(t) ◦ c(t − 1) + i(t) ◦ yg(t)
+o(t) = σ(W1r(t) + Wrec1v(t − 1) + Wp1c(t) + b1)
+v(t) = o(t) ◦ h(c(t))
+(6)
+where ◦ denotes the Hadamard (element-wise) product.
+Summary of notations used in Fig. 2 is as follows:
+• "t": Stands for the time index in the sequence.
+For example, if we have 4 residual vectors of four
+different channels, we can show them as r(t), t =
+1, 2, 3, 4.
+• "1": is a scalar
+• "Wreci, i = 1, 2, 3, 4": Recurrent weight matrices
+of dimension ncell × ncell where ncell is the
+number of cells in LSTM.
+• "Wi,
+i = 1, 2, 3, 4": Input weight matrices of
+dimension M × ncell where M is the number
+of random measurements in compressive sensing.
+These matrices map the residual vectors to feature
+space.
+• "bi, i = 1, 2, 3, 4": Bias vectors of size ncell × 1.
+• "Wpi, i = 1, 2, 3": Peephole connections of di-
+mension ncell × ncell.
+• "v(t), t = 1, 2, . . . , L": Output of the cells. Vector
+of size ncell × 1. L is the number of channels in
+the MMV problem.
+• "i(t), o(t), yg(t),
+t = 1, 2, . . . , L": Input gates,
+output gates and inputs before gating respectively.
+Vector of size ncell × 1.
+• "g(·) and h(·)": tanh(·) function.
+• "σ(·)": Sigmoid function.
+III. PROPOSED METHOD
+A. High Level Picture
+The summary of the proposed method is presented
+in Fig. 1. We initialize the residual vector, r, for each
+channel by the measurement vector, y, of that channel.
+These residual vectors serve as the input to the LSTM
+model that captures features of the residual vectors using
+input weight matrices (W1,W2,W3,W4) as well as the
+dependency among the residual vectors using recurrent
+weight matrices (Wrec1,Wrec2,Wrec3,Wrec4) and the
+central memory unit shown in Fig. 2. A transformation
+matrix U is then used to transform, v ∈ ℜncell×1, the
+output of each memory cell after gating, into the sparse
+vectors space, i.e., z ∈ ℜN×1. "ncell" is the number of
+cells in the LSTM model. Then a softmax layer is used
+for each channel to find the probability of each entry
+of each sparse vector being non-zero. For example, for
+channel 1, the j-th output of the softmax layer is:
+P(s1(j)|r1) =
+ez(j)
+�N
+k=1 ez(k)
+(7)
+Then for each channel, the entry with the maximum
+probability value is selected and added to the support
+set of that channel. After that, given the new support
+set, the following least squares problem is solved to find
+an estimate of the sparse vector for the j-th channel:
+ˆsj = argmin
+sj
+∥yj − AΩjsj∥2
+2
+(8)
+Using ˆsj, the new residual value for the j-th channel is
+calculated as follows:
+rj = yj − AΩjˆsj
+(9)
+This residual serves as the input to the LSTM model at
+the next iteration of the algorithm. The stopping criteria
+for the algorithm is when the residual values are small
+enough or when it has performed N iterations where N
+is the dimension of the sparse vector. Since we have used
+LSTM cells for the proposed method, we call it LSTM-
+CS algorithm. The pseudo-code of the proposed method
+is presented in Algorithm 1.
+Algorithm 1 Distributed Compressive Sensing using
+Long Short-Term Memory (LSTM-CS)
+Inputs: CS measurement matrix A ∈ ℜM×N; matrix of measurements Y ∈
+ℜM×L; minimum ℓ2 norm of residual matrix "resMin" as stopping criterion;
+Trained "lstm" model
+Output: Matrix of sparse vectors ˆS ∈ ℜN×L
+Initialization: ˆS = 0; j = 1; i = 1; Ω = ∅; R = Y.
+1: procedure LSTM-CS(A,Y, lstm)
+2:
+while i ≤ N or ∥R∥2 ≤ resMin do
+3:
+i ← i + 1
+4:
+for j = 1 → L do
+5:
+R(:, j)i ←
+R(:,j)i−1
+max(|R(:,j)i−1|)
+6:
+vj ← lstm(R(:, j)i, vj−1, cj−1)
+▷ LSTM
+7:
+zj ← Uvj
+8:
+c ← softmax(zj)
+9:
+idx ← Support(max(c))
+10:
+Ωi ← Ωi−1 ∪ idx
+11:
+ˆSΩi(:, j) ← (AΩi)†Y(:, j)
+▷ Least Squares
+12:
+ˆSΩC
+i (:, j) ← 0
+13:
+R(:, j)i ← Y(:, j) − AΩi ˆSΩi(:, j)
+14:
+end for
+15:
+end while
+16: end procedure
+We continue by explaining how the training data is
+prepared from off-line dataset and then we present the
+details of the learning method. Please note that all the
+computations explained in the subsequent two sections
+are performed only once and they do not affect the run
+time of the proposed solver in Fig. 1. It is almost as fast
+as greedy algorithms in sparse reconstruction.
+6
+B. Training Data Generation
+The main idea of the proposed method is to look at
+the sparse reconstruction problem as a two step task:
+a classification as the first step and a subsequent least
+squares as the second step. In the classification step,
+the aim is to find the atom of the dictionary, i.e., the
+column of A, that is most relevant to the given residual
+of the current channel and the residuals of the previous
+channels. Therefore we need a set of residual vectors
+and their corresponding sparse vectors for supervised
+training. Since the training data and A are given, we
+can imitate the steps explained in the previous section
+to generate the residuals. This means that, given a sparse
+vector s with k non-zero entries, we calculate y using
+(3). Then we find the entry that has the maximum value
+in s and set it to zero. Assume that the index of this
+entry is k0. This gives us a new sparse vector with k −1
+non-zero entries. Then we calculate the residual vector
+from:
+r = y − ak0s(k0)
+(10)
+Where ak0 is the k0-th column of A and s(k0) is the
+k0-th entry of s. It is obvious that this residual value
+is because of not having the remaining k − 1 non-zero
+entries of s. From these remaining k−1 non-zero entries,
+the second largest value of s has the main contribution
+to r in (10). Therefore, we use r to predict the location
+of the second largest value of s. Assume that the index
+of the second largest value of s is k1. We define s0 as a
+one hot vector that has value 1 at k1-th entry and zero
+at other entries. Therefore, the training pair is (r, s0).
+Now we set the k1-th entry of s to zero. This gives us
+a new sparse vector with k − 2 non-zero entries. Then
+we calculate the new residual vector from:
+r = y − [ak0, ak1][s(k0), s(k1)]T
+(11)
+We use the residual in (11) to predict the location of the
+third largest value in s. Assume that the index of the
+third largest value of s is k2. We define s0 as a one hot
+vector that has value 1 at k2-th entry and zero at other
+entries. Therefore, the new training pair is (r, s0).
+The above procedure is continued upto the point that
+s does not have any non-zero entry. Then the same
+procedure is used for the next training sample. This
+gives us training samples for one channel. Then the same
+procedure is used for the next channel in S. Since the
+number of non-zero entries, k, is not known in advance,
+we assume a maximum number of non-zero entries per
+channel for training data generation.
+C. Learning Method
+To calculate the parameters of the proposed model,
+i.e., W1, W2, W3, W4, Wrec1, Wrec2, Wrec3, Wrec4,
+Wp1, Wp2, Wp3, b1, b2, b3, b4 in Fig. 2 and transfor-
+mation matrix U in Fig.1, we minimize a cross entropy
+cost function over the training data. Assuming s is the
+output vector of the softmax layer given by the model
+in Fig. 1 (output of the softmax layer is represented as
+conditional probabilities in Fig. 1) and s0 is the one hot
+vector explained in the previous section, the following
+optimization problem is solved:
+L(Λ) = min
+Λ
+�
+�
+�
+nB
+�
+i=1
+Bsize
+�
+r=1
+L
+�
+τ=1
+N
+�
+j=1
+Lr,i,τ,j(Λ)
+�
+�
+�
+Lr,i,τ,j(Λ) = −s0,r,i,τ(j)log(sr,i,τ(j))
+(12)
+where nB is the number of mini-batches in the training
+data, Bsize is the number of training data pairs, (r, s0),
+in each mini-batch, L is the number of channels in the
+MMV problem, i.e., number of columns of S, and N is
+the length of vector s and s0. Λ denotes the collection
+of the model parameters that includes W1, W2, W3,
+W4, Wrec1, Wrec2, Wrec3, Wrec4, Wp1, Wp2, Wp3,
+b1, b2, b3 and b4 in Fig. 2 and U in Fig. 1.
+To solve the optimization problem in (12), we use
+Backpropagation through time (BPTT) with Nesterov
+method. The update equations for parameter Λ at epoch
+k are as follows:
+△Λk = Λk − Λk−1
+△Λk = µk−1△Λk−1 − ϵk−1∇L(Λk−1 + µk−1△Λk−1)
+(13)
+where ∇L(·) is the gradient of the cost function in (12),
+ϵ is the learning rate and µk is a momentum parameter
+determined by the scheduling scheme used for training.
+Above equations are equivalent to Nesterov method in
+[41]. To see why, please refer to appendix A.1 of [42]
+where the Nesterov method is derived as a momentum
+method. The gradient of the cost function, ∇L(Λ), is:
+∇L(Λ) =
+nB
+�
+i=1
+Bsize
+�
+r=1
+L
+�
+τ=1
+N
+�
+j=1
+∂Lr,i,τ,j(Λ)
+∂Λ
+�
+��
+�
+one large update
+(14)
+As it is obvious from (14), since we have unfolded the
+LSTM over channels in S, we fold it back when we
+want to calculate gradients over the whole sequence of
+channels.
+∂Lr,i,τ,j(Λ)
+∂Λ
+in (14) and error signals for different
+parameters of the proposed model that are necessary for
+training are presented in Appendix A. Due to lack of
+space, we omit the presentation of full derivation of the
+gradients.
+We have used mini-batch training to accelerate train-
+ing and one large update instead of incremental up-
+dates during back propagation through time. To resolve
+the gradient explosion problem we have used gradient
+7
+Algorithm 2 Training the proposed model for Dis-
+tributed Compressive Sensing
+Inputs: Fixed step size "ϵ", Scheduling for "µ", Gradient clip threshold
+"thG", Maximum number of Epochs "nEpoch", Total number of training
+pairs in each mini-batch "Bsize", Number of channels for the MMV
+problem "L".
+Outputs: LSTM-CS trained model for distributed compressive sensing "Λ".
+Initialization: Set all parameters in Λ to small random numbers, i = 0,
+k = 1.
+procedure LSTM-CS(Λ)
+while i ≤ nEpoch do
+for "first minibatch" → "last minibatch" do
+r ← 1
+while r ≤ Bsize do
+Compute �L
+τ=1
+∂Lr,τ
+∂Λk
+▷ use (23) to (54) in appendix A
+r ← r + 1
+end while
+Compute ∇L(Λk) ← "sum above terms over r"
+if ∇L(Λk) > thG then
+∇L(Λk) ← thG
+▷ For each entry of the gradient matrix ∇L(Λk)
+end if
+Compute △Λk
+▷ use (13)
+Update: Λk ← △Λk + Λk−1
+k ← k + 1
+end for
+i ← i + 1
+end while
+end procedure
+clipping. To accelerate the convergence, we have used
+Nesterov method [41] and found it effective in training
+the proposed model for the MMV problem.
+We have used a simple yet effective scheduling for µk
+in (13), in the first and last 10% of all parameter updates
+µk = 0.9 and for the other 80% of all parameter updates
+µk = 0.995. We have used a fixed step size for training
+LSTM. Please note that since we are using mini-batch
+training, all parameters are updated for each mini-batch
+in (14).
+A summary of training method for LSTM-CS is
+presented in Algorithm 2.
+Although the training method and derivatives in Ap-
+pendix A are presented for all parameters in LSTM, in
+the implementation ,we have removed peephole connec-
+tions and forget gates. Since length of each sequence,
+i.e., the number of columns in S, is known in advance,
+we set state of each cell to zero in the beginning of a
+new sequence. Therefore, forget gates are not a great
+help here. Also, as long as the order of columns in S
+is kept, the precise timing in the sequence is not of
+great concern, therefore, peephole connections are not
+that important as well. Removing peephole connections
+and forget gate will also help to have less training time,
+i.e., less number of parameters need to be tuned during
+training.
+IV. EXPERIMENTAL RESULTS AND DISCUSSION
+We have performed the experiments on two real world
+datasets, the first is the MNIST dataset of handwritten
+digits [43] and the second is three different classes of
+images from natural image dataset of Microsoft Research
+in Cambridge [44].
+In this section, we would like to answer the following
+questions: (i) How is the performance of different recon-
+struction algorithms for the MMV problem, including the
+proposed method, when different channels, i.e., different
+columns in S, have different sparsity patterns? (ii) Does
+the proposed method perform well enough when there
+is correlation among different sparse vectors? E.g., when
+sparse vectors are DCT or Wavelet transform of different
+blocks of an image? (iii) How fast is the proposed
+method compared to other reconstruction algorithms for
+the MMV problem? (iv) How robust is the proposed
+method to noise?
+For all the results presented in this section, the recon-
+struction error is defined as:
+NMSE = ∥ˆS − S∥
+∥S∥
+(15)
+where S is the actual sparse matrix and ˆS is the recov-
+ered sparse matrix from random measurements by the
+reconstruction algorithm. The machine used to perform
+the experiments has an Intel(R) Core(TM) i7 CPU with
+clock 2.93 GHz and with 16 GB RAM.
+A. MNIST Dataset
+MNIST is a dataset of handwritten digits where the
+images of the digits are normalized in size and centred so
+that we have fixed size images. The task is to simultane-
+ously encode 4 images each of size 24×24, i.e., we have
+4 channels and L = 4 in (4). The encoder is a typical
+compressive sensing encoder, i.e., a randomly generated
+matrix A. We have normalized each column of A to
+have unit norm. Since the images are already sparse,
+i.e., have a few number of non-zero pixels, no transform,
+Ψ in (2), is used. To simulate the measurement noise,
+we have added a Gaussian noise with standard deviation
+0.005 to the measurement matrix Y in (4). This results
+in measurements with signal to noise ratio (SNR) of
+approximately 46dB. We have divided each image into
+four 12 × 12 blocks. This means that the length of
+each sparse vector is N = 144. We have taken 50%
+random measurements from each sparse vector, i.e.,
+M = 72. After receiving and reconstructing all blocks at
+the decoder, we compute the reconstruction error defined
+in (15) for the full image. We have randomly selected
+10 images for each digit from the set {0, 1, 2, 3}, i.e.,
+40 images in total for the test. This means that the first
+column of S is an image of digit 0, the second column
+is an image of digit 1, the third column is an image of
+digit 2 and the fourth column is an image of digit 3. Test
+images are represented in Fig. 3.
+8
+Fig. 3. Randomly selected images for test from MNIST dataset. The
+first channel encodes digit zero, the second channel encodes digit one
+and so on.
+We have compared the performance of the proposed
+reconstruction algorithm (LSTM-CS) with 7 reconstruc-
+tion methods for the MMV problem. These methods are:
+• Simultaneous
+Orthogonal
+Matching
+Pursuit
+(SOMP) which is a well known baseline for the
+MMV problem.
+• Bayesian Compressive Sensing (BCS)[15] applied
+independently on each channel. For the BCS
+method we set the initial noise variance of i-th
+channel to the value suggested by the authors, i.e.,
+std(yi)2/100 where i ∈ {1, 2, 3, 4} and std(.) cal-
+culates the standard deviation. We set the threshold
+for stopping the algorithm to 10−8.
+• Multitask Compressive Sensing (MT-BCS) [12]
+which takes into account the statistical dependency
+of different channels. For MT-BCS we set the
+parameters of the Gamma prior on noise variance
+to a = 100/0.1 and b = 1 which are the values
+suggested by the authors. We set the stopping
+threshold to 10−8 as well.
+• Sparse Bayesian Learning for Temporally correlated
+sources (T-SBL) [13] which exploits correlation
+among different sources in the MMV problem. For
+T-SBL, we used the default values proposed by the
+authors.
+• Nonlinear Weighted SOMP (NWSOMP) [17] which
+solves a regression problem to help the SOMP
+algorithm with prior knowledge from training data.
+For NWSOMP, during training, we used one layer,
+512 neurons and 25 epochs of parameters update.
+• Compressive Sensing on Least Squares Residual
+(LSCS) [19] where no explicit joint sparsity as-
+sumption is made in the design of the method. For
+LSCS, we used sigma0 = cc∗(1/3)∗sqrt(Sav/m)
+suggested by the authors where m is the number of
+measurements and Sav = 16 as suggested by the
+author. We tried a range of different values of cc
+and got the best results with cc = 0.1. We also
+20
+40
+60
+80
+100
+120
+140
+0.5
+1
+1.5
+2
+2.5
+3
+3.5
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+LSTM-CS,ncell=512
+MT-BCS
+T-SBL
+NWSOMP
+LSTM-CS,ncell=512,x4 TrData
+LSCS
+PCSBL-GAMP
+BCS
+20
+40
+60
+80
+100
+120
+140
+0.2
+0.4
+0.6
+0.8
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+LSTM-CS,ncell=512
+MT-BCS
+T-SBL
+NWSOMP
+LSTM-CS,ncell=512,x4 TrData
+LSCS
+PCSBL-GAMP
+Fig. 4. Comparison of different MMV reconstruction algorithms for
+MNIST dataset. Bottom figure is the same as top figure without results
+of BCS algorithm to make the difference among different algorithms
+more visible. In this experiment M = 72 and N = 144.
+set sigsys = 1, siginit = 3 and lambdap = 4 as
+suggested by the author.
+• The method proposed in [20], [45] and referred to
+as PCSBL-GAMP where sparse Bayesian learning
+is used to design the method and no explicit joint
+sparsity assumption is made. For PCSBL-GAMP,
+we used beta = 1, Pattern = 2 because we need
+the coupling among the sparse vectors, i.e., left and
+right coupling, maximum number of iterations equal
+to maxiter = 400, and C = 1e0 as suggested by
+the authors for the noisy case.
+For LSTM-CS, during training, we used one layer,
+512 cells and 25 epochs of parameter updates. We used
+only 200 images for the training set. The training set
+does not include any of the 40 images used for test.
+To monitor and prevent overfitting, we used 3 images
+per channel as the validation set and we used early
+stopping if necessary. Please note that the images used
+for validation were not used in the training set or in the
+test set. Results are presented in Fig. 4.
+In Fig. 4, the vertical axis is the NMSE defined in
+(15) and horizontal axis is the number of non-zero entries
+in the sparse vector. The number of measurements, M,
+is fixed to 72. Each point on the curves in Fig. 4 is the
+average of NMSE over 40 reconstructed test images at
+the decoder.
+For the MNIST dataset, we observe from Fig. 4 that
+LSTM-CS significantly outperforms the reconstruction
+9
+Original
+50% Measurements
+SOMP
+MT-BCS
+T-SBL
+NWSOMP
+LSTM-CS
+Original
+50% Measurements
+SOMP
+MT-BCS
+T-SBL
+NWSOMP
+LSTM-CS
+Original
+50% Measurements
+SOMP
+MT-BCS
+T-SBL
+NWSOMP
+LSTM-CS
+Original
+50% Measurements
+SOMP
+MT-BCS
+T-SBL
+NWSOMP
+LSTM-CS
+LS−CS
+PCSBL−GAMP
+LS−CS
+PCSBL−GAMP
+LS−CS
+PCSBL−GAMP
+LS−CS
+PCSBL−GAMP
+Channel 2
+Channel 1
+Channel 3
+Channel 4
+Reconstruction Algorithms:
+Fig. 5. Reconstructed images using different MMV reconstruction algorithms for 4 images of the MNIST dataset. First row are original images,
+S, second row are measurement matrices, Y, third row are reconstructed images using LS-CS, fourth row are reconstructed images using
+SOMP, fifth row using PCSBL-GAMP, sixth row using MT-BCS, seventh row using T-SBL, eighth row using NWSOMP and the last row are
+reconstructed images using the proposed LSTM-CS method.
+algorithms for the MMV problem discussed in this paper.
+One important reason for this is that existing MMV
+solvers rely on the joint sparsity in S, while the proposed
+method does not rely on this assumption. Another reason
+is that the structure of each sparse vector is effectively
+captured by LSTM. The reconstructed images using dif-
+ferent MMV reconstruction algorithms for 4 test images
+are presented in Fig. 5. An interesting observation from
+Fig. 5 is that the accuracy of reconstruction depends on
+the complexity of the sparsity pattern. For example when
+the sparsity pattern is simple, e.g., image of digit 1 in
+Fig. 5, all the algorithms perform well. But when the
+sparsity pattern is more complex, e.g., image of digit
+0 in Fig. 5, then their reconstruction accuracy degrades
+significantly.
+We have repeated the experiments on the MNIST
+dataset with 25% random measurements, i.e., M = 36.
+The results are presented in Fig. 6. We trained 4 different
+LSTM models for this experiment. The first one is the
+same model used for previous experiment (m = 72).
+In the second model, we increased the number of cells
+in the LSTM model from 512 to 1024. In the third and
+fourth models, we used 2 times and 4 times more training
+data respectively. The rest of the experiments' settings
+was similar to the settings described before. As observed
+from these results, by investing more on training a good
+LSTM model, LSTM-CS method performs better.
+All the results presented so far are for noisy measure-
+ments where an additive Gaussian noise with standard
+deviation 0.005 is used (SNR ≃ 46dB). To evaluate the
+stability of the proposed LSTM-CS method to noise, and
+compare it with other methods discussed in this paper,
+an experiment was performed using the following range
+of noise standard deviations:
+σ = {0.5, 0.2, 0.1, 0.05, 0.01, 0.005}
+(16)
+where σ is the standard deviation of noise. This approx-
+imately corresponds to:
+SNR = {6 dB, 14 dB, 20 dB, 26 dB, 40 dB, 46 dB}
+(17)
+We used the same experimental settings explained above.
+Results are presented in Fig. 7.
+As observed from the results, in very noisy envi-
+ronment, i.e., SNR = 6 dB, performance of MT-BCS
+, LSCS and PCSBL-GAMP degrades significantly while
+T-SBL , NWSOMP and LSTM-CS (proposed in this
+paper) methods show less severe degradation. In very
+low noise environment, i.e., SNR = 46 dB, performance
+of LSTM-CS, trained with just 512 cells and 200 training
+images, is better than other methods. In medium noise
+environment, i.e., SNR = 20 dB and SNR = 26 dB,
+performance of LSTM-CS, T-SBL and PCSBL-GAMP
+are close (although LSTM-CS is slightly better). Please
+note that the performance of LSTM-CS can be further
+improved by using a better architecture (e.g., more
+10
+10
+15
+20
+25
+30
+35
+40
+45
+1
+2
+3
+4
+5
+6
+7
+Signal to Noise Ratio (dB)
+NMSE
+ 
+ 
+SOMP
+NWSOMP
+LSTM-CS
+MT-BCS
+T-SBL
+PCSBL-GAMP
+LSCS
+BCS
+(a) Results for all Methods.
+10
+15
+20
+25
+30
+35
+40
+45
+0.3
+0.5
+0.7
+0.9
+1.1
+1.3
+1.5
+1.7
+Signal to Noise Ratio (dB)
+NMSE
+ 
+ 
+SOMP
+NWSOMP
+LSTM-CS
+MT-BCS
+T-SBL
+PCSBL-GAMP
+LSCS
+(b) Results without BCS method for a more clear visibility.
+Fig. 7. Reconstruction performance of the methods discussed in the paper for different noise levels.
+20
+40
+60
+80
+100
+120
+140
+1
+1.5
+2
+2.5
+3
+3.5
+4
+4.5
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+T-SBL
+LSTM-CS
+MT-BCS
+NWSOMP
+BCS
+LSTM-CS,ncell=1024
+LSTM-CS,ncell=1024,x2 TrData
+LSTM-CS,ncell=1024,x4 TrData
+PCSBL-GAMP
+LSCS
+20
+40
+60
+80
+100
+120
+140
+0.6
+0.7
+0.8
+0.9
+1
+1.1
+1.2
+1.3
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+T-SBL
+LSTM-CS
+MT-BCS
+NWSOMP
+LSTM-CS,ncell=1024
+LSTM-CS,ncell=1024,x2 TrData
+LSTM-CS,ncell=1024,x4 TrData
+PCSBL-GAMP
+LSCS
+Fig. 6. Comparison of different MMV reconstruction algorithms for
+MNIST dataset. Bottom figure is the same as top figure without results
+of BCS algorithm to make the difference among different algorithms
+more visible. In this experiment M = 36 and N = 144.
+cells, more training data or more layers) as explained
+previously.
+To present the phase transition diagram of solvers, we
+used a simple LSTM-CS solver that uses 512 cells and
+just 200 training images. The performance was evaluated
+over the following values of m
+n where n is the number
+of entries in each sparse vector and m is the number of
+measurements per channel:
+m
+n = {0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50}
+(18)
+For this experiment, we randomly selected 50 images
+per channel from MNIST dataset. Since we have L = 4
+channels, and each image is of size 24 × 24, and each
+image has 4 blocks of 12×12 pixels, in total we will have
+50×4×4 = 800 sparse vectors. Considering Fig. 4 of the
+paper, NMSE of most solvers is about 0.6. Therefore we
+set the following as the condition for perfect recovery: if
+more than 90% of test images are reconstructed with an
+NMSE of 0.6 or less, count that test image as perfectly
+recovered. We did this for each m
+n in (18). Results are
+presented in Fig. 8. Results presented in Fig.8 shows the
+reconstruction performance improvement when LSTM-
+CS method is used.
+We also present the performance of LSTM-CS for
+different number of random measurements. We used the
+set of random measurements in (18) with n = 144.
+We used an LSTM with 512 cells and 400 training
+images. The settings for all other methods was similar to
+the one described before. Results are presented in Fig.
+9. As observed from Fig. 9, using LSTM-CS method
+improves the reconstruction performance compared to
+other methods discussed in this paper.
+B. Natural Images Dataset
+For experiments on natural images we used the MSR
+Cambridge dataset [44]. Ten randomly selected test
+images belonging to three classes of this dataset are used
+for experiments. The images are shown in Fig. 10. We
+have used 64 × 64 images. Each image is divided into
+8×8 blocks. After reconstructing all blocks of an image
+in the decoder, the NMSE for the reconstructed image
+11
+20
+30
+40
+50
+60
+70
+1
+2
+3
+4
+5
+Number of Random Measurements (m)
+NMSE
+ 
+ 
+SOMP
+NWSOMP
+LSTM-CS
+MT-BCS
+T-SBL
+LSCS
+PCSBL-GAMP
+BCS
+(a) Results for all Methods.
+20
+30
+40
+50
+60
+70
+0.5
+1
+1.5
+Number of Random Measurements (m)
+NMSE
+ 
+ 
+SOMP
+NWSOMP
+LSTM-CS
+MT-BCS
+T-SBL
+LSCS
+PCSBL-GAMP
+(b) Results without BCS method for a more clear visibility.
+Fig. 9.
+Comparison of different MMV reconstruction algorithms for different number of random measurements for MNIST dataset. In this
+experiment n = 144.
+0.1
+0.15
+0.2
+0.25
+0.3
+0.35
+0.4
+0.45
+0.5
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1
+m/n
+k/m
+ 
+ 
+SOMP
+LSTM-CS
+PCSBL-GAMP
+BCS
+T-SBL
+NWSOMP
+MT-BCS
+LSCS
+Fig. 8.
+Phase transition diagram for different methods on MNIST
+dataset where 90% perfect recovery is considered. Assuming a perfect
+recovery condition of NMSE ≤ 0.6 for this dataset. "n" is the
+number of entries in each sparse vector, "m" is the number of random
+measurements and "k" is the number of non-zero entries in each sparse
+vector.
+is calculated. The task is to simultaneously encode 4
+blocks (L = 4) of an image and reconstruct them in the
+decoder. This means that S in (4) has 4 columns each
+one having N = 64 entries. We used 50% measurements,
+i.e., Y in (4) have 4 columns each one having M = 32
+entries.
+We have compared the performance of the proposed
+algorithm, LSTM-CS, with SOMP, T-SBL, MT-BCS and
+NWSOMP. We have not included results of applying
+BCS per channel due its weak performance compared
+to other methods (this is shown in the experiments for
+MNIST dataset). We have used the same setting as the
+settings for the MNIST dataset for different methods
+which is explained in the previous section. The only
+differences here are: (i) For each class of images, we
+have used just 55 images for training set and 5 images
+for validation set which do not include any of 10 images
+used for test. (ii) We have used 15 epochs for training
+LSTM-CS which is enough for this dataset, compared
+to 25 epochs for the MNIST dataset. The experiments
+were performed for two popular transforms, DCT and
+Wavelet, for all aforementioned reconstruction algo-
+rithms. For the wavelet transform we used Haar wavelet
+transform with 3 levels of decomposition. Results for
+DCT transform are presented in Fig. 11. Results for
+wavelet transform are presented in Fig. 12.
+To conclude the experiments section, the CPU time
+for different reconstruction algorithms for the MMV
+problem discussed in this paper are presented in Fig. 13.
+Each point on the curves in Fig. 13 is the time spent to
+reconstruct each sparse vector averaged over all the 8×8
+blocks in 10 test images. We observe from this figure
+that the proposed algorithm is almost as fast as greedy
+algorithms. Please note that there is a faster version of
+T-SBL that is known as TMSBL. It will improve the
+CPU time of T-SBL but it is still slower than other
+reconstruction methods.
+V. CONCLUSIONS AND FUTURE WORK
+This paper presents a method to reconstruct sparse
+vectors for the MMV problem. The proposed method
+learns the structure of sparse vectors and does not rely on
+the commonly used joint sparsity assumption. Through
+experiments on two real world datasets, we showed that
+the proposed method outperforms the general MMV
+baseline SOMP as well as a number of Bayesian model
+based methods for the MMV problem. Please note
+that we have not used multiple layers of LSTM or
+12
+Fig. 10. Randomly selected natural images from three different classes used for test. The first row are "buildings", the second row are "cows"
+and the third row are "flowers".
+the advanced deep learning methods for training, e.g.,
+regularization using drop out which can improve the
+performance of LSTM-CS. This paper is a proof of
+concept that deep learning methods and specifically
+sequence modelling methods, e.g., LSTM, can improve
+the performance of the MMV solvers significantly. This
+is specially the case when the sparsity patterns are more
+complicated than that of obtained by the DCT or Wavelet
+transforms. We showed this on the MNIST dataset.
+Please note that if collecting training samples is expen-
+sive or enough training samples are not available, using
+other sparse reconstruction methods is recommended.
+Our future work includes: 1) Extending the LSTM-CS
+to bidirectional LSTM-CS. 2) Extending the proposed
+method to non-linear distributed compressive sensing.
+3) Using the proposed method for video compressive
+sensing where there is correlation amongst the video
+frames, and compressive sensing of EEG signals where
+there is correlation amongst the different EEG channels.
+VI. ACKNOWLEDGEMENT
+We want to thank the authors of [13], [15], [12],[19]
+and [20] for making the code of their work available.
+This was important in performing comparisons. For re-
+producibility of the results, please contact the authors for
+the MATLAB codes of the proposed LSTM-CS method.
+We also want to thank WestGrid and Compute Canada
+Calcul Canada for providing computational resources for
+part of this work.
+APPENDIX A
+EXPRESSIONS FOR THE GRADIENTS
+In this appendix we present the final gradient expres-
+sions that are necessary to use for training the proposed
+model for the MMV problem. Due to lack of space,
+we omit the presentation of full derivations of these
+gradients.
+Starting
+with
+the
+cost
+function
+in
+(12),
+we
+use
+the
+Nesterov
+method
+described
+in
+(13)
+to
+update
+LSTM-CS
+model
+parameters.
+Here,
+Λ
+is
+one
+of
+the
+weight
+matrices
+or
+bias
+vectors
+{W1, W2, W3, W4, Wrec1, Wrec2, Wrec3, Wrec4
+, Wp1, Wp2, Wp3, b1, b2, b3, b4}
+in
+the
+LSTM-CS
+architecture. The general format of the gradient of the
+cost function, ∇L(Λ), is the same as (14). To calculate
+∂Lr,i,τ (Λ)
+∂Λ
+from (12) we have:
+∂Lr,i,τ(Λ)
+∂Λ
+= −
+N
+�
+j=1
+s0,r,i,τ(j)∂log(sr,i,τ(j))
+∂Λ
+(19)
+After a straightforward derivation of derivatives we will
+have:
+∂Lr,i,τ(Λ)
+∂Λ
+= (βsr,i,τ − s0,r,i,τ)∂zτ
+∂Λ
+(20)
+where zτ is the vector z for τ-th channel in Fig. 1 and
+β is a scalar defined as:
+β =
+N
+�
+j=1
+s0,r,i,τ(j)
+(21)
+Since during training data generation we have generated
+one hot vectors for s0, β always equals to 1. Since we are
+looking at different channels as a sequence, for a more
+clear presentation we show any vector corresponding to
+t-th channel with (t) instead of index τ. For example,
+zτ is represented by z(t).
+Since z(t) = Uv(t) we have:
+∂z(t)
+∂Λ
+= UT ∂v(t)
+∂Λ
+(22)
+Combining (20), (21) and (22) we will have:
+∂Lr,i,t(Λ)
+∂Λ
+= UT (sr,i(t) − s0,r,i(t))∂v(t)
+∂Λ
+(23)
+Starting from "t = L"-th channel, we define e(t) as:
+e(t) = UT (sr,i(t) − s0,r,i(t))
+(24)
+13
+10
+20
+30
+40
+50
+60
+0.1
+0.15
+0.2
+0.25
+0.3
+0.35
+0.4
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+MT-BCS
+T-SBL
+LSTM-CS
+NWSOMP
+LSCS
+PCSBL-GAMP
+10
+20
+30
+40
+50
+60
+0.15
+0.2
+0.25
+0.3
+0.35
+0.4
+0.45
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+MT-BCS
+T-SBL
+LSTM-CS
+NWSOMP
+LSCS
+PCSBL-GAMP
+10
+20
+30
+40
+50
+60
+0.2
+0.25
+0.3
+0.35
+0.4
+0.45
+0.5
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+MT-BCS
+T-SBL
+LSTM-CS
+NWSOMP
+PCSBL-GAMP
+LSCS
+Fig. 11.
+Comparison of different MMV reconstruction algorithms
+for natural image dataset using DCT transform and just one layer
+for LSTM model in LSTM-CS. Image classes from top to bottom
+respectively: buildings, cows and flowers.
+The expressions for the gradients for different parameters
+of LSTM-CS model are presented in the subsequent
+sections. We omit the subscripts r and i for simplicity
+of presentation. Please note that the final value of the
+gradient is sum of gradient values over the mini-batch
+samples and number of channels as represented by
+summations in (14).
+A. Output Weights U
+∂Lt
+∂U = (s(t) − s0(t)).v(t)T
+(25)
+B. Output Gate
+For recurrent connections we have:
+∂Lt
+∂Wrec1
+= δrec1(t).v(t − 1)T
+(26)
+10
+20
+30
+40
+50
+60
+0.1
+0.15
+0.2
+0.25
+0.3
+0.35
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+MT-BCS
+T-SBL
+LSTM-CS
+NWSOMP
+PCSBL-GAMP
+LSCS
+10
+20
+30
+40
+50
+60
+0.15
+0.2
+0.25
+0.3
+0.35
+0.4
+0.45
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+MT-BCS
+T-SBL
+LSTM-CS
+NWSOMP
+LSCS
+PCSBL-GAMP
+10
+20
+30
+40
+50
+60
+0.2
+0.25
+0.3
+0.35
+0.4
+0.45
+0.5
+Number of non-zero entries in the sparse vector
+NMSE
+ 
+ 
+SOMP
+MT-BCS
+T-SBL
+LSTM-CS
+NWSOMP
+LSCS
+PCSBL-GAMP
+Fig. 12.
+Comparison of different MMV reconstruction algorithms
+for natural image dataset using Wavelet transform and just one layer
+for LSTM model in LSTM-CS. Image classes from top to bottom
+respectively: buildings, cows and flowers.
+where
+δrec1(t) = o(t) ◦ (1 − o(t)) ◦ h(c(t)) ◦ e(t)
+(27)
+For input connections, W1, and peephole connections,
+Wp1, we will have:
+∂Lt
+∂W1
+= δrec1(t).r(t)T
+(28)
+∂Lt
+∂Wp1
+= δrec1(t).c(t)T
+(29)
+The derivative for output gate bias values will be:
+∂Lt
+∂b1
+= δrec1(t)
+(30)
+14
+10
+20
+30
+40
+50
+60
+5
+10
+15
+20
+25
+30
+35
+Number of non-zero entries in each sparse vector
+CPU Time (sec)
+ 
+ 
+SOMP
+NWSOMP
+MT-BCS
+T-SBL
+LSTM-CS
+LS-CS
+PCSBL-GAMP
+10
+20
+30
+40
+50
+60
+0.05
+0.1
+0.15
+0.2
+0.25
+Number of non-zero entries in each sparse vector
+CPU Time (sec)
+ 
+ 
+SOMP
+NWSOMP
+MT-BCS
+LSTM-CS
+PCSBL-GAMP
+Fig. 13. CPU time for different MMV reconstruction algorithms. These
+times are for the experiment using DCT transform for 10 test images
+from the building class. The bottom figure is the same as top figure
+but without T-SBL and LS-CS to make the difference among different
+methods more clear.
+C. Input Gate
+For the recurrent connections we have:
+∂Lt
+∂Wrec3
+= diag(δrec3(t)). ∂c(t)
+∂Wrec3
+(31)
+where
+δrec3(t) = (1 − h(c(t))) ◦ (1 + h(c(t))) ◦ o(t) ◦ e(t)
+∂c(t)
+∂Wrec3
+= diag(f(t)).∂c(t − 1)
+∂Wrec3
++ bi(t).v(t − 1)T
+bi(t) = yg(t) ◦ i(t) ◦ (1 − i(t))
+(32)
+For the input connections we will have the following:
+∂Lt
+∂W3
+= diag(δrec3(t)).∂c(t)
+∂W3
+(33)
+where
+∂c(t)
+∂W3
+= diag(f(t)).∂c(t − 1)
+∂W3
++ bi(t).r(t)T
+(34)
+For the peephole connections we will have:
+∂Lt
+∂Wp3
+= diag(δrec3
+y
+(t)). ∂c(t)
+∂Wp3
+(35)
+where
+∂c(t)
+∂Wp3
+= diag(f(t)).∂c(t − 1)
+∂Wp3
++bi(t).c(t−1)T (36)
+For bias values, b3, we will have:
+∂Lt
+∂b3
+= diag(δrec3(t)).∂c(t)
+∂b3
+(37)
+where
+∂c(t)
+∂b3
+= diag(f(t)).∂c(t − 1)
+∂b3
++ bi(t)
+(38)
+D. Forget Gate
+For the recurrent connections we will have:
+∂Lt
+∂Wrec2
+= diag(δrec2(t)). ∂c(t)
+∂Wrec2
+(39)
+where
+δrec2(t) = (1 − h(c(t))) ◦ (1 + h(c(t))) ◦ o(t) ◦ e(t)
+∂c(t)
+∂Wrec2
+= diag(f(t)).∂c(t − 1)
+∂Wrec2
++ bf(t).v(t − 1)T
+bf(t) = c(t − 1) ◦ f(t) ◦ (1 − f(t))
+(40)
+For input connections to forget gate we will have:
+∂Lt
+∂W2
+= diag(δrec2(t)).∂c(t)
+∂W2
+(41)
+where
+∂c(t)
+∂W2
+= diag(f(t)).∂c(t − 1)
+∂W2
++ bf(t).r(t)T
+(42)
+For peephole connections we have:
+∂Lt
+∂Wp2
+= diag(δrec2(t)). ∂c(t)
+∂Wp2
+(43)
+where
+∂c(t)
+∂Wp2
+= diag(f(t)).∂c(t − 1)
+∂Wp2
++bf(t).c(t−1)T (44)
+For forget gate's bias values we will have:
+∂Lt
+∂b2
+= diag(δrec2(t)).∂c(t)
+∂b2
+(45)
+where
+∂c(t)
+∂b2
+= diag(f(t)).∂c(t − 1)
+∂b3
++ bf(t)
+(46)
+E. Input without Gating (yg(t))
+For recurrent connections we will have:
+∂Lt
+∂Wrec4
+= diag(δrec4(t)). ∂c(t)
+∂Wrec4
+(47)
+where
+δrec4(t) = (1 − h(c(t))) ◦ (1 + h(c(t))) ◦ o(t) ◦ e(t)
+∂c(t)
+∂Wrec4
+= diag(f(t)).∂c(t − 1)
+∂Wrec4
++ bg(t).v(t − 1)T
+bg(t) = i(t) ◦ (1 − yg(t)) ◦ (1 + yg(t))
+(48)
+15
+For input connections we have:
+∂Lt
+∂W4
+= diag(δrec4(t)).∂c(t)
+∂W4
+(49)
+where
+∂c(t)
+∂W4
+= diag(f(t)).∂c(t − 1)
+∂W4
++ bg(t).r(t)T
+(50)
+For bias values we will have:
+∂Lt
+∂b4
+= diag(δrec4(t)).∂c(t)
+∂b4
+(51)
+where
+∂c(t)
+∂b4
+= diag(f(t)).∂c(t − 1)
+∂b4
++ bg(t)
+(52)
+F. Error signal backpropagation
+Error signals are back propagated through time using
+following equations:
+δrec1(t − 1) = [o(t − 1) ◦ (1 − o(t − 1)) ◦ h(c(t − 1))]
+◦ [WT
+rec1.δrec1(t) + e(t − 1)]
+(53)
+δreci(t − 1) = [(1 − h(c(t − 1))) ◦ (1 + h(c(t − 1)))
+◦ o(t − 1)] ◦ [WT
+reci.δreci(t) + e(t − 1)],
+for
+i ∈ {2, 3, 4}
+(54)
+REFERENCES
+[1] S. Hochreiter and J. Schmidhuber, "Long short-term memory,"
+Neural Comput., vol. 9, no. 8, pp. 1735–1780, Nov. 1997.
+[2] D. Donoho, "Compressed sensing," IEEE Transactions on Infor-
+mation Theory, vol. 52, no. 4, pp. 1289 –1306, april 2006.
+[3] E. Candes, J. Romberg, and T. Tao, "Stable signal recovery from
+incomplete and inaccurate measurements," Communications on
+Pure and Applied Mathematics, vol. 59, no. 8, pp. 1207–1223,
+2006.
+[4] R. Baraniuk, "Compressive sensing [lecture notes]," IEEE Signal
+Processing Magazine, vol. 24, no. 4, pp. 118 –121, july 2007.
+[5] E. J. Candes, Y. C. Eldar, D. Needell, and P. Randall, "Com-
+pressed sensing with coherent and redundant dictionaries," Ap-
+plied and Computational Harmonic Analysis, vol. 31, no. 1, pp.
+59 – 73, 2011.
+[6] M. Duarte and Y. Eldar, "Structured compressed sensing: From
+theory to applications," IEEE Transactions on Signal Processing,
+vol. 59, no. 9, pp. 4053 –4085, sept. 2011.
+[7] M. Davies and Y. Eldar, "Rank awareness in joint sparse recov-
+ery," IEEE Transactions on Information Theory, vol. 58, no. 2,
+pp. 1135 –1146, Feb. 2012.
+[8] Y. Eldar and H. Rauhut, "Average case analysis of multichannel
+sparse recovery using convex relaxation," IEEE Transactions on
+Information Theory, vol. 56, no. 1, pp. 505 –519, Jan. 2010.
+[9] J. Tropp, A. Gilbert, and M. Strauss, "Algorithms for simul-
+taneous sparse approximation. part I: Greedy pursuit," Signal
+Processing, vol. 86, no. 3, pp. 572 – 588, 2006.
+[10] J. Tropp, "Algorithms for simultaneous sparse approximation.
+part II: Convex relaxation," Signal Processing, vol. 86, no. 3,
+pp. 589 – 602, 2006.
+[11] D. P. Wipf and B. D. Rao, "An empirical bayesian strategy for
+solving the simultaneous sparse approximation problem," IEEE
+Transactions on Signal Processing, vol. 55, no. 7, pp. 3704–3716,
+2007.
+[12] S. Ji, D. Dunson, and L. Carin, "Multitask compressive sensing,"
+IEEE Transactions on Signal Processing, vol. 57, no. 1, pp. 92–
+106, 2009.
+[13] Z. Zhang and B. D. Rao, "Sparse signal recovery with temporally
+correlated source vectors using sparse bayesian learning," IEEE
+Journal of Selected Topics in Signal Processing, vol. 5, no. 5,
+pp. 912–926, 2011.
+[14] R. Baraniuk, V. Cevher, M. Duarte, and C. Hegde, "Model-based
+compressive sensing," IEEE Transactions on Information Theory,
+vol. 56, no. 4, pp. 1982–2001, April 2010.
+[15] S. Ji, Y. Xue, and L. Carin, "Bayesian compressive sensing,"
+IEEE Transactions on Signal Processing, vol. 56, no. 6, pp.
+2346–2356, 2008.
+[16] D. Merhej, C. Diab, M. Khalil, and R. Prost, "Embedding prior
+knowledge within compressed sensing by neural networks," IEEE
+Transactions on Neural Networks, vol. 22, no. 10, pp. 1638 –
+1649, oct. 2011.
+[17] H. Palangi, R. Ward, and L. Deng, "Using deep stacking network
+to improve structured compressed sensing with multiple measure-
+ment vectors," in IEEE International Conference on Acoustics,
+Speech and Signal Processing (ICASSP), 2013.
+[18] A. Mousavi, A. B. Patel, and R. G. Baraniuk, "A deep
+learning
+approach
+to
+structured
+signal
+recovery,"
+2015,
+http://arxiv.org/abs/1508.04065.
+[19] N. Vaswani, "Ls-cs-residual (ls-cs): Compressive sensing on
+least squares residual," IEEE Transactions on Signal Processing,
+vol. 58, no. 8, pp. 4108–4120, 2010.
+[20] J. Fang, Y. Shen, and H. Li, "Pattern coupled sparse bayesian
+learning for recovery of time varying sparse signals," in 19th
+International Conference on Digital Signal Processing (DSP),
+2014, pp. 705–709.
+[21] D. Angelosante, G. Giannakis, and E. Grossi, "Compressed sens-
+ing of time-varying signals," in 16th International Conference on
+Digital Signal Processing, 2009, pp. 1–8.
+[22] M. E. Tipping, "Sparse bayesian learning and the relevance vector
+machine," J. Mach. Learn. Res., vol. 1, pp. 211–244, Sep. 2001.
+[23] A. C. Faul and M. E. Tipping, "Analysis of sparse bayesian
+learning," in Neural Information Processing Systems (NIPS) 14.
+MIT Press, 2001, pp. 383–389.
+[24] L. Deng, D. Yu, and J. Platt, "Scalable stacking and learning for
+building deep architectures," in Proc. ICASSP, march 2012, pp.
+2133 –2136.
+[25] G. E. Hinton, "Training products of experts by minimizing
+contrastive divergence," Neural Computation, vol. 14, no. 8, pp.
+1771–1800, Aug. 2002.
+[26] P. Vincent, H. Larochelle, Y. Bengio, and P.-A. Manzagol,
+"Extracting and composing robust features with denoising au-
+toencoders," ICML, pp. 1096–1103, 2008.
+[27] P. Vincent, "A connection between score matching and denoising
+autoencoders," Neural Comput., vol. 23, no. 7, pp. 1661–1674,
+Jul. 2011.
+[28] G. Hinton, L. Deng, D. Yu, G. E. Dahl, A. Mohamed, N. Jaitly,
+A. Senior, V. Vanhoucke, P. Nguyen, T. N. Sainath, and B. Kings-
+bury, "Deep neural networks for acoustic modeling in speech
+recognition: The shared views of four research groups," IEEE
+Signal Processing Magazine, vol. 29, no. 6, pp. 82–97, November
+2012.
+[29] G. Dahl, D. Yu, L. Deng, and A. Acero, "Context-dependent
+pre-trained deep neural networks for large-vocabulary speech
+recognition," IEEE Transactions on Audio, Speech, and Language
+Processing, vol. 20, no. 1, pp. 30 –42, jan. 2012.
+[30] J. L. Elman, "Finding structure in time," Cognitive Science,
+vol. 14, no. 2, pp. 179–211, 1990.
+[31] A. J. Robinson, "An application of recurrent nets to phone
+probability estimation," IEEE Transactions on Neural Networks,
+vol. 5, no. 2, pp. 298–305, August 1994.
+[32] L. Deng, K. Hassanein, and M. Elmasry, "Analysis of the corre-
+lation structure for a neural predictive model with application to
+speech recognition," Neural Networks, vol. 7, no. 2, pp. 331–339,
+1994.
+16
+[33] T. Mikolov, M. Karafi´at, L. Burget, J. Cernock`y, and S. Khudan-
+pur, "Recurrent neural network based language model." in Proc.
+INTERSPEECH, Makuhari, Japan, September 2010, pp. 1045–
+1048.
+[34] A. Graves, "Sequence transduction with recurrent neural net-
+works," in Representation Learning Workshp, ICML, 2012.
+[35] Y. Bengio, N. Boulanger-Lewandowski, and R. Pascanu, "Ad-
+vances in optimizing recurrent networks," in Proc. ICASSP,
+Vancouver, Canada, May 2013.
+[36] G. Mesnil, X. He, L. Deng, and Y. Bengio, "Investigation of
+recurrent-neural-network architectures and learning methods for
+spoken language understanding," in Proc. INTERSPEECH, Lyon,
+France, August 2013.
+[37] H. Palangi, L. Deng, and R. Ward, "Recurrent deep-stacking
+networks for sequence classification," in Signal and Information
+Processing (ChinaSIP), 2014 IEEE China Summit International
+Conference on, July 2014, pp. 510–514.
+[38] H. Palangi, L. Deng, and R. K. Ward, "Learning input
+and recurrent weight matrices in echo state networks," in
+NIPS Workshop on Deep Learning, December 2013. [Online].
+Available: http://research.microsoft.com/apps/pubs/default.aspx?
+id=204701
+[39] F. A. Gers, J. Schmidhuber, and F. Cummins, "Learning to forget:
+Continual prediction with lstm," Neural Computation, vol. 12, pp.
+2451–2471, 1999.
+[40] F. A. Gers, N. N. Schraudolph, and J. Schmidhuber, "Learning
+precise timing with lstm recurrent networks," J. Mach. Learn.
+Res., vol. 3, pp. 115–143, Mar. 2003.
+[41] Y. Nesterov, "A method of solving a convex programming
+problem with convergence rate o (1/k2)," Soviet Mathematics
+Doklady, vol. 27, pp. 372–376, 1983.
+[42] I. Sutskever, J. Martens, G. E. Dahl, and G. E. Hinton, "On the
+importance of initialization and momentum in deep learning," in
+ICML (3)'13, 2013, pp. 1139–1147.
+[43] Y. Lecun, L. Bottou, Y. Bengio, and P. Haffner, "Gradient-based
+learning applied to document recognition," Proceedings of the
+IEEE, vol. 86, no. 11, pp. 2278–2324, Nov 1998. [Online].
+Available: http://yann.lecun.com/exdb/mnist/
+[44] [Online]. Available: http://research.microsoft.com/en-us/projects/
+objectclassrecognition/
+[45] J. Fang, L. Zhang, and H. Li, "Two-dimensional pattern-coupled
+sparse bayesian learning via generalized approximate message
+passing," 2015. [Online]. Available: http://arxiv.org/abs/1505.
+06270
+Hamid Palangi (S'12) is a Ph.D. Candidate
+in the Electrical and Computer Engineer-
+ing Department at the University of British
+Columbia (UBC), Canada. Before joining
+UBC in Jan. 2012, he received his M.Sc.
+degree in 2010 from Sharif University of
+Technology, Iran and B.Sc. degree in 2007
+from Shahid Rajaee University, Iran, both in
+Electrical Engineering. Since Jan. 2012, he
+has been a member of Image and Signal
+Processing Lab at UBC. His main research
+interests are Machine Learning, Deep Learning and Neural Networks,
+Linear Inverse Problems and Compressive Sensing, with applications
+in Natural Language and Image data.
+Rabab Ward is a Professor Emeritus in the
+Electrical and Computer Engineering Depart-
+ment at the University of British Columbia
+(UBC), Canada.. Her research interests are
+mainly in the areas of signal, image and video
+processing. She has made contributions in the
+areas of signal detection, image encoding,
+image recognition, restoration and enhance-
+ment, and their applications to multimedia
+and medical imaging, face recognition , infant
+cry signals and brain computer interfaces.
+She has published around 500 refereed journal and conference papers
+and holds six patents related to cable television, picture monitoring,
+measurement and noise reduction. She is a Fellow of the Royal Society
+of Canada , the IEEE , the Canadian Academy of Engineers and the
+Engineering Institute of Canada. She has received many top awards
+such as the "Society Award of the IEEE Signal Processing Society, the
+Career Achievement Award of CUFA BC,The Paradigm Shifter Award
+from The Society for Canadian Women in Science and Technology
+and British Columbia's APEGBC top engineering award "The RA
+McLachlan Memorial Award" and UBC Killam Research Prize and
+Killam Senior Mentoring Award. She is presently the President of the
+IEEE Signal Processing Society. She was the General Chair of IEEE
+ICIP 2000 and Co-Chair of IEEE ICASSP 2013.
+Li Deng received a Ph.D. from the Uni-
+versity of Wisconsin-Madison. He was an
+assistant and then tenured full professor at
+the University of Waterloo, Ontario, Canada
+during 1989-1999. Immediately afterward he
+joined Microsoft Research, Redmond, USA
+as a Principal Researcher, where he currently
+directs the R & D of its Deep Learning
+Technology Center he founded in early 2014.
+Dr. Dengs current activities are centered on
+business-critical applications involving big
+data analytics, natural language text, semantic modeling, speech,
+image, and multimodal signals. Outside his main responsibilities,
+Dr. Dengs research interests lie in solving fundamental problems
+of machine learning, artificial and human intelligence, cognitive and
+neural computation with their biological connections, and multimodal
+signal/information processing. In addition to over 70 granted patents
+and over 300 scientific publications in leading journals and confer-
+ences, Dr. Deng has authored or co-authored 5 books including 2 latest
+books: Deep Learning: Methods and Applications (NOW Publishers,
+2014) and Automatic Speech Recognition: A Deep-Learning Approach
+(Springer, 2015), both with English and Chinese editions. Dr. Deng is a
+Fellow of the IEEE, the Acoustical Society of America, and the ISCA.
+He served on the Board of Governors of the IEEE Signal Processing
+Society. More recently, he was the Editor-In-Chief for the IEEE Signal
+Processing Magazine and for the IEEE/ACM Transactions on Audio,
+Speech, and Language Processing; he also served as a general chair of
+ICASSP and area chair of NIPS. Dr. Dengs technical work in industry-
+scale deep learning and AI has impacted various areas of information
+processing, especially Microsoft speech products and text- and big-
+data related products/services. His work helped initiate the resurgence
+of (deep) neural networks in the modern big-data, big-compute era,
+and has been recognized by several awards, including the 2013 IEEE
+SPS Best Paper Award and the 2015 IEEE SPS Technical Achievement
+Award for outstanding contributions to deep learning and to automatic
+speech recognition.

@@ -1,0 +1,8 @@
+["input", "../data/GAN/001_tokenizer_output.jsonl"]
+["output", "../data/GAN/002_rarewords_output.jsonl"]
+["dictfile", "../data/GAN/001_tokenizer_dict.jsonl"]
+["reduceddictfile", "../data/GAN/002_rarewords_reduceddict.jsonl"]
+["Dictionary size", 16136, " => ", 5581]
+"finished"
+["time", 5.698575973510742]
+["used RAM(bytes)=", 75276288]

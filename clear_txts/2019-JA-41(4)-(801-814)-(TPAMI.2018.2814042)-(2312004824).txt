@@ -1,0 +1,327 @@
+Beyond Sharing Weights for Deep Domain Adaptation
+Artem Rozantsev
+Mathieu Salzmann
+Pascal Fua
+Computer Vision Laboratory, ´Ecole Polytechnique F´ed´erale de Lausanne
+Lausanne, Switzerland
+{firstname.lastname}@epfl.ch
+Abstract
+The performance of a classifier trained on data coming from a specific domain typically degrades when applied to a related but different one. While annotating many samples from the new domain would address this issue, it is often too expensive or impractical. Domain Adaptation has therefore emerged as a solution to this problem; It leverages annotated data from a source domain, in which it is abundant, to train a classifier to operate in a target domain, in which it is either sparse or even lacking altogether. In this context, the recent trend consists of learning deep architectures whose weights are shared for both domains, which essentially amounts to learning domain invariant features.
+Here, we show that it is more effective to explicitly model the shift from one domain to the other. To this end, we introduce a two-stream architecture, where one operates in the source domain and the other in the target domain. In contrast to other approaches, the weights in corresponding layers are related but not shared. We demonstrate that this both yields higher accuracy than state-of-the-art methods on several object recognition and detection tasks and consistently outperforms networks with shared weights in both supervised and unsupervised settings.
+1. Introduction
+A classifier trained using samples from a specific domain usually needs to be re-trained to perform well in a related but different one. Since this may require much manual annotation to create enough training data, it is often impractical. With the advent of Deep Networks, this problem has become particularly acute due to their requirements for massive amounts of training data.
+Domain Adaptation and Transfer Learning have long been used to overcome this difficulty by making it possible to exploit what has been learned in one source domain, for which enough training data is available, to effectively train classifiers in a target domain, where only very small amounts of additional annotations, or even none, can
+Figure 1. Our two-stream architecture. One stream operates on the source data and the other on the target data. Their weights are not shared. Instead, we introduce loss functions that prevent corresponding weights from being too different from each other. be acquired. Recently, Domain Adaptation has been investigated in the context of Deep Learning with promising results. These methods, however, use the same deep architecture with the same weights for both source and target domains. In other words, they attempt to learn features that are invariant to the domain shift.
+In this paper, we show that imposing feature invariance is detrimental to discriminative power. To this end, we introduce the two-stream architecture depicted by Fig. 1. One stream operates on the source domain and the other on the target one. This makes it possible not to share the weights in some of the layers. Instead, we introduce a loss function that is lowest when they are linear transformations of each other.
+Furthermore, we introduce a criterion to automatically determine which layers should share their weights
+1 arXiv:1603.06432v2 [cs.CV] 17 Nov 2016 and which ones should not. In short, our approach explicitly models the domain shift by learning features adapted to each domain, but not fully independent, to account for the fact that both domains depict the same underlying problem.
+We demonstrate that our approach is more effective than state-of-the-art weight-sharing schemes on standard Domain Adaptation benchmarks for image recognition. We also show that it is well suited to leveraging synthetic data to increase the performance of a classifier on real images.
+Given that this is one of the easiest ways to provide the large amounts of training data that Deep Networks require, this scenario has become popular. Here, we treat the synthetic images as forming the source domain and the real images the target one. We then make use of our two-stream architecture to learn an effective model for the real data even though we have only few annotations for it. We demonstrate the effectiveness of our approach at leveraging synthetic data for both detection of Unmanned Aerial Vehicles(UAVs) and facial pose estimation. The first application involves classification and the second regression, and they both benefit from using synthetic data. We outperform the state-of-the-art methods in all these cases, and our experiments support our contention that specializing the network weights outperforms sharing them.
+2. Related Work
+In many practical applications, classifiers and regressors may have to operate on various kinds of related but visually different image data. The differences are often large enough for an algorithm that has been trained on one kind of images to perform poorly on another. Therefore, new training data has to be acquired and annotated to re-train it. Since this is typically expensive and time-consuming, there has long been a push to develop Domain Adaptation techniques that allow re-training with minimal amount of new data or even none. Here, we briefly review some recent trends, with a focus on Deep Learning based methods, which are the most related to our work.
+A natural approach to Domain Adaptation is to modify a classifier trained on the source data using the available labeled target data. This was done, for example, using SVM, Boosted Decision Trees and other classifiers.
+In the context of Deep Learning, finetuning essentially follows this pattern. In practice, however, when only a small amount of labeled target data is available, this often results in overfitting.
+Another approach is to learn a metric between the source and target data, which can also be interpreted as a linear cross-domain transformation or a non-linear one.
+Instead of working on the samples directly, several methods involve representing each domain as one separate subspace. A transformation can then be learned to align them. Alternatively, one can interpolate between the source and target subspaces. In, this interpolation idea was extended to Deep Learning by training multiple unsupervised networks with increasing amounts of target data. The final representation of a sample was obtained by concatenating all intermediate ones. It is unclear, however, why this concatenation should be meaningful to classify a target sample.
+Another way to handle the domain shift is to explicitly try making the source and target data distributions similar. While many metrics have been proposed to quantify the similarity between two distributions, the most widely used in the Domain Adaptation context is the Maximum
+Mean Discrepancy (MMD). The MMD has been used to re-weight or select source samples such that the resulting distribution becomes as similar as possible to the target one. An alternative is to learn a transformation of the data, typically both source and target, such that the resulting distributions are as similar as possible in MMD terms. In, the MMD was used within a shallow neural network architecture. However, this method relied on SURF features as initial image representation and thus only achieved limited accuracy.
+Recently, using Deep Networks to learn features has proven effective at increasing the accuracy of Domain
+Adaptation methods. In, it was shown that using DeCAF features instead of hand-crafted ones mitigates the domain shift effects even without performing any kind of adaptation. However, performing adaptation within a Deep
+Learning framework was shown to boost accuracy even further.
+For example, in, a Siamese architecture was introduced to minimize the distance between pairs of source and target samples, which requires training labels available in the target domain thus making the method unsuitable for unsupervised Domain
+Adaptation. The MMD has also been used to relate the source and target data representations learned by Deep Networks thus making it possible to avoid working on individual samples. introduced a loss term that encodes an additional classifier predicting from which domain each sample comes. This was motivated by the fact that, if the learned features are domain-invariant, such a classifier should exhibit very poor performance.
+All these Deep Learning approaches rely on the same architecture with the same weights for both the source and target domains. In essence, they attempt to reduce the impact of the domain shift by learning domain-invariant features.
+In practice, however, domain invariance might very well be detrimental to discriminative power. As discussed in the introduction, this is the hypothesis we set out to test in this work by introducing an approach that explicitly models the domain shift instead of attempting to enforce invariance to it. We show in the results section that this yields a significant accuracy boost over networks with shared weights.
+3. Our Approach
+The core idea of our method is that, for a Deep Network to adapt to different domains, the weights should be related, yet different for each of the two domains.
+As shown empirically, this constitutes a major advantage of our method over the competing ones discussed in Section 2. To implement this idea, we therefore introduce a two-stream architecture, such as the one depicted by Fig. 1. The first stream operates on the source data, the second on the target one, and they are trained jointly. While we allow the weights of the corresponding layers to differ between the two streams, we prevent them from being too far from each other. Additionally we use the MMD between the learned source and target representations. This combination lets us encode the fact that, while different, the two domains are related.
+More formally, let Xs = {xs i}N s i=1 and Xt = {xt i}N t i=1 be the sets of training images from the source and target domains, respectively, with Y s = {ys i } and Y t = {yt i} being the corresponding labels. To handle unsupervised target data as well, we assume, without loss of generality, that the target samples are ordered, such that only the first N t l ones have valid labels, where N t l = 0 in the unsupervised scenario. Furthermore, let θs j and θt j denote the parameters, that is, the weights and biases, of the jth layer of the source and target streams, respectively. We train the network by minimizing a loss function of the form
+L(θs, θt|Xs, Y s, Xt, Y t) = Ls + Lt + Lw + LMMD, Ls =
+N s
+Ns
+� i=1 c(θs|xs i, ys i ), Lt =
+N t l
+Nt l
+� i=1 c(θt|xt i, yt i), Lw = λw
+� j∈Ω rw(θs j, θt j), LMMD = λuru(θs, θt|Xs, Xt),, (5) where c(θ·|x· i, y· i) is a standard classification loss, such as the logistic loss or the hinge loss. rw(·) and ru(·) are the weight and unsupervised regularizers discussed below. The first one represents the loss between corresponding layers of the two streams. The second encodes the MMD measure and favors similar distributions of the source and target data representations.
+These regularizers are weighted by coefficients λw and λu, respectively. In practice, we found our approach to be robust to the specific values of these coefficients and we set them to 1 in all our experiments. Ω denotes the set of indices of the layers whose parameters are not shared. This set is problem-dependent and, in practice, can be obtained by comparing the MMD values for different configurations, as demonstrated in our experiments.
+3.1. Weight Regularizer
+While our goal is to go beyond sharing the layer weights, we still believe that corresponding weights in the two streams should be related. This models the fact that the source and target domains are related, and prevents overfitting in the target stream, when only very few labeled samples are available. Our weight regularizer rw(·) therefore represents the distance between the source and target weights in a particular layer. In principle, we could take it to directly act on the difference of those weights. This, however, would not truly attempt to model the domain shift, for instance to account for different means and ranges of values in the two types of data. To better model the shift and introduce more flexibility in our model, we therefore propose not to penalize linear transformations between the source and target weights. We then write our regularizer either by relying on the L2 norm as rw(θs j, θt j) =
+��ajθs j + bj − θt j
+��2
+2, (6) or in an exponential form as rw(θs j, θt j) = exp
+�
+∥ajθs j + bj − θt j∥2�
+− 1.
+In both cases, aj and bj are scalar parameters that are different for each layer j ∈ Ω and learned at training time along with all other network parameters. While simple, this parameterization can account, for example, for global illumination changes in the first layer of the network. As shown in the results section, we found empirically that the exponential version gives better results.
+We have tried replacing the simple linear transformation of Eqs. 6 and 7 by more sophisticated ones, such as quadratic or piecewise linear ones. This, however, did not yield any performance improvement.
+3.2. Unsupervised Regularizer
+In addition to regularizing the weights of corresponding layers in the two streams, we also aim at learning a final representation, that is, the features before the classifier layer, that is domain invariant. To this end, we introduce a regularizer ru(·) designed to minimize the distance between the distributions of the source and target representations. Following the popular trend in Domain Adaptation, we rely on the Maximum Mean Discrepancy (MMD) to encode this distance.
+As the name suggests, given two sets of data, the MMD measures the distance between the mean of the two sets after mapping each sample to a Reproducing Kernel Hilbert
+Space (RKHS). In our context, let f s i = f s i (θs, xs i) be the feature representation at the last layer of the source stream, and f t j = f t j(θt, xt j) of the target stream. The MMD2 between the source and target domains can be expressed as
+MMD2({f s i }, {f t j}) =
+������
+Ns
+� i=1 φ(f s i )
+N s
+−
+Nt
+� j=1 φ(f t j)
+N t
+������, (8) where φ(·) denotes the mapping to RKHS. In practice, this mapping is typically unknown. Expanding Eq. 8 and using the kernel trick to replace inner products by kernel values lets us rewrite the squared MMD, and thus our regularizer as ru(θs, θt|Xs, Xt) =
+� i,i′ k(f s i, f s i′)(N s)2
+− 2
+� i,j k(f s i, f t j)
+N sN t
+� j,j′ k(f t j, f t j′)(N t)2, (9) where the dependency on the network parameters comes via the f · is, and where k(·, ·) is a kernel function. In practice, we make use of the standard RBF kernel k(u, v) = exp (−∥u − v∥2/σ), with bandwidth σ. In all our experiments, we found our approach to be insensitive to the choice of σ and we therefore set it to 1.
+3.3. Training
+To learn the model parameters, we first pre-train the source stream using the source data only. We then simultaneously optimize the weights of both streams according to the loss of Eqs. 2-5 using both source and target data, with the target stream weights initialized from the pre-trained source weights. Note that this also requires initializing the linear transformation parameters of each layer, aj and bj for all j ∈ Ω. We initialize these values to aj = 1 and bj = 0, thus encoding the identity transformation.
+All parameters are then learned jointly using backpropagation with the AdaDelta algorithm. Note that we rely on mini-batches, and thus in practice compute all the terms of our loss over these mini-batches rather than over the entire source and target datasets.
+Depending on the task, we use different network architectures, to provide a fair comparison with the baselines. For example, for the Office benchmark, we adopt the AlexNet architecture, as was done in, and for digit classification we rely on the standard network structure of for each stream.
+4. Experimental Results
+In this section, we demonstrate the potential of our approach in both the supervised and unsupervised scenarios using different network architectures. We first thoroughly evaluate our method for the drone detection task.
+We then demonstrate that it generalizes well to other classification problems by testing it on the Office and MNIST+USPS datasets. Finally, to show that our approach also generalizes to regression problems, we apply it to estimating the position of facial landmarks.
+Synthetic
+Real positives negatives
+Test real data positives negatives
+Figure 2. Our UAV dataset. Top: Synthetic and real training examples. Bottom: Real samples from the test dataset.
+4.1. Leveraging Synthetic Data for Drone Detection
+Due to the lack of large publicly available datasets, UAV detection is a perfect example of a problem where training videos are scarce and do not cover a wide enough range of possible shapes, poses, lighting conditions, and backgrounds against which drones can be seen. However, it is relatively easy to generate large amounts of synthetic examples, which can be used to supplement a small number of real images and increase detection accuracy. We show here that our approach allows us to exploit these synthetic images more effectively than other state-of-the-art Domain
+Adaptation techniques.
+Dataset and Evaluation Setup
+We used the approach of to create a large set of synthetic examples. Fig. 2 depicts sample images from the real and synthetic dataset that we used for training and testing.
+In our experiments, we treat the synthetic images as source samples and the real images as target ones.
+We report results using two versions of this dataset, which we refer to as UAV-200 (small) and UAV-200 (full). Their sizes are given in Table 1. They only differ in the number of synthetic and negative samples used for training and testing. The ratio of positive to negative samples in the first dataset is better balanced than in the second one. For UAV200 (small), we therefore express our results in terms of accuracy, which is commonly used in Domain Adaptation and can be computed as
+Accuracy = # correctly classified examples
+# all examples
+Using this standard metric facilitates the comparison against the baseline methods whose publicly available implementations only output classification accuracy.
+In real detection tasks, however, training datasets are typically quite unbalanced, since one usually encounters many
+Dataset
+Training
+Testing
+Pos
+Neg
+Pos
+Neg(Real)(Synthetic)(Real)(Real)(Real)
+UAV-200 (full)
+UAV-200 (small)
+Table 1. Statistics of our two UAV datasets. Note that UAV-200(small) is more balanced than UAV-200 (full).
+Figure 3. Evaluation of the best network architecture.
+Top:
+The y-axis corresponds to the MMD2 loss between the outputs of the corresponding streams that operate on real and synthetic data, respectively. Bottom: Here the y-axis corresponds to the AP on validation data (500 positive and 1500 negative examples). Note that low values of MMD tend to coincide with high AP values.
+The x-axis denotes the network configuration, where a '+' sign indicates that the corresponding network layers are regularized with a loss function and a '−' sign that the weights are shared for the corresponding layers. (Best seen in color) negative windows for each positive example. UAV-200 (full) reflects this more realistic scenario, in which the accuracy metric is poorly-suited. For this dataset, we therefore compare various approaches in terms of precision-recall. Precision corresponds to the number of true positives detected by the algorithm divided by the total number of detections.
+Recall is the number of true positives divided by the number of test examples labeled as positive. Additionally, we report the Average Precision (AP), which is computed as
+� 1
+0 p(r)dr, where p and r denote precision and recall, respectively.
+For this experiment, we follow the supervised Domain
+Adaptation scenario. In other words, training data is available with labels for both source and target domains.
+Network Design
+Our network consists of two streams, one for the source data and one for the target data, as illustrated by Fig. 1.
+Each stream is a CNN that comprises three convolutional and max-pooling layers, followed by two fully-connected ones. The classification layer encodes a hinge loss, which was shown to outperform the logistic loss in practice for some tasks.
+As discussed above, some pairs of layers in our twostream architecture may share their weights while others do not, and we must decide upon an optimal arrangement. To this end, we trained one model for every possible combination. In every case, we implemented our regularizer using either the L2 loss of Eq. 6 or the exponential loss of Eq. 7.
+After training, we then computed the MMD2 value between the output of both streams for each configuration. We plot the results in Fig. 3 (top), with the + and − signs indicating whether the weights are stream-specific or shared. Since we use a common classification layer, the MMD2 value ought to be small when our architecture accounts well for the domain shift. It therefore makes sense to choose the configuration that yields the smallest MMD2 value. In this case, it happens when using the exponential loss to connect the first three layers and sharing the weights of the others. Our intuition is that, even though the synthetic and real images feature the same objects, they differ in appearance, which is mostly encoded by the first network layers. Thus, allowing the weights to differ in these layers yields good adaptative behavior, as will be demonstrated in Section 4.1.3.
+As a sanity check, we used validation data (500 positive and 1500 negative examples) to confirm that this MMDbased criterion reflects the best architecture choice.
+In
+Fig. 3 (bottom), we plot the real detection accuracy as a function of the chosen configuration. The best possible accuracies are 0.916 and 0.757 on the validation and test data, respectively, whereas the ones corresponding to our MMDbased choice are 0.902 and 0.732, which corresponds to the second best architecture. Note that the MMD of the best solution also is very low. Altogether, we believe that this evidences that our MMD-based criterion provides an effective alternative to select the right architecture in the absence of validation data.
+Evaluation
+We first compare our approach to other Domain Adaptation methods on UAV-200 (small). As can be seen in Table 2, it significantly outperforms many state-of-the-art baselines in terms of accuracy. In particular, we believe that outperforming DDC goes a long way towards validating our hypothesis that modeling the domain shift is more effective than trying to be invariant to it. This is because, as discussed in Section 2, DDC relies on minimizing the MMD loss between the learned source and target representations much as we do, but uses a single stream for both source and target data. In other words, except for the non-shared weights, it is Accuracy
+ITML 
+ARC-t assymetric 
+ARC-t symmetric 
+HFA 
+DDC 
+Ours
+Table 2. Comparison to other domain adaptation techniques on the UAV-200 (small) dataset. the method closest to ours. Note, however, that the original
+DDC paper used a slightly different network architecture than ours. To avoid any bias, we therefore modified this architecture so that it matches ours.
+We then turn to the complete dataset UAV-200 (full). In this case, the baselines whose implementations only output accuracy values become less relevant because it is not a good metric for unbalanced data.
+We therefore compare our approach against DDC, which we found to be our strongest competitor in the previous experiment, and against the Deep Learning approach of, which also tackles the drone detection problem. We also turn on and off some of our loss terms to quantify their influence on the final performance.
+We give the results in Table 3.
+In short, all loss terms contribute to improving the AP of our approach, which itself outperforms all the baselines by large margins. More specifically, we get a 10% boost over DDC and a 20% boost over using real data only. By contrast, simply using real and synthetic examples together, as was done in, does not yield significant improvements. Note that dropping the terms linking the weights in corresponding layers while still minimizing the MMD loss(Loss: Ls +Lt +LMMD) performs worse than using our full loss function. We attribute this to overfitting of the target stream.
+Influence of the Number of Samples
+Using synthetic data in the UAV detection scenario is motivated by the fact that it is hard and time consuming to collect large amounts of real data. We therefore evaluate the influence of the ratio of synthetic to real data. To this end, we first fix the number of synthetic samples to 32800, as in UAV-200 (full), and vary the amount of real positive samples from 200 to 5000. The results of this experiment are reported in Fig. 4(left), where we again compare our approach to DDC and to the same CNN model trained on the real samples only. Our model always outperforms the one trained on real data only. This suggests that it remains capable of leveraging the synthetic data, even though more real data is available, which is not the case for DDC.
+More importantly, looking at the leftmost point on our curve shows that, with only 200 real samples, our approach perAP(Average Precision)
+CNN (trained on Synthetic only (S))
+CNN (trained on Real only (R))
+CNN (pre-trained on S and fine-tuned on R):
+Loss: Lt
+Loss: Lt + Lw (with fixed source CNN)
+CNN (pre-trained on S and fine-tuned on R and S:)
+Loss: Ls + Lt 
+DDC (pre-trained on S and fine-tuned on R and S)
+Our approach (pre-trained on S and fine-tuned on R and S)
+Loss: Ls + Lt + Lw
+Loss: Ls + Lt + LMMD
+Loss: Ls + Lt + Lw + LMMD
+Table 3. Comparison of our method against several baselines on the UAV-200 (full) dataset. As discussed in Section 3, the terms
+Ls, Lt, Lw, and LMMD correspond to the elements of the loss function, defined in Eqs. 2, 3, 4, 5, respectively.
+Figure 4. Influence of the ratio of synthetic to real data. Left:
+AP of our approach (violet stars), DDC (blue triangles), and training using real data only (red circles) as a function of the number of real samples used given a constant number of synthetic ones.
+Right: AP of our approach (violet stars) and DDC (blue triangles) as a function of the number of synthetic examples used given a small and constant number of real one. (Best seen in color) forms similarly to, and even slightly better than, a singlestream model trained using 2500 real samples. In other words, one only needs to collect 5-10% of labeled training data to obtain good results with our approach, which, we believe, can have a significant impact in practical applications.
+Fig. 4(right) depicts the results of an experiment where we fixed the number of real samples to 200 and increased the number of synthetic ones from 0 to 32800. Note that the AP of our approach steadily increases as more synthetic data is used. DDC also improves, but we systematically outperform it except when we use no synthetic samples, in which case both approaches reduce to a single-stream CNN trained on real data only.
+4.2. Unsupervised Domain Adaptation on Office
+To demonstrate that our approach extends to the unsupervised case, we further evaluate it on the Office dataset, which is a standard domain adaptation benchmark for image classification. Following standard practice, we express
+Amazon
+Webcam
+DSLR
+Figure 5. Some examples from three domains in the Office dataset.(-,-,-,-,-,-,-,-)(-,+,-,-,-,-,-,-)(+,-,-,-,-,-,-,-)(-,-,-,-,-,-,+,+)(-,+,+,-,-,-,-,-)(+,+,-,-,-,-,-,-)(-,-,-,-,-,+,+,+)(+,+,+,-,-,-,-,-)(+,+,+,+,-,-,-,-)
+Layers, regularized by the loss function
+MMD loss conv 1 conv 2 conv 3 conv 4 conv 5 full 1 full 2 adapt(a)(b)
+Figure 6. Office dataset. (a) The network architecture that proved to be the best according to our MMD-based criterion.(b) The y-axis corresponds to the MMD2 loss between the outputs of the corresponding streams that operate on Amazon and Webcam, respectively. The x-axis describes the configuration, as in Fig. 3. our results in terms of accuracy, as defined in Eq. 10.
+The Office dataset comprises three different sets of images (Amazon, DSLR, Webcam) featuring 31 classes of objects.
+Fig. 5 depicts some images from the three different domains. For our experiments, we used the "fullytransductive" evaluation protocol proposed in, which means using all the available information on the source domain and having no labels at all for the target domain.
+In addition to the results obtained using our MMD regularizer of Eq. 5, and for a fair comparison with, which achieves state-of-the-art results on this dataset, we also report results obtained by replacing the MMD loss with one based on the domain confusion classifier advocated in.
+We used the same architecture as in for this classifier.
+Fig. 6(a) illustrates the network architecture we used for this experiment.
+Each stream corresponds to the standard AlexNet CNN. As in, we start with the model pre-trained on ImageNet and fine tune it. However, instead of forcing the weights of both streams to be shared, we allow them to deviate as discussed in Section 3. To identify which layers should share their weights and which ones should not, we used the MMD-based criterion introduced in Section 4.1.2. In Fig. 6(b), we plot the MMD2 value as a function of the configuration on the Amazon → Webcam scenario, as we did for the drones in Fig. 3. In this case, not sharing the last two fully-connected layers achieves the lowest MMD2 value, and this is the configuration we use for our experiments on this dataset.
+Accuracy
+A → W
+D → W
+W → D
+Average
+GFK 
+DLID 
+DDC 
+DAN 
+DRCN 
+GRL 
+Ours (+ DDC)
+Ours (+ GRL)
+Table 4. Comparison against other domain adaptation techniques on the Office benchmark. We evaluate on all 31 categories, following the "fully-transductive" evaluation protocol.
+In Table 4, we compare our approach against other
+Domain Adaptation techniques on the three commonlyreported source/target pairs. It outperforms them on all the pairs. More importantly, the comparison against GRL confirms that allowing the weights not to be shared increases accuracy.
+4.3. Domain Adaptation on MNIST-USPS
+The MNIST and USPS datasets for digit classification both feature 10 different classes of images corresponding to the 10 digits. They have recently been employed for the task of Domain Adaptation.
+For this experiment, we used the evaluation protocol of, which involves randomly selecting of 2000 images from MNIST and 1800 images from USPS and using them interchangeably as source and target domains. As in, we work in the unsupervised setting, and thus ignore the target domain labels at training time. Following, as the image patches in the USPS dataset are only 16 × 16 pixels, we rescaled the images from MNIST to the same size and applied L2 normalization of the pixel intensities.
+For this experiment, we relied on the standard CNN architecture of and employed our MMD-based criterion to determine which layers should not share their weights. We found that allowing all layers of the network not to share their weights yielded the best performance.
+In Table 5, we compare our approach with DDC and with methods that do not rely on deep networks. Our method yields superior performance in all cases, which we believe to be due to its ability to adapt the feature representation to each domain, while still keeping these representations close to each other.
+4.4. Supervised Facial Pose Estimation
+To demonstrate that our method can be used not only for classification or detection tasks but also for regression ones, we further evaluate it for pose estimation purposes. More specifically, the task we address consists of predicting the Accuracy method
+M→U
+U→M
+AVG.
+PCA
+SA 
+GFK 
+TCA 
+SSTCA 
+TSL 
+JCSL 
+DDC 
+Ours
+Table 5. Comparison against other domain adaptation techniques on the MNIST+USPS standard benchmark.
+Synthetic (source domain)
+Real (target domain)
+Figure 7. Samples images from Source and Target datasets with synthetic and real images respectively. location of 5 facial landmarks given 50×50 image patches, such as those of Fig. 7.
+To this end, we train a regressor to predict a 10D vector with two floating point coordinates for each landmark. As we did for drones, we use synthetic images, such as the ones shown in the top portion of Fig. 7, as our source domain and real ones, such as those shown at the bottom, as our target domain. Both datasets contain
+∼ 10k annotated images. We use all the synthetic samples but only 100 of the real ones for training, and the remainder for testing. For more detail on these two datasets, we refer the interested reader to the supplementary material where we also describe the architecture of the regressor we use.
+In Table 6, we compare our Domain Adaptation results to those of DDC in terms of percentage of correctly estimated landmarks (PCP-score). Each landmark is considered to be correctly estimated if it is found within a 2 pixel radius from the ground-truth.
+Note that, again, by not sharing the weights, our approach outperforms DDC.
+4.5. Discussion
+In all the experiments reported above, allowing the weights not to be shared in some fraction of the layers of our
+Synthetic
+DDC 
+Ours
+Right eye
+Left eye
+Nose
+Right mouth corner
+Left mouth corner
+Average
+Table 6. Regression results on facial pose estimation. two-stream architecture boosts performance. This validates our initial hypothesis that explicitly modeling the domain shift is generally beneficial.
+However, the optimal choice of which layers should or should not share their weights is application dependent. In the UAV case, allowing the weights in the first two layers to be different yields top performance, which we understand to mean that the domain shift is caused by low-level changes that are best handled in the early layers. By contrast, for the Office dataset, it is best to only allow the weights in the last two layers to differ. This network configuration was determined using Amazon and Webcam images, such as those shown in Fig. 5. Close examination of these images reveals that the differences between them are not simply due to lowlevel phenomena, such as illumination changes, but to more complex variations. It therefore seems reasonable that the higher layers of the network, which encode higher-level information, should be domain-specific.
+Fortunately, we have shown that the MMD provides us with an effective criterion to choose the right configuration.
+This makes our two-steam approach practical, even when no validation data is available.
+5. Conclusion
+In this paper, we have postulated that Deep Learning approaches to Domain Adaptation should not focus on learning features that are invariant to the domain shift, which makes them less discriminative. Instead, we should explicitly model the domain shift. To prove this, we have introduced a two-stream CNN architecture, where the weights of the streams may or may not be shared. To nonetheless encode the fact that both streams should be related, we encourage the non-shared weights to remain close to being linear transformations of each other by introducing an additional loss term.
+Our experiments on very diverse datasets have clearly validated our hypothesis. Our approach consistently yields higher accuracy than networks that share all weights for the source and target data, both for classification and regression. In the future, we intend to study if more complex weight transformations could help us further improve our results, with a particular focus on designing effective constraints for the parameters of these transformations.
+References
+ M. Baktashmotlagh, M. Harandi, B. Lovell, and M. Salzmann. Unsupervised Domain Adaptation by Domain Invariant Projection. In International Conference on Computer Vision, 2013. 2
+ H. Bay, A. Ess, T. Tuytelaars, and L. Van Gool.
+SURF:
+Speeded Up Robust Features. Computer Vision and Image
+Understanding, 10(3):346–359, 2008. 2
+ C. Becker, M. Christoudias, and P. Fua. Non-Linear Domain
+Adaptation with Boosting. In Advances in Neural Information Processing Systems, 2013. 2
+ A. Bergamo and L. Torresani. Exploiting Weakly-Labeled
+Web Images to Improve Object Classification: A Domain
+Adaptation Approach. In Advances in Neural Information
+Processing Systems, 2010. 2
+ K. Bousmalis, G. Trigeorgis, N. Silberman, D. Krishnan, and D. Erhan. Domain Separation Networks. arXiv Preprint, R. Caseiro, J. Henriques, P. Martins, and J. Batista.
+Beyond the Shortest Path : Unsupervised Domain Adaptation by Sampling Subspaces Along the Spline Flow. In Conference on Computer Vision and Pattern Recognition, 2015. 2
+ S. Chopra, S. Balakrishnan, and R. Gopalan. DLID: Deep
+Learning for Domain Adaptation by Interpolating Between
+Domains. In International Conference on Machine Learning, S. Chopra, R. Hadsell, and Y. LeCun. Learning a Similarity
+Metric Discriminatively, with Application to Face Verification. In Conference on Computer Vision and Pattern Recognition, 2005. 2
+ H. Daum´e and D. Marcu. Domain Adaptation for Statistical
+Classifiers. J. Artif. Int. Res., 26(1):101–126, 2006. 2
+ J. Donahue, Y. Jia, O. Vinyals, J. Hoffman, N. Zhang, E. Tzeng, and T. Darrell. DeCAF: A Deep Convolutional
+Activation Feature for Generic Visual Recognition. In International Conference on Machine Learning, 2014. 2
+ L. Duan, I. Tsang, D.Xu, and S. Maybank. Domain Transfer
+SVM for Video Concept Detection. In Conference on Computer Vision and Pattern Recognition, pages 1375–1381, B. Fernando, A. Habrard, M. Sebban, and T. Tuytelaars.
+Unsupervised Visual Domain Adaptation Using Subspace
+Alignment.
+In International Conference on Computer Vision, 2013. 2, 7, 8
+ B. Fernando, T. Tommasi, and T. Tuytelaars. Joint CrossDomain Classification and Subspace Learning for Unsupervised Adaptation.
+Pattern Recognition Letters, 65:60–66, Y. Ganin and V. Lempitsky. Unsupervised Domain Adaptation by Backpropagation. In International Conference on
+Machine Learning, 2015. 1, 2, 7
+ M. Ghifary, W. B. Kleijn, and M. Zhang. Domain Adaptive
+Neural Networks for Object Recognition. arXiv Preprint, M. Ghifary, W. B. Kleijn, M. Zhang, D. Balduzzi, and W. Li.
+Deep Reconstruction-Classification Networks for Unsupervised Domain Adaptation. arXiv Preprint, 2016. 2, 7
+ R. Girshick, J. Donahue, T. Darrell, and J. Malik. Rich Feature Hierarchies for Accurate Object Detection and Semantic
+Segmentation. arXiv Preprint, 2013. 1, 2
+ B. Gong, K. Grauman, and F. Sha. Connecting the Dots with
+Landmarks:
+Discriminatively Learning Domain-Invariant
+Features for Unsupervised Domain Adaptation. In International Conference on Machine Learning, 2013. 2
+ B. Gong, Y. Shi, F. Sha, and K. Grauman. Geodesic Flow
+Kernel for Unsupervised Domain Adaptation. In Conference on Computer Vision and Pattern Recognition, 2012. 2, 7, 8
+ R. Gopalan, R. Li, and R. Chellappa. Domain Adaptation for
+Object Recognition: An Unsupervised Approach. In International Conference on Computer Vision, 2011. 2
+ A. Gretton, K. Borgwardt, M. Rasch, B. Sch¨olkopf, and A. Smola. A Kernel Method for the Two-Sample Problem. arXiv Preprint, 2008. 2, 3
+ A. Gretton, A. Smola, J. Huang, M. Schmittfull, K. Borgwardt, and B. Sch¨olkopf. Covariate Shift by Kernel Mean
+Matching. Journal of the Royal Statistical Society, 3(4):5–
+ G. Hinton, S. Osindero, and Y. Teh. A Fast Learning Algorithm for Deep Belief Nets. Neural Computation, 18:1391–
+ J. Huang., A. Smola, A. Gretton., K. Borgwardt, and B. Scholkopf. Correcting Sample Selection Bias by Unlabeled Data. In Advances in Neural Information Processing
+Systems, 2006. 2
+ J. Hull. A Database for Handwritten Text Recognition Research. IEEE Transactions on Pattern Analysis and Machine
+Intelligence, 16:550–554, 1994. 7
+ M.
+Jaderberg, K.
+Simonyan, A.
+Zisserman, and K. Kavukcuoglu.
+Spatial Transformer Networks.
+In
+Advances in Neural Information Processing Systems, 2015.
+ J. Jiang. A Literature Survey on Domain Adaptation of Statistical Classifiers. Technical report, University of Illinois at
+Urbana-Champaign, 2008. 1
+ J. Jin, K. Fu, and C. Zhang.
+Traffic Sign Recognition with Hinge Loss Trained Convolutional Neural Networks.
+IEEE Transactions on Intelligent Transportation Systems, 15:1991–2000, 2014. 5
+ A. Krizhevsky, I. Sutskever, and G. Hinton. ImageNet Classification with Deep Convolutional Neural Networks. In Advances in Neural Information Processing Systems, 2012. 4, B. Kulis, K. Saenko, and T. Darrell. What You Saw is Not
+What You Get: Domain Adaptation Using Asymmetric Kernel Transforms. In Conference on Computer Vision and Pattern Recognition, 2011. 2, 6
+ Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner. GradientBased Learning Applied to Document Recognition. IEEE, Y. LeCun, L. Bottou, G. Orr, and K. M¨uller. Neural Networks:
+Tricks of the Trade, chapter Efficient Backprop.
+Springer, 1998. 1
+ W. Li, L. Duan, D. Xu, and I. W. Tsang. Learning with Augmented Features for Supervised and Semi-Supervised Heterogeneous Domain Adaptation. IEEE Transactions on Pattern Analysis and Machine Intelligence, pages 1134–1148, M. Long, Y. Cao, J. Wang, and M. I. Jordan. Learning Transferable Features with Deep Adaptation Networks. In International Conference on Machine Learning, 2015. 1, 2, 7
+ M. Long, J. Wang, G. Ding, J. Sun, and P. Yu. Transfer Feature Learning with Joint Distribution Adaptation. In International Conference on Computer Vision, pages 2200–2207, K. Muandet, D. Balduzzi, and B. Sch¨olkopf. Domain Generalization via Invariant Feature Representation. In International Conference on Machine Learning, 2013. 2
+ M. Oquab, L. Bottou, I. Laptev, and J. Sivic. Learning and Transferring Mid-Level Image Representations Using Convolutional Neural Networks.
+In Conference on Computer
+Vision and Pattern Recognition, 2014. 1, 2
+ S. Pan, I. Tsang, J. Kwok, and Q. Yang.
+Domain Adaptation via Transfer Component Analysis.
+In International
+Joint Conference on Artificial Intelligence, pages 1187–
+ S. Pan and Q. Yang. A Survey on Transfer Learning. IEEE trans. on knowledge and data engineering, 22, 2010. 1
+ A. Rozantsev, V. Lepetit, and P. Fua. On Rendering Synthetic
+Images for Training an Object Detector. Computer Vision and Image Understanding, 137:24–37, 2015. 4, 6
+ K. Saenko, B. Kulis, M. Fritz, and T. Darrell. Adapting Visual Category Models to New Domains. In European Conference on Computer Vision, pages 213–226, 2010. 2, 6, 7
+ S. Si, D. Tao, and B. Geng.
+Bregman Divergence-Based
+Regularization for Transfer Subspace Learning. IEEE Trans.
+Knowl. Data Eng., 22(7):929–942, 2010. 8
+ E. Tzeng, J. Hoffman, T. Darrell, and K. Saenko. Simultaneous Deep Transfer Across Domains and Tasks. In International Conference on Computer Vision, 2015. 1, 2
+ E. Tzeng, J. Hoffman, N. Zhang, K. Saenko, and T. Darrell.
+Deep Domain Confusion: Maximizing for Domain Invariance. arXiv Preprint, 2014. 1, 2, 3, 4, 5, 6, 7, 8
+ M. D. Zeiler.
+ADADELTA: an Adaptive Learning Rate
+Method. Computing Research Repository, 2012. 4

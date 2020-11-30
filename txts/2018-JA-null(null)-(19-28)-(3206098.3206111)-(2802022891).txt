@@ -1,0 +1,1457 @@
+RMDL: Random Multimodel Deep Learning for Classification
+Kamran Kowsari∗
+Department of System and
+Information Engineering,
+University of Virginia
+Charlottesville, VA, USA
+kk7nc@virginia.edu
+Mojtaba Heidarysafa
+Department of System and
+Information Engineering,
+University of Virginia
+Charlottesville, VA, USA
+mh4pk@virginia.edu
+Donald E. Brown†‡
+Department of System and
+Information Engineering,
+University of Virginia
+Charlottesville, VA, USA
+deb@virginia.edu
+Kiana Jafari Meimandi
+Department of System and
+Information Engineering,
+University of Virginia
+Charlottesville, VA, USA
+kj6vd@virginia.edu
+Laura E. Barnes∗†
+Department of System and
+Information Engineering,
+University of Virginia
+Charlottesville, VA, USA
+lb3dp@virginia.edu
+ABSTRACT
+The continually increasing number of complex datasets each year
+necessitates ever improving machine learning methods for robust
+and accurate categorization of these data. This paper introduces
+Random Multimodel Deep Learning (RMDL): a new ensemble, deep
+learning approach for classification. Deep learning models have
+achieved state-of-the-art results across many domains. RMDL solves
+the problem of finding the best deep learning structure and archi-
+tecture while simultaneously improving robustness and accuracy
+through ensembles of deep learning architectures. RDML can accept
+as input a variety data to include text, video, images, and symbolic.
+This paper describes RMDL and shows test results for image and
+text data including MNIST, CIFAR-10, WOS, Reuters, IMDB, and
+20newsgroup. These test results show that RDML produces con-
+sistently better performance than standard methods over a broad
+range of data types and classification problems.1
+CCS CONCEPTS
+• Information systems → Decision support systems, Data
+mining;
+KEYWORDS
+Data Mining, Text Classification, Image Classification, Deep Neural
+Networks, Deep Learning, Supervised Learning
+∗Sensing Systems for Health Lab, University of Virginia, Charlottesville, VA USA
+†Data Science Institute, University of Virginia Charlottesville, VA USA
+‡Predictive Technology Laboratory, University of Virginia, Charlottesville, VA USA
+1Code is shared as an open source tool at https://github.com/kk7nc/RMDL
+Permission to make digital or hard copies of all or part of this work for personal or
+classroom use is granted without fee provided that copies are not made or distributed
+for profit or commercial advantage and that copies bear this notice and the full citation
+on the first page. Copyrights for components of this work owned by others than the
+author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or
+republish, to post on servers or to redistribute to lists, requires prior specific permission
+and/or a fee. Request permissions from permissions@acm.org.
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+© 2018 Copyright held by the owner/author(s). Publication rights licensed to the
+Association for Computing Machinery.
+ACM ISBN 978-1-4503-6354-9/18/04...$15.00
+https://doi.org/10.1145/3206098.3206111
+ACM Reference Format:
+Kamran Kowsari, Mojtaba Heidarysafa, Donald E. Brown, Kiana Jafari
+Meimandi, and Laura E. Barnes. 2018. RMDL: Random Multimodel Deep
+Learning for Classification. In ICISDM '18: 2018 2nd International Conference
+on Information System and Data Mining ICISDM '18, April 9–11, 2018, Lake-
+land, FL, USA. ACM, New York, NY, USA, 10 pages. https://doi.org/10.1145/
+3206098.3206111
+1
+INTRODUCTION
+Categorization and classification with complex data such as images,
+documents, and video are central challenges in the data science
+community. Recently, there has been an increasing body of work
+using deep learning structures and architectures for such problems.
+However, the majority of these deep architectures are designed
+for a specific type of data or domain. There is a need to develop
+more general information processing methods for classification and
+categorization across a broad range of data types.
+While many researchers have successfully used deep learning
+for classification problems (e.g., see [9, 23, 28, 30, 51]), the central
+problem remains as to which deep learning architecture (DNN,
+CNN, or RNN) and structure (how many nodes (units) and hidden
+layers) is more efficient for different types of data and applications.
+The favored approach to this problem is trial and error for the
+specific application and dataset.
+This paper describes an approach to this challenge using ensem-
+bles of deep learning architectures. This approach, called Random
+Multimodel Deep Learning (RMDL), uses three different deep learn-
+ing architectures: Deep Neural Networks (DNN), Convolutional
+Neural Netwroks (CNN), and Recurrent Neural Networks (RNN).
+Test results with a variety of data types demonstrate that this new
+approach is highly accurate, robust and efficient.
+The three basic deep learning architectures use different feature
+space methods as input layers. For instance, for feature extrac-
+tion from text, DNN uses term frequency-inverse document fre-
+quency (TF-IDF) [43]. RDML searches across randomly generated
+hyperparameters for the number of hidden layers and nodes (desity)
+in each hidden layer in the DNN. CNN has been well designed for
+image classification. RMDL finds choices for hyperparameters in
+arXiv:1805.01890v2  [cs.LG]  31 May 2018
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+K. Kowsari et al.
+CNN using random feature maps and random numbers of hidden
+layers. CNN can be used for more than image data. The structures
+for CNN used by RMDL are 1D convolutional layer for text, 2D
+for images and 3D for video processings. RNN architectures are
+used primarily for text classification. RMDL uses two specific RNN
+structures: Gated Recurrent Units (GRUs) and Long Short-Term
+Memory (LSTM). The number of GRU or LSTM units and hidden
+layers used by the RDML are also the results of search over ran-
+domly generated hyperparameters.
+The main contributions of this work are as follows: I) Description
+of an ensemble approach to deep learning which makes the final
+model more robust and accurate. II) Use of different optimization
+techniques in training the models to stabilize the classification
+task. III) Different feature extraction approaches for each Random
+Deep Leaning (RDL) model in order to better understand the feature
+space (specially for text and video data). IV) Use of dropout in each
+individual RDL to address over-fitting. V) Use of majority voting
+among the n RDL models. This majority vote from the ensemble
+of RDL models improves the accuracy and robustness of results.
+Specifically, if k number of RDL models produce inaccuracies or
+overfit classifications and n > k, the overall system is robust and
+accurate VI) Finally, the RMDL has ability to process a variety of
+data types such as text, images and videos.
+The rest of this paper is organized as follows: Section 2 gives
+related work for feature extraction, other classification techniques,
+and deep learning for classification task; Section 3 describes current
+techniques for classification tasks which are used as our baseline;
+Section 4 describes Random Multimodel Deep Learning methods
+and the architecture for RMDL including Section 4.1 shows feature
+extraction in RMDL, Section 4.2 talks about overall view of RMDL;
+Section 4.3 addresses the deep learning structure used in this model,
+Section 4.4 discusses optimization problem; Section 5.1 talks about
+evaluation of these techniques; Section 5 shows the experimental
+results which includes the accuracy and performance of RMDL;
+and finally, Section 6 presents discussion and conclusions of our
+work.
+2
+RELATED WORK
+Researchers from a variety of disciplines have produced work
+relevant to the approach described in this paper. We have orga-
+nized this work into three areas: I) Feature extraction; II) Classifica-
+tion methods and techniques (baseline and other related methods);
+and III) Deep learning for classification.
+Feature Extraction: Feature extraction is a significant part of
+machine learning especially for text, image, and video data. Text
+and many biomedical datasets are mostly unstructured data from
+which we need to generate a meaningful and structures for use by
+machine learning algorithms. As an early example, L. Krueger et. al.
+in 1979 [26] introduced an effective method for feature extraction
+for text categorization. This feature extraction method is based on
+word counting to create a structure for statistical learning. Even ear-
+lier work by H. Luhn [34] introduced weighted values for each word
+and then G. Salton et. al. in 1988 [44] modified the weights of words
+by frequency counts called term frequency-inverse document fre-
+quency (TF-IDF). The TF-IDF vectors measure the number of times
+a word appears in the document weighted by the inverse frequency
+of the commonality of the word across documents. Although, the
+TF-IDF and word counting are simple and intuitive feature extrac-
+tion methods, they do not capture relationships between words as
+sequences. Recently, T. Mikolov et. al. [36] introduced an improved
+technique for feature extraction from text using the concept of
+embedding or placing the word into a vector space based on con-
+text. This approach to word embedding, called Word2Vec, solves the
+problem of representing contextual word relationships in a com-
+putable feature space. Building on these ideas, J. Pennington et. al.
+in 2014 [41] developed a learning vector space representation of the
+words called Glove and deployed it in Stanford NLP lab. The RMDL
+approach described in this paper uses Glove for feature extraction
+from textual data.
+Classification Methods and Techniques: Over the last 50
+years, many supervised learning classification techniques have
+been developed and implemented in software to accurately label
+data. For example, the researchers, K. Murphy in 2006 [38] and I.
+Rish in 2001 [42] introduced the Naïve Bayes Classifier (NBC) as a
+simple approach to the more general respresentation of the super-
+vised learning classification problem. This approach has provided
+a useful technique for text classification and information retrieval
+applications. As with most supervised learning classification tech-
+niques, NBC takes an input vector of numeric or categorical data
+values and produce the probability for each possible output labels.
+This approach is fast and efficient for text classification, but NBC
+has important limitations. Namely, the order of the sequences in
+text is not reflected on the output probability because for text analy-
+sis, naïve bayes uses a bag of words approach for feature extraction.
+Because of its popularity, this paper uses NBC as one of the baseline
+methods for comparison with RMDL. Another popular classification
+technique is Support Vector Machines (SVM), which has proven
+quite accurate over a wide variety of data. This technique con-
+structs a set of hyper-planes in a transformed feature space. This
+transformation is not performed explicitly but rather through the
+kernal trick which allows the SVM classifier to perform well with
+highly nonlinear relationships between the predictor and response
+variables in the data. A variety of approaches have been developed
+to further extend the basic methodology and obtain greater accu-
+racy. C. Yu et. al. in 2009 [54] introduced latent variables into the
+discriminative model as a new structure for SVM, and S. Tong et. al.
+in 2001 [50] added active learning using SVM for text classification.
+For a large volume of data and datasets with a huge number of
+features (such as text), SVM implementations are computationally
+complex. Another technique that helps mediate the computational
+complexity of the SVM for classification tasks is stochastic gradient
+descent classifier (SGDClassifier) [18] which has been widely used
+in both text and image classification. SGDClassifier is an iterative
+model for large datasets. The model is trained based on the SGD
+optimizer iteratively.
+Deep Learning: Neural networks derive their architecture as
+a relatively simply representation of the neurons in the human's
+brain. They are essentially weighte combinations of inputs the
+pass through multiple non-linear functions. Neural networks use
+an iterative learning method known as back-propagation and an
+optimizer (such as stochastic gradient descent (SGD)).
+Deep Neural Networks (DNN) are based on simple neural net-
+works architectures but they contain multiple hidden layers. These
+networks have been widely used for classification. For example, D.
+RMDL: Random Multimodel Deep Learning for Classification
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+CireşAn et. al. in 2012 [10] used multi-column deep neural networks
+for classification tasks, where multi-column deep neural networks
+use DNN architectures. Convolutional Neural Networks (CNN)
+provide a different architectural approach to learning with neural
+networks. The main idea of CNN is to use feed-forward networks
+with convolutional layers that include local and global pooling lay-
+ers. A. Krizhevsky in 2012 [25] used CNN, but they have used 2D
+convolutional layers combined with the 2D feature space of the
+image. Another example of CNN in [28] showed excellent accu-
+racy for image classification. This architecture can also be used
+for text classification as shown in the work of [21]. For text and
+sequences, 1D convolutional layers are used with word embeddings
+as the input feature space. The final type of deep learning architec-
+ture is Recurrent Neural Networks (RNN) where outputs from the
+neurons are fed back into the network as inputs for the next step.
+Some recent extensions to this architecture uses Gated Recurrent
+Units (GRUs) [9] or Long Short-Term Memory (LSTM) units [15].
+These new units help control for instability problems in the original
+network architecure. RNN have been successfully used for natural
+language processing [37]. Recently, Z. Yang et. al. in 2016 [53] devel-
+oped hierarchical attention networks for document classification.
+These networks have two important characteristics: hierarchical
+structure and an attention mechanism at word and sentence level.
+New work has combined these three basic models of the deep
+learning structure and developed a novel technique for enhancing
+accuracy and robustness. The work of M. Turan et. al. in 2017 [51]
+and M. Liang et. al.in 2015 [33] implemented innovative combina-
+tions of CNN and RNN called A Recurrent Convolutional Neural
+Network (RCNN). K. Kowsari et. al. in 2017 [23] introduced hier-
+archical deep learning for text classification (HDLTex) which is
+a combination of all deep learning techniques in a hierarchical
+structure for document classification has improved accuracy over
+traditional methods. The work in this paper builds on these ideas,
+spcifically the work of [23] to provide a more general approach to
+supervised learning for classification.
+3
+BASELINE
+In this paper, we use both contemporary and traditional techniques
+of document and image classification as our baselines. The baselines
+of image and text classification are different due to feature extrac-
+tion and structure of model; thus, text and image classification's
+baselines are described separately in the following section.
+3.1
+Text Classification Baselines
+Text classification techniques which are used as our baselines
+to evaluate our model are as follows: regular deep models such
+as Recurrent Neural Networks (RNN), Convolutional Neural Net-
+works (CNN), and Deep Neural Networks (DNN). Also, we have
+used two different techniques of Support Vector Machine (SVM),
+naïve bayes classification (NBC), and finally Hierarchical Deep
+Learning for Text Classification (HDLTex) [23].
+3.1.1
+Deep Learning. The baseline, we used in this paper is Deep
+Learning without hierarchical levels. An example of hierarchical
+levels' structure is [53] that has been used as one of our baselines
+for text classification. In our methods' Section 4, we will explain
+the basic models of deep learning such as DNN, CNN, and RNN
+which are used as part of RMDL model.
+3.1.2
+Support Vector Machine (SVM). The original version of
+SVM was introduced by Vapnik, VN and Chervonenkis, A Ya [6] in
+1963. The early 1990s, nonlinear version was addressed in [3].
+Multi-class SVM. The original version of SVM is used for binary
+classification, so for multi class we need to generate Multimodel or
+MSVM. One-Vs-One is a technique for multi-class SVM and needs
+to build N(N-1) classifiers.
+The natural way to solve k-class problem is to construct a de-
+cision function of all k classes at once [5, 52]. Another technique
+of multi-class classification using SVM is All-against-One. In SVM,
+many different methods are available for feature extraction such
+as word sequences feature extracting [55], and Term frequency-
+inverse document frequency (TF-IDF).
+String Kernel. The basic idea of String Kernel (SK) is using Φ(.)
+for mapping string in the feature space; therefore, the only different
+between the three techniques are the way they map the string into
+feature space. For many applications such as text, DNA, and protein
+classification, Spectrum Kernel (SP) is addressed [13, 32]. The basic
+idea of SP is counting number of time a word appears in string xi
+as feature map where defining feature maps from x → Rlk
+Mismatch Kernel is the other stable way to map the string into
+feature space. The key idea is using k which stands for k − mer or
+size of the word and allow to havem mismatch in feature space [31].
+The main problem of SVM for string sequences is time complexity
+of these models. S. Ritambhara et. al. in 2017 [47] addressed the
+problem of time for gap k-mers kernel called GaKCo which is used
+only for protein and DNA sequences.
+3.1.3
+Stacking Support Vector Machine (SVM). Stacking SVMs
+is used as another baseline method for comparison with RMDL, but
+this technique is used only for hierarchical labeled datasets. The
+stacking SVM provides an ensemble of individual SVM classifiers
+and generally produces more accurate results than single-SVM
+models [46, 48].
+3.1.4
+Naïve Bayes Classification (NBC). This technique has been
+used in industry and academia for a long time, and it is the most
+traditional method of text categorization which is widely used in
+Information Retrieval [35]. If the number of n documents, fit into k
+categories, the predicted class as output is c ∈ C. Naïve bayes is a
+simple algorithm using naïve bayes rule described as follows:
+P(c | d) = P(d | c)P(c)
+P(d)
+(1)
+where d is document, c indicates classes.
+CMAP = arд max
+c ∈C P(d | c)P(c)
+= arд max
+c ∈C P(x1,x2, ...,xn | c)p(c)
+(2)
+The baseline of this paper is word level of NBC [20] as follows:
+P(cj | di; ˆθ) = P(cj | ˆθ)P(di | cj; ˆθj)
+P(di | ˆθ)
+(3)
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+K. Kowsari et al.
+3.1.5
+Hierarchical Deep Learning for Text Classification (HDL-
+Tex). This technique is used as one of our baselines for hierarchical
+labeled datasets. When documents are organized hierarchically,
+multi-class approaches are difficult to apply using traditional su-
+pervised learning methods. The HDLTex [23] introduced a new
+approach to hierarchical document classification that combines
+multiple deep learning approaches to produce hierarchical classifi-
+cation. The primary contribution of HDLTex research is hierarchical
+classification of documents. A traditional multi-class classification
+technique can work well for a limited number of classes, but per-
+formance drops with increasing number of classes, as is present in
+hierarchically organized documents. HDLTex solved this problem
+by creating architectures that specialize deep learning approaches
+for their level of the document hierarchy.
+3.2
+Image Classification Baselines
+For image classification, we have five baselines as follows: Deep
+L2-SVM [49], Maxout Network [14], BinaryConnect [11], PCANet-
+1 [4], and gcForest [56].
+Deep L2-SVM: This technique is known as deep learning using linear
+support vector machines which simply softmax is replaced with
+linear SVMs [49].
+Maxout Network: I. Goodfellow et. al. in 2013 [14] defined a simple
+novel model called maxout (named because its outputs' layer is a
+set of max of inputs' layer, and it is a natural companion to dropout).
+Their design both facilitates optimization by using dropout, and
+also improves the accuracy of dropout's model.
+BinaryConnect: M. Courbariaux et. al. in 2015 [11] worked on train-
+ing Deep Neural Networks (DNN) with binary weights during prop-
+agations. They have introduced a binarization scheme for binary
+weights during forward and backward propagations (BinaryConnect)
+which is mainly used for image classification. BinaryConnect is
+used as our baseline for RMDL on image classification.
+PCANet: I. Chan et. al. in 2015 [4] is simple way of deep learning
+for image classification which uses CNN structure. Their technique
+is one of the basic and efficient methods of deep learning. The CNN
+structure they've used, is part of RMDL with significant differences
+that they use: I) cascaded principal component analysis (PCA); II)
+binary hashing; and III) blockwise histograms, and also number of
+hidden layers and nodes in RMDL is selected automatically.
+gcForest (Deep Forest): Z. Zhou et. al. in 2017 [56] introduced a
+decision tree ensemble approach with high performance as an al-
+ternative to deep neural networks. Deep forest creates multi level
+of forests as decision trees.
+4
+METHOD
+The novelty of this work is in using multi random deep learning
+models including DNN, RNN, and CNN techniques for text and
+image classification. The method section of this paper is organized
+as follows: first we describe RMDL and we discuss three techniques
+of deep learning architectures (DNN, RNN, and CNN) which are
+trained in parallel. Next, we talk about multi optimizer techniques
+that are used in different random models.
+4.1
+Feature Extraction and Data Pre-processing
+The feature extraction is divided into two main parts for RMDL (Text
+and image). Text and sequential datasets are unstructured data,
+while the feature space is structured for image datasets.
+4.1.1
+Image and 3D Object Feature Extraction. Image features
+are the followings: h × w × c where h denotes the height of the
+image, w represents the width of image, and c is the color that has 3
+dimensions (RGB). For gray scale datasets such as MNIST dataset,
+the feature space is h × w. A 3D object in space contains n cloud
+points in space and each cloud point has 6 features which are (x, y, z,
+R, G, and B). The 3D object is unstructured due to number of cloud
+points since one object could be different with others. However,
+we could use simple instance down/up sampling to generate the
+structured datasets.
+4.1.2
+Text and Sequences Feature Extraction. In this paper we
+use several techniques of text feature extraction which are word
+embedding (GloVe and Word2vec) and also TF-IDF. In this paper,
+we use word vectorization techniques [16] for extracting features;
+Besides, we also can use N-gram representation as features for
+neural deep learning [12, 19]. For example, feature extraction in
+this model for the string "In this paper we introduced this technique"
+would be composed of the following:
+• Feature count(1) { (In 1) , (this 2), (paper 1), (we 1), (introduced
+1), (technique 1) }
+• Feature count(2) { (In 1) , (this 2), (paper 1), (we 1), (introduced
+1), (technique 1), (In this 1), (This Paper 1), ( paper we 1), (
+we introduced 1), (introduced this 1), ( this technique 1) }
+Documents enter our models via features extracted from the text.
+We employed different feature extraction approaches for the deep
+learning architectures we built. For CNN and RNN, we used the
+text vector-space models using 200 dimensions as described in
+GloVe [41]. A vector-space model is a mathematical mapping of the
+word space, defined as follows:
+dj = (w1,j,w2,j, ...,wi,j...,wlj,j)
+(4)
+where lj is the length of the document j, and wi,j is the GloVe word
+embedding vectorization of word i in document j.
+4.2
+Random Multimodel Deep Learning
+Random Multimodel Deep Learning is a novel technique that we
+can use in any kind of dataset for classification. An overview of this
+technique is shown in Figure 2 which contains multi Deep Neural
+Networks (DNN), Deep Convolutional Neural Networks (CNN),
+and Deep Recurrent Neural Networks (RNN). The number of layers
+and nodes for all of these Deep learning multi models are gener-
+ated randomly (e.g. 9 Random Models in RMDL constructed of 3
+CNNs, 3 RNNs, and 3 DNNs, all of them are unique due to randomly
+creation).
+M(yi1,yi2, ...,yin) =
+� 1
+2 +
+(�n
+j=1 yij) − 1
+2
+n
+�
+(5)
+Where n is the number of random models, and yij is the output
+prediction of model for data point i in model j (Equation 5 is used
+for binary classification, k ∈ {0 or 1}). Output space uses majority
+RMDL: Random Multimodel Deep Learning for Classification
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+RDL 1
+RDL 2
+RDL 3
+RDL n
+C=1
+C=2
+C=k
+C=1
+C=2
+C=k
+C=1
+C=2
+C=k
+C=1
+C=2
+C=k
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+𝑥0 
+𝑥1 
+𝑥𝑓−1 𝑥𝑓 
+1
+2
+3
+k
+1
+2
+3
+k
+1 2 3
+k
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+Voting for 𝑋1  
+Voting for 𝑋2  
+Voting for 𝑋𝑚  
+Input
+RMDL
+Majority Voting 
+Based on n RDLs
+. . . 
+Figure 1: Overview of RDML: Random Multimodel Deep Learning for classification that includes n Random models which are
+d random model of DNN classifiers, c models of CNN classifiers, and r RNN classifiers where r + c + d = n.
+vote for final ˆyi. Therefore, ˆyi is given as follows:
+ˆyi =
+� ˆyi1 . . . ˆyij . . . ˆyin
+�T
+(6)
+Where n is number of random model, and ˆyij shows the predic-
+tion of label of document or data point of Di ∈ {xi,yi } for model j
+and ˆyi,j is defined as follows:
+ˆyi,j = arд max
+k [sof tmax(y∗
+i,j)]
+(7)
+After all RDL models (RMDL) are trained, the final prediction is
+calculated using majority vote of these models.
+4.3
+Deep Learning in RMDL
+The RMDL model structure (section 4.2) includes three basic archi-
+tectures of deep learning in parallel. We describe each individual
+model separately. The final model contains d random DNNs (Sec-
+tion 4.3.1),r RNNs (Section 4.3.2), andc CNNs models (Section 4.3.3).
+4.3.1
+Deep Neural Networks. Deep Neural Networks' structure
+is designed to learn by multi connection of layers that each layer
+only receives connection from previous and provides connections
+only to the next layer in hidden part. The input is a connection of
+feature space with first hidden layer for all random models. The
+output layer is number of classes for multi-class classification and
+only one output for binary classification. But our main contribution
+of this paper is that we have many training DNN for different
+purposes. In our techniques, we have multi-classes DNNs where
+each learning models is generated randomly (number of nodes
+in each layer and also number of layers are completely random
+assigned). Our implementation of Deep Neural Networks (DNN) is
+discriminative trained model that uses standard back-propagation
+algorithm using sigmoid (equation 8), ReLU [39] (equation 9) as
+activation function. The output layer for multi-class classification,
+should use Sof tmax equation 10.
+f (x) =
+1
+1 + e−x ∈ (0, 1)
+(8)
+f (x) = max(0,x)
+(9)
+σ(z)j =
+ezj
+�K
+k=1 ezk
+(10)
+∀ j ∈{1, . . . ,K}
+Given a set of example pairs (x,y),x ∈ X,y ∈ Y, the goal is to
+learn from these input and target space using hidden layers. In text
+classification, the input is string which is generated by vectorization
+of text. In Figure 2 the left model shows how DNN contribute in
+RMDL.
+4.3.2
+Recurrent Neural Networks (RNN). Another neural net-
+work architecture that contributes in RMDL is Recurrent Neural
+Networks (RNN). RNN assigns more weights to the previous data
+points of sequence. Therefore, this technique is a powerful method
+for text, string and sequential data classification but also could be
+used for image classification as we did in this work. In RNN the
+neural net considers the information of previous nodes in a very
+sophisticated method which allows for better semantic analysis of
+structures of dataset. General formulation of this concept is given
+in Equation 11 where xt is the state at time t and ut refers to the
+input at step t.
+xt = F(xt−1,ut ,θ)
+(11)
+More specifically, we can use weights to formulate the Equa-
+tion 11 with specified parameters in Equation 12
+xt = Wrecσ(xt−1) + Winut + b
+(12)
+Where Wrec refers to recurrent matrix weight, Win refers to input
+weights, b is the bias and σ denotes an element-wise function.
+Again, we have modified the basic architecture for use RMDL.
+Figure 2 left side shows this extended RNN architecture. Several
+problems arise from RNN when the error of the gradient descent
+algorithm is back propagated through the network: vanishing gra-
+dient and exploding gradient [2].
+Long Short-Term Memory (LSTM): To deal with these problems
+Long Short-Term Memory (LSTM) is a special type of RNN that
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+K. Kowsari et al.
+...
+...
+...
+...
+...
+...
+...
+...
+...
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+. . . 
+𝑥0 
+𝑥1 
+𝑥𝑖 
+𝑥𝑓−1 𝑥𝑓 
+𝑦0 
+𝑦1 
+𝑦𝑖 
+𝑦𝑚−1 𝑦𝑚 
+. . . 
+. . . 
+𝑦0 
+𝑦1 
+𝑦𝑚−1 𝑦𝑚 
+. . . 
+𝑥0 
+𝑥1 
+𝑥𝑓−1 𝑥𝑓 
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+LSTM
+GRU
+...
+...
+...
+. . . 
+. . . 
+. . . 
+𝑦0 
+𝑦1 
+𝑦𝑚−1 𝑦𝑚 
+. . . 
+𝑥0 
+𝑥1 
+𝑥𝑓 
+. . . 
+𝑦0 
+𝑦1 
+𝑦𝑚−1 𝑦𝑚 
+. . . 
+𝑥0 
+𝑥1 
+𝑥𝑓−1 𝑥𝑓 
+. . . 
+Input Layer
+Hidden Layer
+Output Layer
+n×k representation of 
+sentence or image
+Convolutional layer 
+with multi filter
+Max-over-time
+pooling
+Hidden Layer of LSTM or GRU
+Figure 2: Random Multimodel Deep Learning (RDML) architecture for classification which includes 3 Random models, a DNN
+classifier at left, a Deep CNN classifier at middle, and a Deep RNN classifier at right (each unit could be LSTM or GRU).
+preserve long term dependency in a more effective way in com-
+parison to the basic RNN. This is particularly useful to overcome
+vanishing gradient problem [40]. Although LSTM has a chain-like
+structure similar to RNN, LSTM uses multiple gates to carefully
+regulate the amount of information that will be allowed into each
+node state. Figure 3 shows the basic cell of a LSTM model. A step
+by step explanation of a LSTM cell is as following:
+it =σ(Wi[xt,ht−1] + bi),
+(13)
+˜Ct = tanh(Wc[xt,ht−1] + bc),
+(14)
+ft =σ(Wf [xt,ht−1] + bf ),
+(15)
+Ct =it ∗ ˜Ct + ftCt−1,
+(16)
+ot =σ(Wo[xt,ht−1] + bo),
+(17)
+ht =ot tanh(Ct ),
+(18)
+Where equation 13 is input gate, Equation 14 shows candid memory
+cell value, Equation 15 is forget gate activation, Equation 16 is new
+memory cell value, and Equation 17 and 18 show output gate value.
+In the above description all b represents bias vectors and all W rep-
+resent weight matrices and xt is used as input to the memory cell
+at time t. Also, i,c, f ,o indices refer to input, cell memory, forget
+and output gates respectively. Figure 3 shows the structure of these
+gates with a graphical representation.
+An RNN can be biased when later words are more influential than
+the earlier ones. To overcome this bias Convolutional Neural Net-
+work (CNN) models (discussed in Subsection 4.3.3 were introduced
+which deploys a max-pooling layer to determine discriminative
+phrases in a text [27].
+Gated Recurrent Unit (GRU): Gated Recurrent Unit (GRU) is
+a gating mechanism for RNN which was introduced by [9] and [7].
+GRU is a simplified variant of the LSTM architecture, but there
+are differences as follows: GRU contains two gates, a GRU does
+not possess internal memory (the Ct−1 in Figure 3); and finally, a
+second non-linearity is not applied (tanh in Figure 3). A step by
+step explanation of a GRU cell is as following:
+zt = σд(Wzxt + Uzht−1 + bz),
+(19)
+Where zt refers to update gate vector of t, xt stands for input vec-
+tor, W , U and b are parameter matrices and vector, σд is activation
+function that could be sigmoid or ReLU.
+˜rt = σд(Wrxt + Urht−1 + br ),
+(20)
+ht = zt ◦ ht−1 + (1 − zt ) ◦ σh(Whxt + Uh(rt ◦ ht−1) + bh)
+(21)
+Where ht is output vector of t, rt stands for reset gate vector of t,
+zt is update gate vector of t, σh indicates the hyperbolic tangent
+function.
+4.3.3
+Convolutional Neural Networks (CNN). The final deep
+learning approach which contributes in RMDL is Convolutional
+Neural Networks (CNN) that is employed for document or image
+classification. Although originally built for image processing with
+architecture similar to the visual cortex, CNN have also been effec-
+tively used for text classification [29]; thus, in RMDL, this technique
+is used in all datasets.
+In the basic CNN for image processing an image tensor is convolved
+with a set of kernels of size d × d. These convolution layers are
+called feature maps and can be stacked to provide multiple filters
+on the input. To reduce the computational complexity CNN use
+pooling which reduces the size of the output from one layer to
+RMDL: Random Multimodel Deep Learning for Classification
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+the next in the network. Different pooling techniques are used to
+reduce outputs while preserving important features [45]. The most
+common pooling method is max pooling where the maximum ele-
+ment is selected in the pooling window.
+In order to feed the pooled output from stacked featured maps to
+the final layer, the maps are flattened into one column. The final
+layers in a CNN are typically fully connected.
+In general, during the back propagation step of a convolutional neu-
+ral network not only the weights are adjusted but also the feature
+detector filters. A potential problem of CNN used for text is the num-
+ber of 'channels', Σ (size of the feature space). This might be very
+large (e.g. 50K), for text but for images this is less of a problem (e.g.
+only 3 channels of RGB) [17]. This means the dimensionality of the
+CNN for text is very high.
+4.4
+Optimization
+In this paper we use two types of stochastic gradient optimizer
+in our neural networks implementation which are RMSProp and
+Adam optimizer:
+4.4.1
+Stochastic Gradient Descent (SGD) Optimizer. SGD has
+been used as one of our optimizer that is shown in equation 22. It
+uses a momentum on re-scaled gradient which is shown in equa-
+tion 23 for updating parameters. The other technique of optimizer
+that is used is RMSProp which does not do bias correction. This
+will be a significant problem while dealing with sparse gradient.
+θ ← θ − α∇θ J(θ,xi,yi)
+(22)
+θ ← θ − �γθ + α∇θ J(θ,xi,yi)�
+(23)
+4.4.2
+Adam Optimizer. Adam is another stochastic gradient
+optimizer which uses only the first two moments of gradient (v
+and m that are shown in equation 24, 25, 26, and 27) and average
+over them. It can handle non-stationary of objective function as in
+RMSProp while overcoming the sparse gradient issue that was a
+tanh
+𝜎 
+𝜎 
+𝑥𝑡 
+ℎ𝑡−1 
+ℎ𝑡 
+ℎ𝑡 
+tanh
+tanh
+𝜎 
+𝜎 
+𝜎 
+𝑥𝑡 
+𝐶𝑡−1 
+ℎ𝑡−1 
+ℎ𝑡 
+𝐶𝑡 
+ℎ𝑡 
+1-
+Figure 3: Top Figure is a cell of GRU, and bottom Figure is a
+cell of LSTM
+Figure 4: This figure Shows multi SGD optimizer
+drawback in RMSProp [22].
+θ ← θ −
+α
+√
+ˆv + ϵ
+ˆm
+(24)
+дi,t = ∇θ J(θi,xi,yi)
+(25)
+mt = β1mt−1 + (1 − β1)дi,t
+(26)
+mt = β2vt−1 + (1 − β2)д2
+i,t
+(27)
+Where mt is the first moment and vt indicates second moment that
+both are estimated. ˆ
+mt =
+mt
+1−β t
+1 and ˆvt =
+vt
+1−β t
+2
+4.4.3
+Multi Optimization rule. The main idea of using multi
+model with different optimizers is that if one optimizer does not
+provide a good fit for a specific datasets, the RMDL model with n
+random models (some of them might use different optimizers) could
+ignore k models which are not efficient if and only if n > k. The
+Figure 4 provides a visual insight on how three optimizers work
+better in the concept of majority voting. Using multi techniques of
+optimizers such as SGD, adam, RMSProp, Adagrad, Adamax, and so
+on helps the RMDL model to be more stable for any type of datasets.
+In this research, we only used two optimizers (Adam and RMSProp)
+for evaluating our model, but the RMDL model has the capability
+to use any kind of optimizer.
+5
+EXPERIMENTAL RESULTS
+In this section, experimental results are discussed including evalua-
+tion of method, experimental setup, and datasets. Also, we discuss
+the hardware and frameworks which are used in RMDL; finally, a
+comparison between our empirical results and the baselines has
+been presented. Moreover, losses and accuracies of this model for
+each individual RDL (in each epoch) is shown in Figure 5.
+5.1
+Evaluation
+In this work, we report accuracy and Micro F1-Score which are given
+as follows:
+Precisionmicro =
+�L
+l=1TPl
+�L
+l=1TPl + FPl
+(28)
+Recallmicro =
+�L
+l=1TPl
+�L
+l=1TPl + FNl
+(29)
+F1 − Scoremicro =
+�L
+l=1 2TPl
+�L
+l=1 2TPl + FPl + FNl
+(30)
+However, the performance of our model is evaluated only in terms
+of F1-score for evaluation as in Tables 1 and 3. Formally, given I =
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+K. Kowsari et al.
+{1, 2, · · · ,k} a set of indices, we define the ith class as Ci. If we de-
+note l = |I | and for TPi-true positive of Ci, FPi-false positive, FNi-
+false negative, and TNi-true negative counts respectively then the
+above definitions apply for our multi-class classification problem.
+5.2
+Experimental Setup
+Two types of datasets (text and image) has been used to test and
+evaluate our approach performance. However, in theory the model
+has capability to solve classification problems with a variety of data
+including video, text, and images.
+5.2.1
+Text Datasets. For text classification, we used 4 different
+datasets, namely, WOS , Reuters, IMDB, and 20newsдroups.
+Web Of Science (WOS) dataset [24] is a collection of academic arti-
+cles' abstracts which contains three corpora (5736, 11967, and 46985
+documents) for (11, 34, and 134 topics).
+The Reuters-21578 news dataset contains 10, 788 documents which
+are divided into 7, 769 documents for training and 3, 019 for testing
+with total of 90 classes.
+IMDB dataset contains 50, 000 reviews that is splitted into a set
+of 25, 000 highly popular movie reviews for training, and 25, 000
+for testing.
+20NewsGroup dataset includes 19, 997 documents with maximum
+length of 1, 000 words. In this dataset, we have 15, 997 for training
+and 4, 000 samples are used for validation.
+5.2.2
+Image datasets. For image classification, two traditional
+and ground truth datasets are used, namely, MNIST hand writing
+dataset and CIFAR.
+MNIST: this dataset contains handwritten number k ∈ {0, 1, ..., 9}
+and input feature space is in 28 × 28 × 1 format. The training
+and the test set contains 60, 000 and 10, 000 data point examples
+respectively.
+CIFAR: This dataset consists of 60, 000 images with 32×32×3 format
+assigned in 10 classes, with 6, 000 images per class that is splitted
+into 50, 000 training and 10, 000 test images. Classes are airplane,
+automobile, bird, cat, deer, dog, frog, horse, ship, and truck.
+Table
+1:
+Accuracy
+comparison
+for
+text
+classification.
+W.1 (WOS-5736) refers to Web of Science dataset, W.2
+represents W-11967, W.3 is WOS-46985, and R stands for
+Reuters-21578
+Model
+Dataset
+W.1
+W.2
+W.3
+R
+Baseline
+DNN
+86.15
+80.02
+66.95
+85.3
+CNN [53]
+88.68
+83.29
+70.46
+86.3
+RNN [53]
+89.46
+83.96
+72.12
+88.4
+NBC
+78.14
+68.8
+46.2
+83.6
+SVM [55]
+85.54
+80.65
+67.56
+86.9
+SVM (TF-IDF) [5]
+88.24
+83.16
+70.22
+88.93
+Stacking SVM [48]
+85.68
+79.45
+71.81
+NA
+HDLTex [23]
+90.42
+86.07
+76.58
+NA
+RMDL
+3 RDLs
+90.86
+87.39
+78.39
+89.10
+9 RDLs
+92.60
+90.65
+81.92
+90.36
+15 RDLs
+92.66
+91.01
+81.86
+89.91
+30 RDLs
+93.57
+91.59
+82.42
+90.69
+Table
+2:
+Error
+rate
+comparison
+for
+Image
+classifica-
+tion (MNIST and CIFAR-10 datasets)
+Methods
+MNIST
+CIFAR-10
+Baseline
+Deep L2-SVM [49]
+0.87
+11.9
+Maxout Network [14]
+0.94
+11.68
+BinaryConnect [11]
+1.29
+9.90
+PCANet-1 [4]
+0.62
+21.33
+gcForest [56]
+0.74
+31.00
+RMDL
+3 RDLs
+0.51
+9.89
+9 RDLs
+0.41
+9.1
+15 RDLs
+0.21
+8.74
+30 RDLs
+0.18
+8.79
+5.3
+Hardware
+All of the results shown in this paper are performed on Central Pro-
+cess Units (CPU) and Graphical Process Units (GPU). Also, RMDL
+can be implemented using only GPU, CPU, or both. The process-
+ing units that has been used through this experiment was intel on
+Xeon E5-2640 (2.6 GHz) with 12 cores and 64 GB memory (DDR3).
+Also, we have used three graphical cards on our machine which
+are two Nvidia GeForce GTX 1080 Ti and Nvidia Tesla K20c.
+5.4
+Framework
+This work is implemented in Python using Compute Unified Device
+Architecture (CUDA) which is a parallel computing platform and
+Application Programming Interface (API) model created by Nvidia.
+We used TensorFelow and Keras library for creating the neural
+networks [1, 8].
+5.5
+Empirical Results
+5.5.1
+Image classification. Table 2 shows the error rate of RMDL
+for image classification. The comparison between the RMDL with
+baselines (as described in Section 3.2), shows that the error rate
+of the RMDL for MNIST dataset has been improved to 0.51, 0.41,
+and 0.21 for 3, 9 and 15 random models respectively. For the CIFAR-
+10 datasets, the error rate has been decreased for RMDL to 9.89, 9.1,
+8.74, and 8.79,using 3, 9, 15, and 30 RDL respectively.
+5.5.2
+Document categorization. Table 1 shows that for four
+ground truth datasets, RMDL improved the accuracy in comparison
+to the baselines. In Table 1, we evaluated our empirical results by
+four different RMDL models (using 3, 9, 15, and 30 RDLs). For Web of
+Science (WOS-5,736) the accuracy is improved to 90.86, 92.60, 92.66,
+and 93.57 respectively. For Web of Science (WOS-11,967), the ac-
+curacy is increased to 87.39, 90.65, 91.01, and 91.59 respectively,
+and for Web of Science (WOS-46,985) the accuracy has increased
+to 78.39, 81.92, 81.86, and 82.42 respectively. The accuracy of Reuters-
+21578 is 88.95, 90.29, 89.91, and 90.69 respectively. We report results
+for other ground truth datasets such as Large Movie Review Dataset
+(IMDB) and 20NewsGroups. As it is mentioned in Table 3, for two
+ground truth datasets, RMDL improves the accuracy. In Table 3,
+we evaluated our empirical results of two datasets (IMDB reviewer
+and 20NewsGroups).The accuracy of IMDB dataset is 89.91, 90.13,
+and 90.79 for 3, 9, and 15 RDLs respectively, whereas the accuracy
+of DNN is 88.55%, CNN [53] is 87.44%, RNN [53] is 88.59%, Naïve
+Bayes Classifier is 83.19%, SVM [55] is 87.97%, and SVM [5] using
+RMDL: Random Multimodel Deep Learning for Classification
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+epoch
+epoch
+loss
+Test
+Train
+RDL1
+RDL2
+RDL3
+RDL4
+RDL5
+RDL6
+RDL7
+RDL8
+RDL9
+RDL10
+RDL11
+RDL12
+RDL13
+RDL14
+RDL15
+CIFAR
+0.8
+0.7
+0.6
+0.5
+0.4
+0.3
+0.2
+0.1
+0.05
+0
+20
+40
+60
+80
+100
+120
+epoch
+RDL1
+RDL2
+RDL3
+RDL4
+RDL5
+RDL6
+RDL7
+RDL8
+RDL9
+RDL10
+RDL11
+RDL12
+RDL13
+RDL14
+RDL15
+0.8
+0.7
+0.6
+0.5
+0.4
+0.3
+0.2
+0.1
+0.05
+0
+20
+40
+60
+80
+100
+120
+epoch
+loss
+MNIST
+(a) This sub-figure indicates MNIST and CIFAR-10 loss function for
+15 Random Deep Learning (RDL) model. The MNNST shown as 120
+epoch and CIFAR has 200 epoch
+epoch
+Test
+Train
+0.9
+0.8
+0.7
+0.6
+0.5
+0.4
+0.3
+1.0
+0.8
+0.6
+0.4
+0.2
+0   
+      20
+     40             60            80
+        100 
+epoch
+0   
+      20
+     40             60            80
+        100 
+Accuracy
+0   
+      20
+     40             60            80
+        100 
+1.0
+0.9
+0.8
+0.7
+0.6
+0.4
+0.9
+0.8
+0.7
+0.6
+0.4
+Accuracy
+0   
+      20
+     40             60            80
+        100 
+WOS-5736
+Reuters-21578
+epoch
+epoch
+(b) This sub-figure indicates WOS-5736 (Web Of Science dataset with 11
+categories and 5736 documents) accuracy function for 9 Random Deep
+Learning (RDL) model, and bottom figure indicates Reuters-21578 ac-
+curacy function for 9 Random Deep Learning (RDL) model
+Figure 5: This figure shows results of individual RDLs (accuracy and loss) for each epoch as part of RMDL.
+TF-IDF is equal to 88.45%. The accuracy of 20NewsGroup dataset
+is 86.73%, 87.62%, and 87.91% for 3, 9, and 15 random models respec-
+tively, whereas the accuracy of DNN is 86.50%, CNN [53] is 82.91%,
+RNN [53] is 83.75%, Naïve Bayes Classifier is 81.67%, SVM [55]
+is 84.57%, and SVM [5] using TF-IDF is equal to 86.00%.
+Figure 5 indicates accuracies and losses of RMDL which are
+shown with 9 (RDLs) for text classification and 15 RDLs for image
+classification. As shown in Figure 5a, 4 RDLs' loss of MNIST dataset
+are increasing over each epoch (RDL 6, RDL 9, RDL 14 and RDL 15)
+after 40 epochs, but RMDL model contains 15 RDL models; thus,
+the accuracy of the majority votes for these models as presented in
+Table 2 is competing with our baselines.
+In Figure 5a, for CIFAR dataset, the models do not have overfitting
+problem, but for MNIST datasets at least 4 models' losses are in-
+creasing over each epoch after 40 iterations (RDL 4, RDL 5, RDL 6,
+and RDL 9); although the accuracy and F1-measure of these 4 mod-
+els will drop after 40 epochs, the majority votes' accuracy is robust
+Table 3: Accuracy comparison for text classification on
+IMDB and 20NewsGroup datasets
+Model
+Dataset
+IMDB
+20NewsGroup
+Baseline
+DNN
+88.55
+86.50
+CNN [53]
+87.44
+82.91
+RNN [53]
+88.59
+83.75
+Naïve Bayes Classifier
+83.19
+81.67
+SVM [55]
+87.97
+84.57
+SVM(TF-IDF) [5]
+88.45
+86.00
+RMDL
+3 RDLs
+89.91
+86.73
+9 RDLs
+90.13
+87.62
+15 RDLs
+90.79
+87.91
+and efficient which means RMDL will ignore them due to major-
+ity votes between 15 models. The Figure 5a shows the loss value
+over each epoch of two ground truth datasets, CIFAR and IMDB
+for 15 random deep learning models (RDL). Figure 5b presents the
+accuracy of 15 random models for Reuters-21578 respectively. In
+Figure 5b, the accuracy of Random Deep Learning (RDLs) model is
+addressed over each epoch for WOS-5736 (Web Of Science dataset
+with 17 categories and 5, 736 documents), the majority votes of
+these models as shown in Table 1 is competing with our baselines.
+6
+DISCUSSION AND CONCLUSION
+The classification task is an important problem to address in ma-
+chine learning, given the growing number and size of datasets
+that need sophisticated classification. We propose a novel tech-
+nique to solve the problem of choosing best technique and method
+out of many possible structures and architectures in deep learn-
+ing. This paper introduces a new approach called RMDL (Random
+Multimodel Deep Learning) for the classification that combines
+multi deep learning approaches to produce random classification
+models. Our evaluation on datasets obtained from the Web of Sci-
+ence (WOS), Reuters, MNIST, CIFAR, IMDB, and 20NewsGroups
+shows that combinations of DNNs, RNNs and CNNs with the par-
+allel learning architecture, has consistently higher accuracy than
+those obtained by conventional approaches using naïve Bayes, SVM,
+or single deep learning model. These results show that deep learn-
+ing methods can provide improvements for classification and that
+they provide flexibility to classify datasets by using majority vote.
+The proposed approach has the ability to improve accuracy and
+efficiency of models and can be use across a wide range of data
+types and applications.
+ICISDM '18, April 9–11, 2018, Lakeland, FL, USA
+K. Kowsari et al.
+REFERENCES
+[1] Martín Abadi, Ashish Agarwal, Paul Barham, Eugene Brevdo, Zhifeng Chen, Craig
+Citro, Greg S Corrado, Andy Davis, Jeffrey Dean, Matthieu Devin, and others.
+2016. Tensorflow: Large-scale machine learning on heterogeneous distributed
+systems. arXiv preprint arXiv:1603.04467 (2016).
+[2] Yoshua Bengio, Patrice Simard, and Paolo Frasconi. 1994. Learning long-term
+dependencies with gradient descent is difficult. IEEE transactions on neural
+networks 5, 2 (1994), 157–166.
+[3] Bernhard E Boser, Isabelle M Guyon, and Vladimir N Vapnik. 1992. A training
+algorithm for optimal margin classifiers. In COLT92. ACM, 144–152.
+[4] Tsung-Han Chan, Kui Jia, Shenghua Gao, Jiwen Lu, Zinan Zeng, and Yi Ma.
+2015. PCANet: A simple deep learning baseline for image classification? IEEE
+Transactions on Image Processing 24, 12 (2015), 5017–5032.
+[5] Kewen Chen, Zuping Zhang, Jun Long, and Hao Zhang. 2016. Turning from
+TF-IDF to TF-IGM for term weighting in text classification. Expert Systems with
+Applications 66 (2016), 245–260.
+[6] Alexey Ya Chervonenkis. 2013. Early history of support vector machines. In
+Empirical Inference. Springer, 13–20.
+[7] Kyunghyun Cho, Bart Van Merriënboer, Caglar Gulcehre, Dzmitry Bahdanau,
+Fethi Bougares, Holger Schwenk, and Yoshua Bengio. 2014. Learning phrase
+representations using RNN encoder-decoder for statistical machine translation.
+arXiv preprint arXiv:1406.1078 (2014).
+[8] François Chollet and others. 2015. Keras: Deep learning library for theano and
+tensorflow. URL: https://keras. io/k (2015).
+[9] Junyoung Chung, Caglar Gulcehre, KyungHyun Cho, and Yoshua Bengio. 2014.
+Empirical evaluation of gated recurrent neural networks on sequence modeling.
+arXiv preprint arXiv:1412.3555 (2014).
+[10] Dan CireşAn, Ueli Meier, Jonathan Masci, and Jürgen Schmidhuber. 2012. Multi-
+column deep neural network for traffic sign classification. Neural Networks 32
+(2012), 333–338.
+[11] Matthieu Courbariaux, Yoshua Bengio, and Jean-Pierre David. 2015. Binarycon-
+nect: Training deep neural networks with binary weights during propagations.
+In Advances in Neural Information Processing Systems. 3123–3131.
+[12] Kushal Dave, Steve Lawrence, and David M Pennock. 2003. Mining the peanut
+gallery: Opinion extraction and semantic classification of product reviews. In
+WWW. ACM, 519–528.
+[13] Eleazar Eskin, Jason Weston, William S Noble, and Christina S Leslie. 2002.
+Mismatch string kernels for SVM protein classification. In Advances in neural
+information processing systems. 1417–1424.
+[14] Ian J Goodfellow, David Warde-Farley, Mehdi Mirza, Aaron Courville, and Yoshua
+Bengio. 2013. Maxout networks. arXiv preprint arXiv:1302.4389 (2013).
+[15] Sepp Hochreiter and Jürgen Schmidhuber. 1997. Long short-term memory. Neural
+computation 9, 8 (1997), 1735–1780.
+[16] Hajime Hotta, Masanobu Kittaka, and Masafumi Hagiwara. 2010. Word vector-
+ization using relations among words for neural network. IEEE Transactions on
+Electronics, Information and Systems 130, 1 (2010), 75–82.
+[17] Rie Johnson and Tong Zhang. 2014. Effective use of word order for text catego-
+rization with convolutional neural networks. preprint arXiv:1412.1058 (2014).
+[18] Fasihul Kabir, Sabbir Siddique, Mohammed Rokibul Alam Kotwal, and Moham-
+mad Nurul Huda. 2015. Bangla text document categorization using stochastic
+gradient descent (sgd) classifier. In CCIP. IEEE, 1–4.
+[19] Vlado Kešelj, Fuchun Peng, Nick Cercone, and Calvin Thomas. 2003. N-gram-
+based author profiles for authorship attribution. In PACLING, Vol. 3. 255–264.
+[20] Sang-Bum Kim, Kyoung-Soo Han, Hae-Chang Rim, and Sung Hyon Myaeng. 2006.
+Some effective techniques for naive bayes text classification. IEEE transactions
+on knowledge and data engineering 18, 11 (2006), 1457–1466.
+[21] Yoon Kim. 2014. Convolutional neural networks for sentence classification. arXiv
+preprint arXiv:1408.5882 (2014).
+[22] Diederik Kingma and Jimmy Ba. 2014. Adam: A method for stochastic optimiza-
+tion. arXiv preprint arXiv:1412.6980 (2014).
+[23] Kamran Kowsari, Donald E Brown, Mojtaba Heidarysafa, Kiana Jafari Meimandi,
+Matthew S Gerber, and Laura E Barnes. 2017. HDLTex: Hierarchical Deep Learn-
+ing for Text Classification. In 2017 16th IEEE International Conference on Machine
+Learning and Applications (ICMLA). 364–371. DOI:https://doi.org/10.1109/ICMLA.
+2017.0-134
+[24] Kamran Kowsari, Donald E Brown, Mojtaba Heidarysafa, Kiana Jafari Meimandi,
+Matthew S Gerber, and Laura E Barnes. 2018. Web of Science Dataset. DOI:
+https://doi.org/10.17632/9rw3vkcfy4.6
+[25] Alex Krizhevsky, Ilya Sutskever, and Geoffrey E Hinton. 2012. Imagenet classifica-
+tion with deep convolutional neural networks. In Advances in neural information
+processing systems. 1097–1105.
+[26] Lester E Krueger and Ronald G Shapiro. 1979. Letter detection with rapid serial
+visual presentation: Evidence against word superiority at feature extraction.
+Journal of Experimental Psychology: Human Perception and Performance 5, 4
+(1979), 657.
+[27] Siwei Lai, Liheng Xu, Kang Liu, and Jun Zhao. 2015. Recurrent Convolutional
+Neural Networks for Text Classification.. In AAAI, Vol. 333. 2267–2273.
+[28] Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. 2015. Deep learning. Nature
+521, 7553 (2015), 436–444.
+[29] Yann LeCun, Léon Bottou, Yoshua Bengio, and Patrick Haffner. 1998. Gradient-
+based learning applied to document recognition. Proc. IEEE 86, 11 (1998), 2278–
+2324.
+[30] Honglak Lee, Roger Grosse, Rajesh Ranganath, and Andrew Y Ng. 2009. Convo-
+lutional deep belief networks for scalable unsupervised learning of hierarchical
+representations. In Proceedings of the 26th annual international conference on
+machine learning. ACM, 609–616.
+[31] Christina S Leslie, Eleazar Eskin, Adiel Cohen, Jason Weston, and William Stafford
+Noble. 2004. Mismatch string kernels for discriminative protein classification.
+Bioinformatics 20, 4 (2004), 467–476.
+[32] Christina S Leslie, Eleazar Eskin, and William Stafford Noble. 2002. The spectrum
+kernel: A string kernel for SVM protein classification.. In Pacific symposium on
+biocomputing, Vol. 7. 566–575.
+[33] Ming Liang and Xiaolin Hu. 2015. Recurrent convolutional neural network for
+object recognition. In Proceedings of the IEEE Conference on Computer Vision and
+Pattern Recognition. 3367–3375.
+[34] Hans Peter Luhn. 1957. A statistical approach to mechanized encoding and
+searching of literary information. IBM Journal of research and development 1, 4
+(1957), 309–317.
+[35] Christopher D Manning, Prabhakar Raghavan, Hinrich Schütze, and others. 2008.
+Introduction to information retrieval. Vol. 1. Cambridge university press Cam-
+bridge.
+[36] Tomas Mikolov, Kai Chen, Greg Corrado, and Jeffrey Dean. 2013. Efficient
+estimation of word representations in vector space. arXiv:1301.3781 (2013).
+[37] Tomas Mikolov, Martin Karafiát, Lukas Burget, Jan Cernock`y, and Sanjeev Khu-
+danpur. 2010. Recurrent neural network based language model.. In Interspeech,
+Vol. 2. 3.
+[38] Kevin P Murphy. 2006. Naive bayes classifiers. University of British Columbia
+(2006).
+[39] Vinod Nair and Geoffrey E Hinton. 2010. Rectified linear units improve re-
+stricted boltzmann machines. In Proceedings of the 27th international conference
+on machine learning (ICML-10). 807–814.
+[40] Razvan Pascanu, Tomas Mikolov, and Yoshua Bengio. 2013. On the difficulty of
+training recurrent neural networks. ICML (3) 28 (2013), 1310–1318.
+[41] Jeffrey Pennington, Richard Socher, and Christopher Manning. 2014. Glove:
+Global vectors for word representation. In Proceedings of the 2014 conference on
+empirical methods in natural language processing (EMNLP). 1532–1543.
+[42] Irina Rish. 2001. An empirical study of the naive Bayes classifier. In IJCAI 2001
+workshop on empirical methods in artificial intelligence, Vol. 3. IBM, 41–46.
+[43] Stephen Robertson. 2004. Understanding inverse document frequency: on theo-
+retical arguments for IDF. Journal of documentation 60, 5 (2004), 503–520.
+[44] Gerard Salton and Christopher Buckley. 1988. Term-weighting approaches in
+automatic text retrieval. Information processing & management 24, 5 (1988),
+513–523.
+[45] Dominik Scherer, Andreas Müller, and Sven Behnke. 2010. Evaluation of pooling
+operations in convolutional architectures for object recognition. Artificial Neural
+Networks–ICANN 2010 (2010), 92–101.
+[46] Fabrizio Sebastiani. 2002. Machine learning in automated text categorization.
+ACM computing surveys (CSUR) 34, 1 (2002), 1–47.
+[47] Ritambhara Singh, Arshdeep Sekhon, Kamran Kowsari, Jack Lanchantin, Beilun
+Wang, and Yanjun Qi. 2017. Gakco: a fast gapped k-mer string kernel using
+counting. In Joint European Conference on Machine Learning and Knowledge
+Discovery in Databases. Springer, 356–373.
+[48] Aixin Sun and Ee-Peng Lim. 2001. Hierarchical text classification and evaluation.
+In ICDM. IEEE, 521–528.
+[49] Yichuan Tang. 2013. Deep learning using linear support vector machines. arXiv
+preprint arXiv:1306.0239 (2013).
+[50] Simon Tong and Daphne Koller. 2001. Support vector machine active learning
+with applications to text classification. Journal of machine learning research 2,
+Nov (2001), 45–66.
+[51] Mehmet Turan, Yasin Almalioglu, Helder Araujo, Ender Konukoglu, and Metin
+Sitti. 2017. Deep EndoVO: A Recurrent Convolutional Neural Network (RCNN)
+based Visual Odometry Approach for Endoscopic Capsule Robots. arXiv preprint
+arXiv:1708.06822 (2017).
+[52] Jason Weston and Chris Watkins. 1998. Multi-class support vector machines.
+Technical Report. Department of Computer Science, University of London.
+[53] Zichao Yang, Diyi Yang, Chris Dyer, Xiaodong He, Alexander J Smola, and Ed-
+uard H Hovy. 2016. Hierarchical Attention Networks for Document Classification..
+In HLT-NAACL. 1480–1489.
+[54] Chun-Nam John Yu and Thorsten Joachims. 2009. Learning structural svms with
+latent variables. In ICML. ACM, 1169–1176.
+[55] Wen Zhang, Taketoshi Yoshida, and Xijin Tang. 2008. Text classification based on
+multi-word with support vector machine. Knowledge-Based Systems 21, 8 (2008),
+879–886.
+[56] Zhi-Hua Zhou and Ji Feng. 2017. Deep forest: Towards an alternative to deep
+neural networks. arXiv preprint arXiv:1702.08835 (2017).

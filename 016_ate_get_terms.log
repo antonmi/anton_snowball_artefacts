@@ -1,0 +1,30 @@
+"../data/GAN/datasets/D0000000001.txt"
+"len(terms)=37301"
+["time", 23.87212085723877]
+"../data/GAN/datasets/D0000000002.txt"
+"len(terms)=63632"
+["time", 40.76014518737793]
+"../data/GAN/datasets/D0000000003.txt"
+"len(terms)=92019"
+["time", 60.4979031085968]
+"../data/GAN/datasets/D0000000004.txt"
+"len(terms)=116054"
+["time", 70.02528119087219]
+"../data/GAN/datasets/D0000000005.txt"
+"len(terms)=145068"
+["time", 94.13441824913025]
+"../data/GAN/datasets/D0000000006.txt"
+"len(terms)=165930"
+["time", 109.80505323410034]
+"../data/GAN/datasets/D0000000007.txt"
+"len(terms)=193788"
+["time", 116.93249297142029]
+"../data/GAN/datasets/D0000000008.txt"
+"len(terms)=217016"
+["time", 131.62663888931274]
+"../data/GAN/datasets/D0000000009.txt"
+"len(terms)=239927"
+["time", 151.3803789615631]
+"finished"
+["time", 799.0390160083771]
+["used RAM(bytes)=", 217300992]

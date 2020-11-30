@@ -1,0 +1,12 @@
+["input", "../data/GAN/001_tokenizer_output.jsonl"]
+["output", "../data/GAN/003_joint_probabilities.npy"]
+["dictfile", "../data/GAN/001_tokenizer_dict.jsonl"]
+"finished"
+["time", 23.4128680229187]
+["used RAM(bytes)=", 2154663936]
+["input", "../data/GAN/001_tokenizer_output.jsonl"]
+["output", "../data/GAN/005_reduced_joint_probabilities.npy"]
+["dictfile", "../data/GAN/004_stopwords_reduceddict.jsonl"]
+"finished"
+["time", 15.673088073730469]
+["used RAM(bytes)=", 321961984]

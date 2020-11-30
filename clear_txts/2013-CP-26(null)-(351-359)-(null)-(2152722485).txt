@@ -1,0 +1,319 @@
+Dropout Training as Adaptive Regularization
+Stefan Wager⇤, Sida Wang†, and Percy Liang†
+Departments of Statistics⇤ and Computer Science†
+Stanford University, Stanford, CA-94305 swager@stanford.edu, {sidaw, pliang}@cs.stanford.edu
+Abstract
+Dropout and other feature noising schemes control overfitting by artificially corrupting the training data. For generalized linear models, dropout performs a form of adaptive regularization. Using this viewpoint, we show that the dropout regularizer is first-order equivalent to an L2 regularizer applied after scaling the features by an estimate of the inverse diagonal Fisher information matrix. We also establish a connection to AdaGrad, an online learning algorithm, and find that a close relative of AdaGrad operates by repeatedly solving linear dropout-regularized problems. By casting dropout as regularization, we develop a natural semi-supervised algorithm that uses unlabeled data to create a better adaptive regularizer. We apply this idea to document classification tasks, and show that it consistently boosts the performance of dropout training, improving on state-of-the-art results on the IMDB reviews dataset.
+Introduction
+Dropout training was introduced by Hinton et al. as a way to control overfitting by randomly omitting subsets of features at each iteration of a training procedure.1 Although dropout has proved to be a very successful technique, the reasons for its success are not yet well understood at a theoretical level.
+Dropout training falls into the broader category of learning methods that artificially corrupt training data to stabilize predictions. There is a well-known connection between artificial feature corruption and regularization. For example, Bishop showed that the effect of training with features that have been corrupted with additive Gaussian noise is equivalent to a form of L2-type regularization in the low noise limit. In this paper, we take a step towards understanding how dropout training works by analyzing it as a regularizer. We focus on generalized linear models (GLMs), a class of models for which feature dropout reduces to a form of adaptive model regularization.
+Using this framework, we show that dropout training is first-order equivalent to L2-regularization after transforming the input by diag(ˆI)�1/2, where ˆI is an estimate of the Fisher information matrix.
+This transformation effectively makes the level curves of the objective more spherical, and so balances out the regularization applied to different features. In the case of logistic regression, dropout can be interpreted as a form of adaptive L2-regularization that favors rare but useful features.
+The problem of learning with rare but useful features is discussed in the context of online learning by Duchi et al., who show that their AdaGrad adaptive descent procedure achieves better regret bounds than regular stochastic gradient descent (SGD) in this setting. Here, we show that AdaGrad
+S.W. is supported by a B.C. and E.J. Eaves Stanford Graduate Fellowship.
+1Hinton et al. introduced dropout training in the context of neural networks specifically, and also advocated omitting random hidden layers during training. In this paper, we follow and study feature dropout as a generic training method that can be applied to any learning algorithm.
+1 and dropout training have an intimate connection: Just as SGD progresses by repeatedly solving linearized L2-regularized problems, a close relative of AdaGrad advances by solving linearized dropout-regularized problems.
+Our formulation of dropout training as adaptive regularization also leads to a simple semi-supervised learning scheme, where we use unlabeled data to learn a better dropout regularizer. The approach is fully discriminative and does not require fitting a generative model. We apply this idea to several document classification problems, and find that it consistently improves the performance of dropout training. On the benchmark IMDB reviews dataset introduced by, dropout logistic regression with a regularizer tuned on unlabeled data outperforms previous state-of-the-art. In follow-up research, we extend the results from this paper to more complicated structured prediction, such as multi-class logistic regression and linear chain conditional random fields.
+Artificial Feature Noising as Regularization
+We begin by discussing the general connections between feature noising and regularization in generalized linear models (GLMs). We will apply the machinery developed here to dropout training in Section 4.
+A GLM defines a conditional distribution over a response y 2 Y given an input feature vector x 2 Rd: p�(y | x) def
+= h(y) exp{y x · � � A(x · �)}, `x,y(�) def
+= � log p�(y | x).
+Here, h(y) is a quantity independent of x and �, A(·) is the log-partition function, and `x,y(�) is the loss function (i.e., the negative log likelihood); Table 1 contains a summary of notation. Common examples of GLMs include linear (Y = R), logistic (Y = {0, 1}), and Poisson (Y = {0, 1, 2,... }) regression.
+Given n training examples (xi, yi), the standard maximum likelihood estimate ˆ� 2 Rd minimizes the empirical loss over the training examples:
+ˆ� def
+= arg min
+�2Rd n
+X i=1
+`xi, yi(�).
+With artificial feature noising, we replace the observed feature vectors xi with noisy versions ˜xi =
+⌫(xi, ⇠i), where ⌫ is our noising function and ⇠i is an independent random variable. We first create many noisy copies of the dataset, and then average out the auxiliary noise. In this paper, we will consider two types of noise:
+• Additive Gaussian noise: ⌫(xi, ⇠i) = xi + ⇠i, where ⇠i ⇠ N(0, �2Id⇥d).
+• Dropout noise: ⌫(xi, ⇠i) = xi � ⇠i, where � is the elementwise product of two vectors. Each component of ⇠i 2 {0, (1 � �)�1}d is an independent draw from a scaled
+Bernoulli(1 � �) random variable. In other words, dropout noise corresponds to setting ˜xij to 0 with probability � and to xij/(1 � �) else.2
+Integrating over the feature noise gives us a noised maximum likelihood parameter estimate:
+ˆ� = arg min
+�2Rd n
+X i=1
+E⇠ [`˜xi, yi(�)], where E⇠ [Z] def
+= E [Z | {xi, yi}](3) is the expectation taken with respect to the artificial feature noise ⇠ = (⇠1,..., ⇠n). Similar expressions have been studied by.
+For GLMs, the noised empirical loss takes on a simpler form: n
+X i=1
+E⇠ [`˜xi, yi(�)] = n
+X i=1
+� (y xi · � � E⇠ [A(˜xi · �)]) = n
+X i=1
+`xi, yi(�) + R(�).
+2Artificial noise of the form xi � ⇠i is also called blankout noise. For GLMs, blankout noise is equivalent to dropout noise as defined by.
+Table 1: Summary of notation. xi
+Observed feature vector
+R(�)
+Noising penalty (5)
+˜xi
+Noised feature vector
+Rq(�)
+Quadratic approximation (6)
+A(x · �)
+Log-partition function
+`(�)
+Negative log-likelihood (loss)
+The first equality holds provided that E⇠[˜xi] = xi, and the second is true with the following definition:
+R(�) def
+= n
+X i=1
+E⇠ [A(˜xi · �)] � A(xi · �).
+Here, R(�) acts as a regularizer that incorporates the effect of artificial feature noising. In GLMs, the log-partition function A must always be convex, and so R is always positive by Jensen's inequality.
+The key observation here is that the effect of artificial feature noising reduces to a penalty R(�) that does not depend on the labels {yi}. Because of this, artificial feature noising penalizes the complexity of a classifier in a way that does not depend on the accuracy of a classifier. Thus, for
+GLMs, artificial feature noising is a regularization scheme on the model itself that can be compared with other forms of regularization such as ridge (L2) or lasso (L1) penalization. In Section 6, we exploit the label-independence of the noising penalty and use unlabeled data to tune our estimate of R(�).
+The fact that R does not depend on the labels has another useful consequence that relates to prediction. The natural prediction rule with artificially noised features is to select ˆy to minimize expected loss over the added noise: ˆy = argminy E⇠[`˜x, y(ˆ�)]. It is common practice, however, not to noise the inputs and just to output classification decisions based on the original feature vector :
+ˆy = argminy `x, y(ˆ�). It is easy to verify that these expressions are in general not equivalent, but they are equivalent when the effect of feature noising reduces to a label-independent penalty on the likelihood. Thus, the common practice of predicting with clean features is formally justified for
+GLMs.
+A Quadratic Approximation to the Noising Penalty
+Although the noising penalty R yields an explicit regularizer that does not depend on the labels
+{yi}, the form of R can be difficult to interpret. To gain more insight, we will work with a quadratic approximation of the type used by. By taking a second-order Taylor expansion of A around x · �, we get that E⇠ [A(˜x · �)] � A(x · �) ⇡ 1
+2A00(x · �) Var⇠ [˜x · �]. Here the first-order term
+E⇠ [A0(x · �)(˜x � x)] vanishes because E⇠[˜x] = x. Applying this quadratic approximation to (5) yields the following quadratic noising regularizer, which will play a pivotal role in the rest of the paper:
+Rq(�) def
+= 1
+2 n
+X i=1
+A00(xi · �) Var⇠ [˜xi · �].
+This regularizer penalizes two types of variance over the training examples: (i) A00(xi · �), which corresponds to the variance of the response yi in the GLM, and (ii) Var⇠[˜xi · �], the variance of the estimated GLM parameter due to noising.3
+Accuracy of approximation
+Figure 1a compares the noising penalties R and Rq for logistic regression in the case that ˜x · � is Gaussian;4 we vary the mean parameter p def
+= (1 + e�x·�)�1 and the noise level �. We see that Rq is generally very accurate, although it tends to overestimate the true penalty for p ⇡ 0.5 and tends to underestimate it for very confident predictions. We give a graphical explanation for this phenomenon in the Appendix (Figure A.1).
+The quadratic approximation also appears to hold up on real datasets. In Figure 1b, we compare the evolution during training of both R and Rq on the 20 newsgroups alt.atheism vs
+3Although Rq is not convex, we were still able (using an L-BFGS algorithm) to train logistic regression with Rq as a surrogate for the dropout regularizer without running into any major issues with local optima.
+4This assumption holds a priori for additive Gaussian noise, and can be reasonable for dropout by the central limit theorem.
+Sigma
+Noising Penalty p = 0.5 p = 0.73 p = 0.82 p = 0.88 p = 0.95(a) Comparison of noising penalties R and Rq for logistic regression with Gaussian perturbations, i.e., (˜x � x) · � ⇠ N(0, �2). The solid line indicates the true penalty and the dashed one is our quadratic approximation thereof; p = (1 + e�x·�)�1 is the mean parameter for the logistic model.
+Training Iteration
+Loss
+Dropout Penalty
+Quadratic Penalty
+Negative Log−Likelihood(b) Comparing the evolution of the exact dropout penalty R and our quadratic approximation Rq for logistic regression on the AthR classification task in with 22K features and n = 1000 examples. The horizontal axis is the number of quasi-Newton steps taken while training with exact dropout.
+Figure 1: Validating the quadratic approximation. soc.religion.christian classification task described in. We see that the quadratic approximation is accurate most of the way through the learning procedure, only deteriorating slightly as the model converges to highly confident predictions.
+In practice, we have found that fitting logistic regression with the quadratic surrogate Rq gives similar results to actual dropout-regularized logistic regression. We use this technique for our experiments in Section 6.
+Regularization based on Additive Noise
+Having established the general quadratic noising regularizer Rq, we now turn to studying the effects of Rq for various likelihoods (linear and logistic regression) and noising models (additive and dropout). In this section, we warm up with additive noise; in Section 4 we turn to our main target of interest, namely dropout noise.
+Linear regression
+Suppose ˜x = x + " is generated by by adding noise with Var["] = �2Id⇥d to the original feature vector x. Note that Var⇠[˜x · �] = �2k�k2
+2, and in the case of linear regression
+A(z) = 1
+2z2, so A00(z) = 1. Applying these facts to (6) yields a simplified form for the quadratic noising penalty:
+Rq(�) = 1
+2�2nk�k2
+Thus, we recover the well-known result that linear regression with additive feature noising is equivalent to ridge regression. Note that, with linear regression, the quadratic approximation Rq is exact and so the correspondence with L2-regularization is also exact.
+Logistic regression
+The situation gets more interesting when we move beyond linear regression.
+For logistic regression, A00(xi · �) = pi(1 � pi) where pi = (1 + exp(�xi · �))�1 is the predicted probability of yi = 1. The quadratic noising penalty is then
+Rq(�) = 1
+2�2k�k2
+2 n
+X i=1 pi(1 � pi).
+In other words, the noising penalty now simultaneously encourages parsimonious modeling as before (by encouraging k�k2
+2 to be small) as well as confident predictions (by encouraging the pi's to move away from 1
+Table 2: Form of the different regularization schemes. These expressions assume that the design matrix has been normalized, i.e., that P i x2 ij = 1 for all j. The pi = (1 + e�xi·�)�1 are mean parameters for the logistic model.
+Linear Regression
+Logistic Regression
+GLM
+L2-penalization k�k2
+2 k�k2
+2 k�k2
+Additive Noising k�k2
+2 k�k2
+P i pi(1 � pi) k�k2
+2 tr(V (�))
+Dropout Training k�k2
+P i, j pi(1 � pi) x2 ij �2 j
+�> diag(X>V (�)X)�
+Regularization based on Dropout Noise
+Recall that dropout training corresponds to applying dropout noise to training examples, where the noised features ˜xi are obtained by setting ˜xij to 0 with some "dropout probability" � and to xij/(1 � �) with probability (1 � �), independently for each coordinate j of the feature vector. We can check that:
+Var⇠ [˜xi · �] = 1
+�
+1 � � d
+X j=1 x2 ij�2 j, (9) and so the quadratic dropout penalty is Rq(�) = 1
+�
+1 � � n
+X i=1
+A00(xi · �) d
+X j=1 x2 ij�2 j.
+Letting X 2 Rn⇥d be the design matrix with rows xi and V (�) 2 Rn⇥n be a diagonal matrix with entries A00(xi · �), we can re-write this penalty as
+Rq(�) = 1
+�
+1 � � �> diag(X>V (�)X)�.
+Let �⇤ be the maximum likelihood estimate given infinite data. When computed at �⇤, the matrix
+1 nX>V (�⇤)X =
+1 n
+Pn i=1 r2`xi, yi(�⇤) is an estimate of the Fisher information matrix I. Thus, dropout can be seen as an attempt to apply an L2 penalty after normalizing the feature vector by diag(I)�1/2. The Fisher information is linked to the shape of the level surfaces of `(�) around �⇤.
+If I were a multiple of the identity matrix, then these level surfaces would be perfectly spherical around �⇤. Dropout, by normalizing the problem by diag(I)�1/2, ensures that while the level surfaces of `(�) may not be spherical, the L2-penalty is applied in a basis where the features have been balanced out. We give a graphical illustration of this phenomenon in Figure A.2.
+Linear Regression
+For linear regression, V is the identity matrix, so the dropout objective is equivalent to a form of ridge regression where each column of the design matrix is normalized before applying the L2 penalty.5 This connection has been noted previously by.
+Logistic Regression
+The form of dropout penalties becomes much more intriguing once we move beyond the realm of linear regression. The case of logistic regression is particularly interesting.
+Here, we can write the quadratic dropout penalty from (10) as
+Rq(�) = 1
+�
+1 � � n
+X i=1 d
+X j=1 pi(1 � pi) x2 ij �2 j.
+Thus, just like additive noising, dropout generally gives an advantage to confident predictions and small �. However, unlike all the other methods considered so far, dropout may allow for some large pi(1 � pi) and some large �2 j, provided that the corresponding cross-term x2 ij is small.
+Our analysis shows that dropout regularization should be better than L2-regularization for learning weights for features that are rare (i.e., often 0) but highly discriminative, because dropout effectively does not penalize �j over observations for which xij = 0. Thus, in order for a feature to earn a large
+�2 j, it suffices for it to contribute to a confident prediction with small pi(1 � pi) each time that it is active.6 Dropout training has been empirically found to perform well on tasks such as document
+5Normalizing the columns of the design matrix before performing penalized regression is standard practice, and is implemented by default in software like glmnet for R.
+6To be precise, dropout does not reward all rare but discriminative features. Rather, dropout rewards those features that are rare and positively co-adapted with other features in a way that enables the model to make confident predictions whenever the feature of interest is active.
+Table 3: Accuracy of L2 and dropout regularized logistic regression on a simulated example. The first row indicates results over test examples where some of the rare useful features are active (i.e., where there is some signal that can be exploited), while the second row indicates accuracy over the full test set. These results are averaged over 100 simulation runs, with 75 training examples in each.
+All tuning parameters were set to optimal values. The sampling error on all reported values is within
+±0.01.
+Accuracy
+L2-regularization
+Dropout training
+Active Instances
+All Instances
+0.55 classification where rare but discriminative features are prevalent. Our result suggests that this is no mere coincidence.
+We summarize the relationship between L2-penalization, additive noising and dropout in Table 2.
+Additive noising introduces a product-form penalty depending on both � and A00. However, the full potential of artificial feature noising only emerges with dropout, which allows the penalty terms due to � and A00 to interact in a non-trivial way through the design matrix X (except for linear regression, in which all the noising schemes we consider collapse to ridge regression).
+A Simulation Example
+The above discussion suggests that dropout logistic regression should perform well with rare but useful features. To test this intuition empirically, we designed a simulation study where all the signal is grouped in 50 rare features, each of which is active only 4% of the time. We then added
+1000 nuisance features that are always active to the design matrix, for a total of d = 1050 features.
+To make sure that our experiment was picking up the effect of dropout training specifically and not just normalization of X, we ensured that the columns of X were normalized in expectation.
+The dropout penalty for logistic regression can be written as a matrix product
+Rq(�) = 1
+�
+1 � � (· · · pi(1 � pi)
+· · ·)
+@
+· · ·
+· · · x2 ij
+· · ·
+· · ·
+A
+@
+· · ·
+�2 j
+· · ·
+A.
+We designed the simulation study in such a way that, at the optimal �, the dropout penalty should have structure
+Small(confident prediction)
+Big(weak prediction)
+!
+· · ·
+· · ·
+· · ·
+B
+@
+C
+A
+Big(useful feature)
+Small(nuisance feature)
+B
+B
+B
+B
+@
+C
+C
+C
+C
+A
+A dropout penalty with such a structure should be small. Although there are some uncertain predictions with large pi(1 � pi) and some big weights �2 j, these terms cannot interact because the corresponding terms x2 ij are all 0 (these are examples without any of the rare discriminative features and thus have no signal). Meanwhile, L2 penalization has no natural way of penalizing some
+�j more and others less. Our simulation results, given in Table 3, confirm that dropout training outperforms L2-regularization here as expected. See Appendix A.1 for details.
+Dropout Regularization in Online Learning
+There is a well-known connection between L2-regularization and stochastic gradient descent (SGD).
+In SGD, the weight vector ˆ� is updated with ˆ�t+1 = ˆ�t � ⌘t gt, where gt = r`xt, yt(ˆ�t) is the gradient of the loss due to the t-th training example. We can also write this update as a linear
+L2-penalized problem
+ˆ�t+1 = argmin�
+⇢
+`xt, yt(ˆ�t) + gt · (� � ˆ�t) + 1
+2⌘t k� � ˆ�tk2
+�, (15) where the first two terms form a linear approximation to the loss and the third term is an L2regularizer. Thus, SGD progresses by repeatedly solving linearized L2-regularized problems.
+0.9 size of unlabeled data accuracydropout+unlabeled dropout
+L2
+0.9 size of labeled data accuracydropout+unlabeled dropout
+L2
+Figure 2: Test set accuracy on the IMDB dataset with unigram features. Left: 10000 labeled training examples, and up to 40000 unlabeled examples. Right: 3000-15000 labeled training examples, and 25000 unlabeled examples. The unlabeled data is discounted by a factor ↵ = 0.4.
+As discussed by Duchi et al., a problem with classic SGD is that it can be slow at learning weights corresponding to rare but highly discriminative features. This problem can be alleviated by running a modified form of SGD with ˆ�t+1 = ˆ�t � ⌘ A�1 t gt, where the transformation At is also learned online; this leads to the AdaGrad family of stochastic descent rules. Duchi et al. use
+At = diag(Gt)1/2 where Gt = Pt i=1 gig> i and show that this choice achieves desirable regret bounds in the presence of rare but useful features. At least superficially, AdaGrad and dropout seem to have similar goals: For logistic regression, they can both be understood as adaptive alternatives to methods based on L2-regularization that favor learning rare, useful features. As it turns out, they have a deeper connection.
+The natural way to incorporate dropout regularization into SGD is to replace the penalty term k� �
+ˆ�k2
+2/2⌘ in (15) with the dropout regularizer, giving us an update rule
+ˆ�t+1 = argmin� n
+`xt, yt(ˆ�t) + gt · (� � ˆ�t) + Rq(� � ˆ�t; ˆ�t) o(16) where, Rq(·; ˆ�t) is the quadratic noising regularizer centered at ˆ�t:7
+Rq(� � ˆ�t; ˆ�t) = 1
+2(� � ˆ�t)> diag(Ht) (� � ˆ�t), where Ht = t
+X i=1 r2`xi, yi(ˆ�t).
+This implies that dropout descent is first-order equivalent to an adaptive SGD procedure with At = diag(Ht). To see the connection between AdaGrad and this dropout-based online procedure, recall that for GLMs both of the expressions
+E�⇤ ⇥ r2`x, y(�⇤)
+⇤
+= E�⇤ ⇥ r`x, y(�⇤)r`x, y(�⇤)>⇤(18) are equal to the Fisher information I. In other words, as ˆ�t converges to �⇤, Gt and Ht are both consistent estimates of the Fisher information. Thus, by using dropout instead of L2-regularization to solve linearized problems in online learning, we end up with an AdaGrad-like algorithm.
+Of course, the connection between AdaGrad and dropout is not perfect. In particular, AdaGrad allows for a more aggressive learning rate by using At = diag(Gt)�1/2 instead of diag(Gt)�1.
+But, at a high level, AdaGrad and dropout appear to both be aiming for the same goal: scaling the features by the Fisher information to make the level-curves of the objective more circular. In contrast, L2-regularization makes no attempt to sphere the level curves, and AROW —another popular adaptive method for online learning—only attempts to normalize the effective feature matrix but does not consider the sensitivity of the loss to changes in the model weights. In the case of logistic regression, AROW also favors learning rare features, but unlike dropout and AdaGrad does not privilege confident predictions.
+7This expression is equivalent to (11) except that we used ˆ�t and not � � ˆ�t to compute Ht.
+Table 4: Performance of semi-supervised dropout training for document classification.(a) Test accuracy with and without unlabeled data on different datasets. Each dataset is split into 3 parts of equal sizes: train, unlabeled, and test. Log. Reg.: logistic regression with L2 regularization; Dropout: dropout trained with quadratic surrogate; +Unlabeled: using unlabeled data.
+Datasets Log. Reg. Dropout +Unlabeled
+Subj
+RT
+IMDB-2k
+XGraph
+BbCrypt
+IMDB(b) Test accuracy on the IMDB dataset. Labeled: using just labeled data from each paper/method, +Unlabeled: use additional unlabeled data. Drop: dropout with Rq, MNB: multionomial naive Bayes with semisupervised frequency estimate from,8-Uni: unigram features, -Bi: bigram features.
+Methods Labeled +Unlabeled
+MNB-Uni 
+MNB-Bi 
+Vect.Sent 
+NBSVM -Bi
+–
+Drop-Uni
+Drop-Bi
+Semi-Supervised Dropout Training
+Recall that the regularizer R(�) in (5) is independent of the labels {yi}. As a result, we can use additional unlabeled training examples to estimate it more accurately. Suppose we have an unlabeled dataset {zi} of size m, and let ↵ 2 (0, 1] be a discount factor for the unlabeled data. Then we can define a semi-supervised penalty estimate
+R⇤(�) def
+= n n + ↵m
+⇣
+R(�) + ↵ RUnlabeled(�)
+⌘, (19) where R(�) is the original penalty estimate and RUnlabeled(�) = P i E⇠[A(zi · �)] � A(zi · �) is computed using (5) over the unlabeled examples zi. We select the discount parameter by crossvalidation; empirically, ↵ 2 [0.1, 0.4] works well. For convenience, we optimize the quadratic surrogate Rq
+⇤ instead of R⇤. Another practical option would be to use the Gaussian approximation from for estimating R⇤(�).
+Most approaches to semi-supervised learning either rely on using a generative model or various assumptions on the relationship between the predictor and the marginal distribution over inputs. Our semi-supervised approach is based on a different intuition: we'd like to set weights to make confident predictions on unlabeled data as well as the labeled data, an intuition shared by entropy regularization and transductive SVMs.
+Experiments
+We apply this semi-supervised technique to text classification. Results on several datasets described in are shown in Table 4a; Figure 2 illustrates how the use of unlabeled data improves the performance of our classifier on a single dataset. Overall, we see that using unlabeled data to learn a better regularizer R⇤(�) consistently improves the performance of dropout training.
+Table 4b shows our results on the IMDB dataset of. The dataset contains 50,000 unlabeled examples in addition to the labeled train and test sets of size 25,000 each. Whereas the train and test examples are either positive or negative, the unlabeled examples contain neutral reviews as well.
+We train a dropout-regularized logistic regression classifier on unigram/bigram features, and use the unlabeled data to tune our regularizer. Our method benefits from unlabeled data even in the presence of a large amount of labeled data, and achieves state-of-the-art accuracy on this dataset.
+Conclusion
+We analyzed dropout training as a form of adaptive regularization. This framework enabled us to uncover close connections between dropout training, adaptively balanced L2-regularization, and AdaGrad; and led to a simple yet effective method for semi-supervised training. There seem to be multiple opportunities for digging deeper into the connection between dropout training and adaptive regularization. In particular, it would be interesting to see whether the dropout regularizer takes on a tractable and/or interpretable form in neural networks, and whether similar semi-supervised schemes could be used to improve on the results presented in.
+8Our implementation of semi-supervised MNB. MNB with EM failed to give an improvement.
+References
+ Geoffrey E Hinton, Nitish Srivastava, Alex Krizhevsky, Ilya Sutskever, and Ruslan R Salakhutdinov.
+Improving neural networks by preventing co-adaptation of feature detectors. arXiv preprint arXiv:1207.0580, 2012.
+ Laurens van der Maaten, Minmin Chen, Stephen Tyree, and Kilian Q Weinberger.
+Learning with marginalized corrupted features. In Proceedings of the International Conference on Machine Learning, Sida I Wang and Christopher D Manning. Fast dropout training. In Proceedings of the International
+Conference on Machine Learning, 2013.
+ Yaser S Abu-Mostafa. Learning from hints in neural networks. Journal of Complexity, 6(2):192–198, Chris J.C. Burges and Bernhard Schlkopf. Improving the accuracy and speed of support vector machines.
+In Advances in Neural Information Processing Systems, pages 375–381, 1997.
+ Patrice Y Simard, Yann A Le Cun, John S Denker, and Bernard Victorri. Transformation invariance in pattern recognition: Tangent distance and propagation. International Journal of Imaging Systems and Technology, 11(3):181–197, 2000.
+ Salah Rifai, Yann Dauphin, Pascal Vincent, Yoshua Bengio, and Xavier Muller. The manifold tangent classifier. Advances in Neural Information Processing Systems, 24:2294–2302, 2011.
+ Kiyotoshi Matsuoka. Noise injection into inputs in back-propagation learning. Systems, Man and Cybernetics, IEEE Transactions on, 22(3):436–440, 1992.
+ Chris M Bishop. Training with noise is equivalent to Tikhonov regularization. Neural computation, 7(1):108–116, 1995.
+ Salah Rifai, Xavier Glorot, Yoshua Bengio, and Pascal Vincent. Adding noise to the input of a model trained with a regularized objective. arXiv preprint arXiv:1104.3250, 2011.
+ John Duchi, Elad Hazan, and Yoram Singer.
+Adaptive subgradient methods for online learning and stochastic optimization. Journal of Machine Learning Research, 12:2121–2159, 2010.
+ Andrew L Maas, Raymond E Daly, Peter T Pham, Dan Huang, Andrew Y Ng, and Christopher Potts.
+Learning word vectors for sentiment analysis. In Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics, pages 142–150. Association for Computational Linguistics, 2011.
+ Sida I Wang, Mengqiu Wang, Stefan Wager, Percy Liang, and Christopher D Manning. Feature noising for log-linear structured prediction. In Empirical Methods in Natural Language Processing, 2013.
+ Ian J Goodfellow, David Warde-Farley, Mehdi Mirza, Aaron Courville, and Yoshua Bengio. Maxout networks. In Proceedings of the International Conference on Machine Learning, 2013.
+ Sida Wang and Christopher D Manning. Baselines and bigrams: Simple, good sentiment and topic classification. In Proceedings of the 50th Annual Meeting of the Association for Computational Linguistics, pages 90–94. Association for Computational Linguistics, 2012.
+ Jerome Friedman, Trevor Hastie, and Rob Tibshirani. Regularization paths for generalized linear models via coordinate descent. Journal of Statistical Software, 33(1):1, 2010.
+ Erich Leo Lehmann and George Casella. Theory of Point Estimation. Springer, 1998.
+ Koby Crammer, Alex Kulesza, Mark Dredze, et al. Adaptive regularization of weight vectors. Advances in Neural Information Processing Systems, 22:414–422, 2009.
+ Jiang Su, Jelber Sayyad Shirab, and Stan Matwin. Large scale text classification using semi-supervised multinomial naive Bayes. In Proceedings of the International Conference on Machine Learning, 2011.
+ Kamal Nigam, Andrew Kachites McCallum, Sebastian Thrun, and Tom Mitchell. Text classification from labeled and unlabeled documents using EM. Machine Learning, 39(2-3):103–134, May 2000.
+ G. Bouchard and B. Triggs. The trade-off between generative and discriminative classifiers. In International Conference on Computational Statistics, pages 721–728, 2004.
+ R. Raina, Y. Shen, A. Ng, and A. McCallum. Classification with hybrid generative/discriminative models.
+In Advances in Neural Information Processing Systems, Cambridge, MA, 2004. MIT Press.
+ J. Suzuki, A. Fujino, and H. Isozaki.
+Semi-supervised structured output learning based on a hybrid generative and discriminative approach.
+In Empirical Methods in Natural Language Processing and Computational Natural Language Learning, 2007.
+ Y. Grandvalet and Y. Bengio. Entropy regularization. In Semi-Supervised Learning, United Kingdom, 2005. Springer.
+ Thorsten Joachims.
+Transductive inference for text classification using support vector machines.
+In
+Proceedings of the International Conference on Machine Learning, pages 200–209, 1999.

@@ -1,0 +1,12 @@
+Semantic Matching in Search
+Hang Li and Jun Xu
+Noah's Ark Lab, Huawei Technologies, Hong Kong
+ABSTRACT
+In this talk, we will give a high level introduction to our book entitled "Semantic Matching in Search", which was published recently in Foundations and Trends in Information Retrieval. We will start our talk by pointing out the importance of semantic matching for natural language processing and information retrieval. Most of the tasks in natural language processing and information retrieval, including search, question answering, and machine translation, are based on matching between language expressions.
+This approach works quite well in practice; its limitation is also obvious, however. Sometimes mismatch can occur. We argue that 'semantic matching' is an effective approach to overcome the challenge, that is to conduct more semantic analysis on the language expressions and perform matching between language expressions at semantic level. We will then introduce the major approaches to semantic matching in search, developed in the research community in recent
+SMIR'14, July 11, 2014, Gold Coast, Queensland, Australia.. years, including matching by query reformulation, matching with term dependency model, matching with translation model, matching with topic model, and matching with latent space model. We will conclude the talk by explaining our view on the open problems and future directions of semantic matching.
+Categories and Subject Descriptors
+H.4.0 [Information Systems Applications]: General
+Keywords semantic matching, information retrieval, web search
+REFERENCES
+ H. Li and J. Xu. Semantic Matching in Search. Foundations and Trends in Information Retrieval, 7(5):343–469, 2013.

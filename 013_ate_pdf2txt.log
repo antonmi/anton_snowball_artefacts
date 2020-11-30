@@ -1,0 +1,706 @@
+["txt_dir", "../data/GAN/txts"]
+["pdf_dir", "../data/GAN/pdfs"]
+[["../data/GAN/pdfs", "2010-BO-null(null)-(null-null)-(null)-(3021520429) 2.pdf"], ["../data/GAN/pdfs", "2010-BO-null(null)-(null-null)-(null)-(3021520429).pdf"], ["../data/GAN/pdfs", "2010-CP-26(4)-(449-467)-(J.1467-8640.2010.00366.X)-(2106004777) 2.pdf"], ["../data/GAN/pdfs", "2010-CP-26(4)-(449-467)-(J.1467-8640.2010.00366.X)-(2106004777).pdf"], ["../data/GAN/pdfs", "2010-CP-null(null)-(1062-1069)-(CVPR.2010.5540096)-(2141357020) 2.pdf"], ["../data/GAN/pdfs", "2010-CP-null(null)-(1062-1069)-(CVPR.2010.5540096)-(2141357020).pdf"], ["../data/GAN/pdfs", "2010-CP-null(null)-(3360-3367)-(CVPR.2010.5540018)-(2027922120).pdf"], ["../data/GAN/pdfs", "2010-CP-null(null)-(451-458)-(1835449.1835525)-(2139450192) 2.pdf"], ["../data/GAN/pdfs", "2010-CP-null(null)-(451-458)-(1835449.1835525)-(2139450192).pdf"], ["../data/GAN/pdfs", "2010-CP-null(null)-(73-80)-(CVPR.2010.5540226)-(2128715914).pdf"], ["../data/GAN/pdfs", "2010-CP-null(null)-(902-909)-(CVPR.2010.5540120)-(1981613567).pdf"], ["../data/GAN/pdfs", "2010-JA-11(19)-(625-660)-(null)-(2138857742) 2.pdf"], ["../data/GAN/pdfs", "2010-JA-11(19)-(625-660)-(null)-(2138857742).pdf"], ["../data/GAN/pdfs", "2010-JA-13(3)-(254-270)-(S10791-009-9112-1)-(2162059449).pdf"], ["../data/GAN/pdfs", "2010-JA-13(4)-(346-374)-(S10791-009-9123-Y)-(2007815473) 2.pdf"], ["../data/GAN/pdfs", "2010-JA-13(4)-(346-374)-(S10791-009-9123-Y)-(2007815473).pdf"], ["../data/GAN/pdfs", "2010-RE-null(null)-(null-null)-(null)-(2171490498).pdf"], ["../data/GAN/pdfs", "2010-UN-null(null)-(null-null)-(null)-(2115584760) 2.pdf"], ["../data/GAN/pdfs", "2010-UN-null(null)-(null-null)-(null)-(2115584760).pdf"], ["../data/GAN/pdfs", "2011-CP-24(null)-(2546-2554)-(null)-(2106411961).pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(105-114)-(2009916.2009934)-(2000431947) 2.pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(105-114)-(2009916.2009934)-(2000431947).pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(1879-1886)-(ICCV.2011.6126456)-(2129305389) 2.pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(1879-1886)-(ICCV.2011.6126456)-(2129305389).pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(265-272)-(null)-(2102017903) 2.pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(265-272)-(null)-(2102017903).pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(2857-2864)-(CVPR.2011.5995710)-(1995997122) 2.pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(2857-2864)-(CVPR.2011.5995710)-(1995997122).pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(817-824)-(CVPR.2011.5995432)-(2084363474) 2.pdf"], ["../data/GAN/pdfs", "2011-CP-null(null)-(817-824)-(CVPR.2011.5995432)-(2084363474).pdf"], ["../data/GAN/pdfs", "2011-JA-94(10)-(1854-1862)-(TRANSINF.E94.D.1854)-(2101626488) 2.pdf"], ["../data/GAN/pdfs", "2011-JA-94(10)-(1854-1862)-(TRANSINF.E94.D.1854)-(2101626488).pdf"], ["../data/GAN/pdfs", "2011-UN-null(null)-(17-37)-(null)-(2616180702) 2.pdf"], ["../data/GAN/pdfs", "2011-UN-null(null)-(17-37)-(null)-(2616180702).pdf"], ["../data/GAN/pdfs", "2011-UN-null(null)-(97-111)-(null)-(2726367589) 2.pdf"], ["../data/GAN/pdfs", "2011-UN-null(null)-(97-111)-(null)-(2726367589).pdf"], ["../data/GAN/pdfs", "2012-CP-25(null)-(1223-1231)-(null)-(2168231600) 2.pdf"], ["../data/GAN/pdfs", "2012-CP-25(null)-(1223-1231)-(null)-(2168231600).pdf"], ["../data/GAN/pdfs", "2012-CP-25(null)-(2951-2959)-(null)-(2131241448) 2.pdf"], ["../data/GAN/pdfs", "2012-CP-25(null)-(2951-2959)-(null)-(2131241448).pdf"], ["../data/GAN/pdfs", "2012-CP-null(null)-(1627-1634)-(null)-(2096873754) 2.pdf"], ["../data/GAN/pdfs", "2012-CP-null(null)-(1627-1634)-(null)-(2096873754).pdf"], ["../data/GAN/pdfs", "2012-CP-null(null)-(3474-3481)-(CVPR.2012.6248089)-(1995318441) 2.pdf"], ["../data/GAN/pdfs", "2012-CP-null(null)-(3474-3481)-(CVPR.2012.6248089)-(1995318441).pdf"], ["../data/GAN/pdfs", "2012-CP-null(null)-(445-458)-(978-3-642-33765-9_32)-(25437484) 2.pdf"], ["../data/GAN/pdfs", "2012-CP-null(null)-(445-458)-(978-3-642-33765-9_32)-(25437484).pdf"], ["../data/GAN/pdfs", "2012-CP-null(null)-(761-770)-(2348283.2348385)-(2109154214) 2.pdf"], ["../data/GAN/pdfs", "2012-CP-null(null)-(761-770)-(2348283.2348385)-(2109154214).pdf"], ["../data/GAN/pdfs", "2012-RE-null(null)-(null-null)-(null)-(2952111767) 2.pdf"], ["../data/GAN/pdfs", "2012-RE-null(null)-(null-null)-(null)-(2952111767).pdf"], ["../data/GAN/pdfs", "2013-CP-26(null)-(2121-2129)-(null)-(2123024445) 2.pdf"], ["../data/GAN/pdfs", "2013-CP-26(null)-(2121-2129)-(null)-(2123024445).pdf"], ["../data/GAN/pdfs", "2013-CP-26(null)-(351-359)-(null)-(2152722485) 2.pdf"], ["../data/GAN/pdfs", "2013-CP-26(null)-(351-359)-(null)-(2152722485).pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(118-126)-(null)-(35527955) 2.pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(118-126)-(null)-(35527955).pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(1409-1416)-(ICCV.2013.178)-(1964763677) 2.pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(1409-1416)-(ICCV.2013.178)-(1964763677).pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(3294-3301)-(CVPR.2013.423)-(1964005749) 2.pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(3294-3301)-(CVPR.2013.423)-(1964005749).pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(410-418)-(null)-(2158542502) 2.pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(410-418)-(null)-(2158542502).pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(819-826)-(CVPR.2013.111)-(2109317801) 2.pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(819-826)-(CVPR.2013.111)-(2109317801).pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(923-930)-(CVPR.2013.124)-(2033832873) 2.pdf"], ["../data/GAN/pdfs", "2013-CP-null(null)-(923-930)-(CVPR.2013.124)-(2033832873).pdf"], ["../data/GAN/pdfs", "2013-JA-35(8)-(1798-1828)-(TPAMI.2013.50)-(2163922914) 2.pdf"], ["../data/GAN/pdfs", "2013-JA-35(8)-(1798-1828)-(TPAMI.2013.50)-(2163922914).pdf"], ["../data/GAN/pdfs", "2013-RE-null(null)-(null-null)-(null)-(2952899695) 2.pdf"], ["../data/GAN/pdfs", "2013-RE-null(null)-(null-null)-(null)-(2952899695).pdf"], ["../data/GAN/pdfs", "2013-UN-null(null)-(1-37)-(978-3-642-39593-2_1)-(1613249581) 2.pdf"], ["../data/GAN/pdfs", "2013-UN-null(null)-(1-37)-(978-3-642-39593-2_1)-(1613249581).pdf"], ["../data/GAN/pdfs", "2014-BO-null(null)-(null-null)-(null)-(2150341604) 2.pdf"], ["../data/GAN/pdfs", "2014-BO-null(null)-(null-null)-(null)-(2150341604).pdf"], ["../data/GAN/pdfs", "2014-BO-null(null)-(null-null)-(null)-(2170245882) 2.pdf"], ["../data/GAN/pdfs", "2014-BO-null(null)-(null-null)-(null)-(2170245882).pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(1077-1085)-(null)-(122178443) 2.pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(1077-1085)-(null)-(122178443).pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(1293-1299)-(null)-(2405933695) 2.pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(1293-1299)-(null)-(2405933695).pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(297-312)-(978-3-319-10584-0_20)-(1507506748) 2.pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(297-312)-(978-3-319-10584-0_20)-(1507506748).pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(512-519)-(CVPRW.2014.131)-(2062118960) 2.pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(512-519)-(CVPRW.2014.131)-(2062118960).pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(701-710)-(2623330.2623732)-(2154851992) 2.pdf"], ["../data/GAN/pdfs", "2014-CP-null(null)-(701-710)-(2623330.2623732)-(2154851992).pdf"], ["../data/GAN/pdfs", "2014-JA-15(1)-(1929-1958)-(null)-(2095705004) 2.pdf"], ["../data/GAN/pdfs", "2014-JA-15(1)-(1929-1958)-(null)-(2095705004).pdf"], ["../data/GAN/pdfs", "2014-RE-null(null)-(null-null)-(null)-(1594098193) 2.pdf"], ["../data/GAN/pdfs", "2014-RE-null(null)-(null-null)-(null)-(1594098193).pdf"], ["../data/GAN/pdfs", "2014-RE-null(null)-(null-null)-(null)-(2168894214) 2.pdf"], ["../data/GAN/pdfs", "2014-RE-null(null)-(null-null)-(null)-(2168894214).pdf"], ["../data/GAN/pdfs", "2014-RE-null(null)-(null-null)-(null)-(2949825606) 2.pdf"], ["../data/GAN/pdfs", "2014-RE-null(null)-(null-null)-(null)-(2949825606).pdf"], ["../data/GAN/pdfs", "2014-RE-null(null)-(null-null)-(null)-(2952375406) 2.pdf"], ["../data/GAN/pdfs", "2014-RE-null(null)-(null-null)-(null)-(2952375406).pdf"], ["../data/GAN/pdfs", "2015-CP-28(null)-(2377-2385)-(null)-(1026270304) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-28(null)-(2377-2385)-(null)-(1026270304).pdf"], ["../data/GAN/pdfs", "2015-CP-28(null)-(2755-2763)-(null)-(2182361439) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-28(null)-(2755-2763)-(null)-(2182361439).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1-9)-(CVPR.2015.7298594)-(2097117768) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1-9)-(CVPR.2015.7298594)-(2097117768).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1155-1164)-(2783258.2783295)-(1985697265) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1155-1164)-(2783258.2783295)-(1985697265).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1225-1237)-(APSIPA.2015.7415532)-(2963522845) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1225-1237)-(APSIPA.2015.7415532)-(2963522845).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1310-1321)-(2810103.2813687)-(2053637704) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1310-1321)-(2810103.2813687)-(2053637704).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1340-1346)-(null)-(2217066517) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1340-1346)-(null)-(2217066517).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1395-1403)-(ICCV.2015.164)-(845365781) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1395-1403)-(ICCV.2015.164)-(845365781).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1413-1421)-(ICCV.2015.166)-(2198618282) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1413-1421)-(ICCV.2015.166)-(2198618282).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1718-1727)-(null)-(1487641199) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1718-1727)-(null)-(1487641199).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1990-1998)-(null)-(809122546) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(1990-1998)-(null)-(809122546).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(2302-2310)-(null)-(277886906) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(2302-2310)-(null)-(277886906).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(2927-2936)-(CVPR.2015.7298911)-(2044913453) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(2927-2936)-(CVPR.2015.7298911)-(2044913453).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(3128-3137)-(CVPR.2015.7298932)-(1905882502) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(3128-3137)-(CVPR.2015.7298932)-(1905882502).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(3202-3212)-(CVPR.2015.7298940)-(2078238240) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(3202-3212)-(CVPR.2015.7298940)-(2078238240).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(334-345)-(MSR.2015.38)-(2018389835) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(334-345)-(MSR.2015.38)-(2018389835).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(3431-3440)-(CVPR.2015.7298965)-(1903029394) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(3431-3440)-(CVPR.2015.7298965)-(1903029394).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(4566-4575)-(CVPR.2015.7299087)-(1956340063) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(4566-4575)-(CVPR.2015.7299087)-(1956340063).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(507-516)-(2783258.2783365)-(2042954874) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(507-516)-(2783258.2783365)-(2042954874).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(556-560)-(ICSM.2015.7332513)-(2118548380) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(556-560)-(ICSM.2015.7332513)-(2118548380).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(562-570)-(null)-(2963606038) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(562-570)-(null)-(2963606038).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(625-635)-(2736277.2741627)-(1570098300) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(625-635)-(2736277.2741627)-(1570098300).pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(881-889)-(null)-(1866230956) 2.pdf"], ["../data/GAN/pdfs", "2015-CP-null(null)-(881-889)-(null)-(1866230956).pdf"], ["../data/GAN/pdfs", "2015-JA-61(null)-(85-117)-(J.NEUNET.2014.09.003)-(2076063813) 2.pdf"], ["../data/GAN/pdfs", "2015-JA-61(null)-(85-117)-(J.NEUNET.2014.09.003)-(2076063813).pdf"], ["../data/GAN/pdfs", "2015-JA-null(null)-(143-171)-(B978-0-12-802806-3.00008-7)-(2147062276) 2.pdf"], ["../data/GAN/pdfs", "2015-JA-null(null)-(143-171)-(B978-0-12-802806-3.00008-7)-(2147062276).pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2167085024) 2.pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2167085024).pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2189246496) 2.pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2189246496).pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2278264165) 2.pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2278264165).pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2950891598) 2.pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2950891598).pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2952729433) 2.pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2952729433).pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2953259386) 2.pdf"], ["../data/GAN/pdfs", "2015-RE-null(null)-(null-null)-(null)-(2953259386).pdf"], ["../data/GAN/pdfs", "2016-CP-29(null)-(3738-3746)-(null)-(2963135265) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-29(null)-(3738-3746)-(null)-(2963135265).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(165-174)-(2983323.2983702)-(2507839313) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(165-174)-(2983323.2983702)-(2507839313).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(1727-1736)-(null)-(2963773425) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(1727-1736)-(null)-(2963773425).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(2793-2799)-(null)-(2286300105) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(2793-2799)-(null)-(2286300105).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(3-19)-(978-3-319-46493-0_1)-(2332488709) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(3-19)-(978-3-319-46493-0_1)-(2332488709).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(4594-4602)-(CVPR.2016.497)-(1573040851) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(4594-4602)-(CVPR.2016.497)-(1573040851).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(49-58)-(CVPR.2016.13)-(2398118205) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(49-58)-(CVPR.2016.13)-(2398118205).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(499-515)-(978-3-319-46478-7_31)-(2520774990) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(499-515)-(978-3-319-46478-7_31)-(2520774990).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(5337-5346)-(CVPR.2016.576)-(2963325024) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(5337-5346)-(CVPR.2016.576)-(2963325024).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(577-593)-(978-3-319-46493-0_35)-(2308529009) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(577-593)-(978-3-319-46493-0_35)-(2308529009).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(601-618)-(null)-(2964318098) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(601-618)-(null)-(2964318098).pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(613-621)-(M26GIH-TNYZ)-(2520707650) 2.pdf"], ["../data/GAN/pdfs", "2016-CP-null(null)-(613-621)-(M26GIH-TNYZ)-(2520707650).pdf"], ["../data/GAN/pdfs", "2016-JA-3(1)-(9-null)-(S40537-016-0043-6)-(2395579298) 2.pdf"], ["../data/GAN/pdfs", "2016-JA-3(1)-(9-null)-(S40537-016-0043-6)-(2395579298).pdf"], ["../data/GAN/pdfs", "2016-JA-3(null)-(null-null)-(FENVS.2015.00080)-(2189911347) 2.pdf"], ["../data/GAN/pdfs", "2016-JA-3(null)-(null-null)-(FENVS.2015.00080)-(2189911347).pdf"], ["../data/GAN/pdfs", "2016-JA-64(17)-(4504-4518)-(TSP.2016.2557301)-(1857867064) 2.pdf"], ["../data/GAN/pdfs", "2016-JA-64(17)-(4504-4518)-(TSP.2016.2557301)-(1857867064).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2259472270) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2259472270).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2366141641) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2366141641).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2399306074) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2399306074).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2409550820) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2409550820).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2411541852) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2411541852).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2412320034) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2412320034).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2461943168) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2461943168).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2471149695) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2471149695).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2554863749) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2554863749).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2949099979) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2949099979).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2951055789) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2951055789).pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2951708950) 2.pdf"], ["../data/GAN/pdfs", "2016-RE-null(null)-(null-null)-(null)-(2951708950).pdf"], ["../data/GAN/pdfs", "2016-UN-104(1)-(148-175)-(JPROC.2015.2494218)-(2192203593) 2.pdf"], ["../data/GAN/pdfs", "2016-UN-104(1)-(148-175)-(JPROC.2015.2494218)-(2192203593).pdf"], ["../data/GAN/pdfs", "2016-UN-104(1)-(34-57)-(JPROC.2015.2487976)-(2963213486) 2.pdf"], ["../data/GAN/pdfs", "2016-UN-104(1)-(34-57)-(JPROC.2015.2487976)-(2963213486).pdf"], ["../data/GAN/pdfs", "2017-CP-10772(null)-(1403-1406)-(3077136.3082062)-(2964304677) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-10772(null)-(1403-1406)-(3077136.3082062)-(2964304677).pdf"], ["../data/GAN/pdfs", "2017-CP-2017(null)-(5533-5542)-(CVPR.2017.587)-(2964189064) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-2017(null)-(5533-5542)-(CVPR.2017.587)-(2964189064).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(1-18)-(3132747.3132785)-(2616028256) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(1-18)-(3132747.3132785)-(2616028256).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(2206-2214)-(CVPR.2017.237)-(2613997951) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(2206-2214)-(CVPR.2017.237)-(2613997951).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(2261-2269)-(CVPR.2017.243)-(2963446712) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(2261-2269)-(CVPR.2017.243)-(2963446712).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(257-266)-(3132847.3132914)-(2766284073) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(257-266)-(3132847.3132914)-(2766284073).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(380-389)-(null)-(2964231305) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(380-389)-(null)-(2964231305).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(4006-4015)-(null)-(2964017345) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(4006-4015)-(null)-(2964017345).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(475-484)-(3077136.3080838)-(2741497758) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(475-484)-(3077136.3080838)-(2741497758).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(49-60)-(3106237.3106256)-(2593675739) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(49-60)-(3106237.3106256)-(2593675739).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(4904-4912)-(ICCV.2017.524)-(2552161745) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(4904-4912)-(ICCV.2017.524)-(2552161745).pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(65-74)-(3077136.3080832)-(2610935556) 2.pdf"], ["../data/GAN/pdfs", "2017-CP-null(null)-(65-74)-(3077136.3080832)-(2610935556).pdf"], ["../data/GAN/pdfs", "2017-JA-28(10)-(2222-2232)-(TNNLS.2016.2582924)-(1689711448) 2.pdf"], ["../data/GAN/pdfs", "2017-JA-28(10)-(2222-2232)-(TNNLS.2016.2582924)-(1689711448).pdf"], ["../data/GAN/pdfs", "2017-JA-34(4)-(18-42)-(MSP.2017.2693418)-(2558748708) 2.pdf"], ["../data/GAN/pdfs", "2017-JA-34(4)-(18-42)-(MSP.2017.2693418)-(2558748708).pdf"], ["../data/GAN/pdfs", "2017-JA-4(1)-(1-42)-(S40537-017-0089-0)-(2758375579) 2.pdf"], ["../data/GAN/pdfs", "2017-JA-4(1)-(1-42)-(S40537-017-0089-0)-(2758375579).pdf"], ["../data/GAN/pdfs", "2017-JA-4(3)-(161-175)-(J.DCAN.2017.10.002)-(2762644836) 2.pdf"], ["../data/GAN/pdfs", "2017-JA-4(3)-(161-175)-(J.DCAN.2017.10.002)-(2762644836).pdf"], ["../data/GAN/pdfs", "2017-JA-42(null)-(60-88)-(J.MEDIA.2017.07.005)-(2592929672) 2.pdf"], ["../data/GAN/pdfs", "2017-JA-42(null)-(60-88)-(J.MEDIA.2017.07.005)-(2592929672).pdf"], ["../data/GAN/pdfs", "2017-PT-null(null)-(null-null)-(null)-(2770298516) 2.pdf"], ["../data/GAN/pdfs", "2017-PT-null(null)-(null-null)-(null)-(2770298516).pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2586544230) 2.pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2586544230).pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2586811659) 2.pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2586811659).pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2590953969) 2.pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2590953969).pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2611099133) 2.pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2611099133).pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2619890685) 2.pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2619890685).pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2626967530) 2.pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2626967530).pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2743563068) 2.pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2743563068).pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2767002384) 2.pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2767002384).pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2769989147) 2.pdf"], ["../data/GAN/pdfs", "2017-RE-null(null)-(null-null)-(null)-(2769989147).pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(100-111)-(ISSRE.2018.00021)-(2799640043) 2.pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(100-111)-(ISSRE.2018.00021)-(2799640043).pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(4367-4375)-(CVPR.2018.00459)-(2798836702) 2.pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(4367-4375)-(CVPR.2018.00459)-(2798836702).pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(451-466)-(978-3-030-01246-5_27)-(2963115079) 2.pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(451-466)-(978-3-030-01246-5_27)-(2963115079).pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(5505-5514)-(CVPR.2018.00577)-(3043547428) 2.pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(5505-5514)-(CVPR.2018.00577)-(3043547428).pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(7986-7994)-(CVPR.2018.00833)-(2964216930) 2.pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(7986-7994)-(CVPR.2018.00833)-(2964216930).pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(8697-8710)-(CVPR.2018.00907)-(2964081807) 2.pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(8697-8710)-(CVPR.2018.00907)-(2964081807).pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(9368-9377)-(CVPR.2018.00976)-(2798820905) 2.pdf"], ["../data/GAN/pdfs", "2018-CP-null(null)-(9368-9377)-(CVPR.2018.00976)-(2798820905).pdf"], ["../data/GAN/pdfs", "2018-JA-10(4)-(354-364)-(TG.2018.2799997)-(2769575776) 2.pdf"], ["../data/GAN/pdfs", "2018-JA-10(4)-(354-364)-(TG.2018.2799997)-(2769575776).pdf"], ["../data/GAN/pdfs", "2018-JA-158(null)-(113-122)-(J.CMPB.2018.01.025)-(2755930428) 2.pdf"], ["../data/GAN/pdfs", "2018-JA-158(null)-(113-122)-(J.CMPB.2018.01.025)-(2755930428).pdf"], ["../data/GAN/pdfs", "2018-JA-24(15)-(3492-3499)-(1078-0432.CCR-18-0385)-(2789242863) 2.pdf"], ["../data/GAN/pdfs", "2018-JA-24(15)-(3492-3499)-(1078-0432.CCR-18-0385)-(2789242863).pdf"], ["../data/GAN/pdfs", "2018-JA-27(5)-(2368-2378)-(TIP.2017.2787612)-(2612135493) 2.pdf"], ["../data/GAN/pdfs", "2018-JA-27(5)-(2368-2378)-(TIP.2017.2787612)-(2612135493).pdf"], ["../data/GAN/pdfs", "2018-JA-37(2)-(384-395)-(TMI.2017.2743464)-(2620296437) 2.pdf"], ["../data/GAN/pdfs", "2018-JA-37(2)-(384-395)-(TMI.2017.2743464)-(2620296437).pdf"], ["../data/GAN/pdfs", "2018-JA-9(2)-(513-530)-(C7SC02664A)-(2594183968) 2.pdf"], ["../data/GAN/pdfs", "2018-JA-9(2)-(513-530)-(C7SC02664A)-(2594183968).pdf"], ["../data/GAN/pdfs", "2018-JA-null(null)-(19-28)-(3206098.3206111)-(2802022891) 2.pdf"], ["../data/GAN/pdfs", "2018-JA-null(null)-(19-28)-(3206098.3206111)-(2802022891).pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2786808285) 2.pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2786808285).pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2792738181) 2.pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2792738181).pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2795783309) 2.pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2795783309).pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2842511635) 2.pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2842511635).pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2965236084) 2.pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2965236084).pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2971325325) 2.pdf"], ["../data/GAN/pdfs", "2018-RE-null(null)-(null-null)-(null)-(2971325325).pdf"], ["../data/GAN/pdfs", "2019-CP-null(null)-(1861-1870)-(CVPR.2019.00196)-(2953271441) 2.pdf"], ["../data/GAN/pdfs", "2019-CP-null(null)-(1861-1870)-(CVPR.2019.00196)-(2953271441).pdf"], ["../data/GAN/pdfs", "2019-CP-null(null)-(6210-6219)-(CVPR.2019.00637)-(2979579363) 2.pdf"], ["../data/GAN/pdfs", "2019-CP-null(null)-(6210-6219)-(CVPR.2019.00637)-(2979579363).pdf"], ["../data/GAN/pdfs", "2019-CP-null(null)-(692-702)-(ICCV.2019.00078)-(2982232682) 2.pdf"], ["../data/GAN/pdfs", "2019-CP-null(null)-(692-702)-(ICCV.2019.00078)-(2982232682).pdf"], ["../data/GAN/pdfs", "2019-CP-null(null)-(9865-9874)-(ICCV.2019.00996)-(2990500698) 2.pdf"], ["../data/GAN/pdfs", "2019-CP-null(null)-(9865-9874)-(ICCV.2019.00996)-(2990500698).pdf"], ["../data/GAN/pdfs", "2019-JA-10(4)-(150-null)-(INFO10040150)-(2937423263) 2.pdf"], ["../data/GAN/pdfs", "2019-JA-10(4)-(150-null)-(INFO10040150)-(2937423263).pdf"], ["../data/GAN/pdfs", "2019-JA-111(null)-(47-63)-(J.NEUNET.2018.12.002)-(2798878556) 2.pdf"], ["../data/GAN/pdfs", "2019-JA-111(null)-(47-63)-(J.NEUNET.2018.12.002)-(2798878556).pdf"], ["../data/GAN/pdfs", "2019-JA-116(44)-(22071-22080)-(PNAS.1900654116)-(2910705748) 2.pdf"], ["../data/GAN/pdfs", "2019-JA-116(44)-(22071-22080)-(PNAS.1900654116)-(2910705748).pdf"], ["../data/GAN/pdfs", "2019-JA-41(4)-(801-814)-(TPAMI.2018.2814042)-(2312004824) 2.pdf"], ["../data/GAN/pdfs", "2019-JA-41(4)-(801-814)-(TPAMI.2018.2814042)-(2312004824).pdf"], ["../data/GAN/pdfs", "2019-JA-41(9)-(2251-2265)-(TPAMI.2018.2857768)-(2963499153) 2.pdf"], ["../data/GAN/pdfs", "2019-JA-41(9)-(2251-2265)-(TPAMI.2018.2857768)-(2963499153).pdf"], ["../data/GAN/pdfs", "2019-JA-null(null)-(369-378)-(3287560.3287595)-(2899682268) 2.pdf"], ["../data/GAN/pdfs", "2019-JA-null(null)-(369-378)-(3287560.3287595)-(2899682268).pdf"], ["../data/GAN/pdfs", "2019-RE-null(null)-(null-null)-(null)-(2933502442) 2.pdf"], ["../data/GAN/pdfs", "2019-RE-null(null)-(null-null)-(null)-(2933502442).pdf"], ["../data/GAN/pdfs", "2019-RE-null(null)-(null-null)-(null)-(2938830017) 2.pdf"], ["../data/GAN/pdfs", "2019-RE-null(null)-(null-null)-(null)-(2938830017).pdf"], ["../data/GAN/pdfs", "2019-RE-null(null)-(null-null)-(null)-(2943530662) 2.pdf"], ["../data/GAN/pdfs", "2019-RE-null(null)-(null-null)-(null)-(2943530662).pdf"], ["../data/GAN/pdfs", "2019-RE-null(null)-(null-null)-(null)-(2965373594) 2.pdf"], ["../data/GAN/pdfs", "2019-RE-null(null)-(null-null)-(null)-(2965373594).pdf"], ["../data/GAN/pdfs", "2020-CP-null(null)-(null-null)-(null)-(2996403597) 2.pdf"], ["../data/GAN/pdfs", "2020-CP-null(null)-(null-null)-(null)-(2996403597).pdf"], ["../data/GAN/pdfs", "2020-JA-50(9)-(3840-3854)-(TCYB.2020.2983860)-(2887063112) 2.pdf"], ["../data/GAN/pdfs", "2020-JA-50(9)-(3840-3854)-(TCYB.2020.2983860)-(2887063112).pdf"], ["../data/GAN/pdfs", "2020-JA-6(1)-(3-28)-(TBDATA.2018.2850013)-(2963512530) 2.pdf"], ["../data/GAN/pdfs", "2020-JA-6(1)-(3-28)-(TBDATA.2018.2850013)-(2963512530).pdf"], ["../data/GAN/pdfs", "2020-RE-null(null)-(null-null)-(null)-(3006528745) 2.pdf"], ["../data/GAN/pdfs", "2020-RE-null(null)-(null-null)-(null)-(3006528745).pdf"], ["../data/GAN/pdfs", "2020-RE-null(null)-(null-null)-(null)-(3021450295) 2.pdf"], ["../data/GAN/pdfs", "2020-RE-null(null)-(null-null)-(null)-(3021450295).pdf"], ["../data/GAN/pdfs", "2020-RE-null(null)-(null-null)-(null)-(3035001721) 2.pdf"], ["../data/GAN/pdfs", "2020-RE-null(null)-(null-null)-(null)-(3035001721).pdf"]]
+["../data/GAN/pdfs", "/", "2010-BO-null(null)-(null-null)-(null)-(3021520429) 2.pdf", "=>", "../data/GAN/txts/2010-BO-null(null)-(null-null)-(null)-(3021520429) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-BO-null(null)-(null-null)-(null)-(3021520429).pdf", "=>", "../data/GAN/txts/2010-BO-null(null)-(null-null)-(null)-(3021520429).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-CP-26(4)-(449-467)-(J.1467-8640.2010.00366.X)-(2106004777) 2.pdf", "=>", "../data/GAN/txts/2010-CP-26(4)-(449-467)-(J.1467-8640.2010.00366.X)-(2106004777) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-CP-26(4)-(449-467)-(J.1467-8640.2010.00366.X)-(2106004777).pdf", "=>", "../data/GAN/txts/2010-CP-26(4)-(449-467)-(J.1467-8640.2010.00366.X)-(2106004777).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-CP-null(null)-(1062-1069)-(CVPR.2010.5540096)-(2141357020) 2.pdf", "=>", "../data/GAN/txts/2010-CP-null(null)-(1062-1069)-(CVPR.2010.5540096)-(2141357020) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-CP-null(null)-(1062-1069)-(CVPR.2010.5540096)-(2141357020).pdf", "=>", "../data/GAN/txts/2010-CP-null(null)-(1062-1069)-(CVPR.2010.5540096)-(2141357020).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-CP-null(null)-(3360-3367)-(CVPR.2010.5540018)-(2027922120).pdf", "=>", "../data/GAN/txts/2010-CP-null(null)-(3360-3367)-(CVPR.2010.5540018)-(2027922120).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-CP-null(null)-(451-458)-(1835449.1835525)-(2139450192) 2.pdf", "=>", "../data/GAN/txts/2010-CP-null(null)-(451-458)-(1835449.1835525)-(2139450192) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-CP-null(null)-(451-458)-(1835449.1835525)-(2139450192).pdf", "=>", "../data/GAN/txts/2010-CP-null(null)-(451-458)-(1835449.1835525)-(2139450192).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-CP-null(null)-(73-80)-(CVPR.2010.5540226)-(2128715914).pdf", "=>", "../data/GAN/txts/2010-CP-null(null)-(73-80)-(CVPR.2010.5540226)-(2128715914).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-CP-null(null)-(902-909)-(CVPR.2010.5540120)-(1981613567).pdf", "=>", "../data/GAN/txts/2010-CP-null(null)-(902-909)-(CVPR.2010.5540120)-(1981613567).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-JA-11(19)-(625-660)-(null)-(2138857742) 2.pdf", "=>", "../data/GAN/txts/2010-JA-11(19)-(625-660)-(null)-(2138857742) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-JA-11(19)-(625-660)-(null)-(2138857742).pdf", "=>", "../data/GAN/txts/2010-JA-11(19)-(625-660)-(null)-(2138857742).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-JA-13(3)-(254-270)-(S10791-009-9112-1)-(2162059449).pdf", "=>", "../data/GAN/txts/2010-JA-13(3)-(254-270)-(S10791-009-9112-1)-(2162059449).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-JA-13(4)-(346-374)-(S10791-009-9123-Y)-(2007815473) 2.pdf", "=>", "../data/GAN/txts/2010-JA-13(4)-(346-374)-(S10791-009-9123-Y)-(2007815473) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-JA-13(4)-(346-374)-(S10791-009-9123-Y)-(2007815473).pdf", "=>", "../data/GAN/txts/2010-JA-13(4)-(346-374)-(S10791-009-9123-Y)-(2007815473).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-RE-null(null)-(null-null)-(null)-(2171490498).pdf", "=>", "../data/GAN/txts/2010-RE-null(null)-(null-null)-(null)-(2171490498).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-UN-null(null)-(null-null)-(null)-(2115584760) 2.pdf", "=>", "../data/GAN/txts/2010-UN-null(null)-(null-null)-(null)-(2115584760) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2010-UN-null(null)-(null-null)-(null)-(2115584760).pdf", "=>", "../data/GAN/txts/2010-UN-null(null)-(null-null)-(null)-(2115584760).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-24(null)-(2546-2554)-(null)-(2106411961).pdf", "=>", "../data/GAN/txts/2011-CP-24(null)-(2546-2554)-(null)-(2106411961).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(105-114)-(2009916.2009934)-(2000431947) 2.pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(105-114)-(2009916.2009934)-(2000431947) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(105-114)-(2009916.2009934)-(2000431947).pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(105-114)-(2009916.2009934)-(2000431947).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(1879-1886)-(ICCV.2011.6126456)-(2129305389) 2.pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(1879-1886)-(ICCV.2011.6126456)-(2129305389) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(1879-1886)-(ICCV.2011.6126456)-(2129305389).pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(1879-1886)-(ICCV.2011.6126456)-(2129305389).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(265-272)-(null)-(2102017903) 2.pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(265-272)-(null)-(2102017903) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(265-272)-(null)-(2102017903).pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(265-272)-(null)-(2102017903).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(2857-2864)-(CVPR.2011.5995710)-(1995997122) 2.pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(2857-2864)-(CVPR.2011.5995710)-(1995997122) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(2857-2864)-(CVPR.2011.5995710)-(1995997122).pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(2857-2864)-(CVPR.2011.5995710)-(1995997122).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(817-824)-(CVPR.2011.5995432)-(2084363474) 2.pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(817-824)-(CVPR.2011.5995432)-(2084363474) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-CP-null(null)-(817-824)-(CVPR.2011.5995432)-(2084363474).pdf", "=>", "../data/GAN/txts/2011-CP-null(null)-(817-824)-(CVPR.2011.5995432)-(2084363474).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-JA-94(10)-(1854-1862)-(TRANSINF.E94.D.1854)-(2101626488) 2.pdf", "=>", "../data/GAN/txts/2011-JA-94(10)-(1854-1862)-(TRANSINF.E94.D.1854)-(2101626488) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-JA-94(10)-(1854-1862)-(TRANSINF.E94.D.1854)-(2101626488).pdf", "=>", "../data/GAN/txts/2011-JA-94(10)-(1854-1862)-(TRANSINF.E94.D.1854)-(2101626488).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-UN-null(null)-(17-37)-(null)-(2616180702) 2.pdf", "=>", "../data/GAN/txts/2011-UN-null(null)-(17-37)-(null)-(2616180702) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-UN-null(null)-(17-37)-(null)-(2616180702).pdf", "=>", "../data/GAN/txts/2011-UN-null(null)-(17-37)-(null)-(2616180702).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-UN-null(null)-(97-111)-(null)-(2726367589) 2.pdf", "=>", "../data/GAN/txts/2011-UN-null(null)-(97-111)-(null)-(2726367589) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2011-UN-null(null)-(97-111)-(null)-(2726367589).pdf", "=>", "../data/GAN/txts/2011-UN-null(null)-(97-111)-(null)-(2726367589).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-25(null)-(1223-1231)-(null)-(2168231600) 2.pdf", "=>", "../data/GAN/txts/2012-CP-25(null)-(1223-1231)-(null)-(2168231600) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-25(null)-(1223-1231)-(null)-(2168231600).pdf", "=>", "../data/GAN/txts/2012-CP-25(null)-(1223-1231)-(null)-(2168231600).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-25(null)-(2951-2959)-(null)-(2131241448) 2.pdf", "=>", "../data/GAN/txts/2012-CP-25(null)-(2951-2959)-(null)-(2131241448) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-25(null)-(2951-2959)-(null)-(2131241448).pdf", "=>", "../data/GAN/txts/2012-CP-25(null)-(2951-2959)-(null)-(2131241448).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-null(null)-(1627-1634)-(null)-(2096873754) 2.pdf", "=>", "../data/GAN/txts/2012-CP-null(null)-(1627-1634)-(null)-(2096873754) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-null(null)-(1627-1634)-(null)-(2096873754).pdf", "=>", "../data/GAN/txts/2012-CP-null(null)-(1627-1634)-(null)-(2096873754).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-null(null)-(3474-3481)-(CVPR.2012.6248089)-(1995318441) 2.pdf", "=>", "../data/GAN/txts/2012-CP-null(null)-(3474-3481)-(CVPR.2012.6248089)-(1995318441) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-null(null)-(3474-3481)-(CVPR.2012.6248089)-(1995318441).pdf", "=>", "../data/GAN/txts/2012-CP-null(null)-(3474-3481)-(CVPR.2012.6248089)-(1995318441).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-null(null)-(445-458)-(978-3-642-33765-9_32)-(25437484) 2.pdf", "=>", "../data/GAN/txts/2012-CP-null(null)-(445-458)-(978-3-642-33765-9_32)-(25437484) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-null(null)-(445-458)-(978-3-642-33765-9_32)-(25437484).pdf", "=>", "../data/GAN/txts/2012-CP-null(null)-(445-458)-(978-3-642-33765-9_32)-(25437484).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-null(null)-(761-770)-(2348283.2348385)-(2109154214) 2.pdf", "=>", "../data/GAN/txts/2012-CP-null(null)-(761-770)-(2348283.2348385)-(2109154214) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-CP-null(null)-(761-770)-(2348283.2348385)-(2109154214).pdf", "=>", "../data/GAN/txts/2012-CP-null(null)-(761-770)-(2348283.2348385)-(2109154214).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-RE-null(null)-(null-null)-(null)-(2952111767) 2.pdf", "=>", "../data/GAN/txts/2012-RE-null(null)-(null-null)-(null)-(2952111767) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2012-RE-null(null)-(null-null)-(null)-(2952111767).pdf", "=>", "../data/GAN/txts/2012-RE-null(null)-(null-null)-(null)-(2952111767).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-26(null)-(2121-2129)-(null)-(2123024445) 2.pdf", "=>", "../data/GAN/txts/2013-CP-26(null)-(2121-2129)-(null)-(2123024445) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-26(null)-(2121-2129)-(null)-(2123024445).pdf", "=>", "../data/GAN/txts/2013-CP-26(null)-(2121-2129)-(null)-(2123024445).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-26(null)-(351-359)-(null)-(2152722485) 2.pdf", "=>", "../data/GAN/txts/2013-CP-26(null)-(351-359)-(null)-(2152722485) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-26(null)-(351-359)-(null)-(2152722485).pdf", "=>", "../data/GAN/txts/2013-CP-26(null)-(351-359)-(null)-(2152722485).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(118-126)-(null)-(35527955) 2.pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(118-126)-(null)-(35527955) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(118-126)-(null)-(35527955).pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(118-126)-(null)-(35527955).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(1409-1416)-(ICCV.2013.178)-(1964763677) 2.pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(1409-1416)-(ICCV.2013.178)-(1964763677) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(1409-1416)-(ICCV.2013.178)-(1964763677).pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(1409-1416)-(ICCV.2013.178)-(1964763677).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(3294-3301)-(CVPR.2013.423)-(1964005749) 2.pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(3294-3301)-(CVPR.2013.423)-(1964005749) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(3294-3301)-(CVPR.2013.423)-(1964005749).pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(3294-3301)-(CVPR.2013.423)-(1964005749).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(410-418)-(null)-(2158542502) 2.pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(410-418)-(null)-(2158542502) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(410-418)-(null)-(2158542502).pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(410-418)-(null)-(2158542502).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(819-826)-(CVPR.2013.111)-(2109317801) 2.pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(819-826)-(CVPR.2013.111)-(2109317801) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(819-826)-(CVPR.2013.111)-(2109317801).pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(819-826)-(CVPR.2013.111)-(2109317801).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(923-930)-(CVPR.2013.124)-(2033832873) 2.pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(923-930)-(CVPR.2013.124)-(2033832873) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-CP-null(null)-(923-930)-(CVPR.2013.124)-(2033832873).pdf", "=>", "../data/GAN/txts/2013-CP-null(null)-(923-930)-(CVPR.2013.124)-(2033832873).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-JA-35(8)-(1798-1828)-(TPAMI.2013.50)-(2163922914) 2.pdf", "=>", "../data/GAN/txts/2013-JA-35(8)-(1798-1828)-(TPAMI.2013.50)-(2163922914) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-JA-35(8)-(1798-1828)-(TPAMI.2013.50)-(2163922914).pdf", "=>", "../data/GAN/txts/2013-JA-35(8)-(1798-1828)-(TPAMI.2013.50)-(2163922914).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-RE-null(null)-(null-null)-(null)-(2952899695) 2.pdf", "=>", "../data/GAN/txts/2013-RE-null(null)-(null-null)-(null)-(2952899695) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-RE-null(null)-(null-null)-(null)-(2952899695).pdf", "=>", "../data/GAN/txts/2013-RE-null(null)-(null-null)-(null)-(2952899695).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-UN-null(null)-(1-37)-(978-3-642-39593-2_1)-(1613249581) 2.pdf", "=>", "../data/GAN/txts/2013-UN-null(null)-(1-37)-(978-3-642-39593-2_1)-(1613249581) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2013-UN-null(null)-(1-37)-(978-3-642-39593-2_1)-(1613249581).pdf", "=>", "../data/GAN/txts/2013-UN-null(null)-(1-37)-(978-3-642-39593-2_1)-(1613249581).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-BO-null(null)-(null-null)-(null)-(2150341604) 2.pdf", "=>", "../data/GAN/txts/2014-BO-null(null)-(null-null)-(null)-(2150341604) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-BO-null(null)-(null-null)-(null)-(2150341604).pdf", "=>", "../data/GAN/txts/2014-BO-null(null)-(null-null)-(null)-(2150341604).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-BO-null(null)-(null-null)-(null)-(2170245882) 2.pdf", "=>", "../data/GAN/txts/2014-BO-null(null)-(null-null)-(null)-(2170245882) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-BO-null(null)-(null-null)-(null)-(2170245882).pdf", "=>", "../data/GAN/txts/2014-BO-null(null)-(null-null)-(null)-(2170245882).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(1077-1085)-(null)-(122178443) 2.pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(1077-1085)-(null)-(122178443) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(1077-1085)-(null)-(122178443).pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(1077-1085)-(null)-(122178443).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(1293-1299)-(null)-(2405933695) 2.pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(1293-1299)-(null)-(2405933695) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(1293-1299)-(null)-(2405933695).pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(1293-1299)-(null)-(2405933695).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(297-312)-(978-3-319-10584-0_20)-(1507506748) 2.pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(297-312)-(978-3-319-10584-0_20)-(1507506748) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(297-312)-(978-3-319-10584-0_20)-(1507506748).pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(297-312)-(978-3-319-10584-0_20)-(1507506748).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(512-519)-(CVPRW.2014.131)-(2062118960) 2.pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(512-519)-(CVPRW.2014.131)-(2062118960) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(512-519)-(CVPRW.2014.131)-(2062118960).pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(512-519)-(CVPRW.2014.131)-(2062118960).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(701-710)-(2623330.2623732)-(2154851992) 2.pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(701-710)-(2623330.2623732)-(2154851992) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-CP-null(null)-(701-710)-(2623330.2623732)-(2154851992).pdf", "=>", "../data/GAN/txts/2014-CP-null(null)-(701-710)-(2623330.2623732)-(2154851992).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-JA-15(1)-(1929-1958)-(null)-(2095705004) 2.pdf", "=>", "../data/GAN/txts/2014-JA-15(1)-(1929-1958)-(null)-(2095705004) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-JA-15(1)-(1929-1958)-(null)-(2095705004).pdf", "=>", "../data/GAN/txts/2014-JA-15(1)-(1929-1958)-(null)-(2095705004).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-RE-null(null)-(null-null)-(null)-(1594098193) 2.pdf", "=>", "../data/GAN/txts/2014-RE-null(null)-(null-null)-(null)-(1594098193) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-RE-null(null)-(null-null)-(null)-(1594098193).pdf", "=>", "../data/GAN/txts/2014-RE-null(null)-(null-null)-(null)-(1594098193).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-RE-null(null)-(null-null)-(null)-(2168894214) 2.pdf", "=>", "../data/GAN/txts/2014-RE-null(null)-(null-null)-(null)-(2168894214) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-RE-null(null)-(null-null)-(null)-(2168894214).pdf", "=>", "../data/GAN/txts/2014-RE-null(null)-(null-null)-(null)-(2168894214).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-RE-null(null)-(null-null)-(null)-(2949825606) 2.pdf", "=>", "../data/GAN/txts/2014-RE-null(null)-(null-null)-(null)-(2949825606) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-RE-null(null)-(null-null)-(null)-(2949825606).pdf", "=>", "../data/GAN/txts/2014-RE-null(null)-(null-null)-(null)-(2949825606).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-RE-null(null)-(null-null)-(null)-(2952375406) 2.pdf", "=>", "../data/GAN/txts/2014-RE-null(null)-(null-null)-(null)-(2952375406) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2014-RE-null(null)-(null-null)-(null)-(2952375406).pdf", "=>", "../data/GAN/txts/2014-RE-null(null)-(null-null)-(null)-(2952375406).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-28(null)-(2377-2385)-(null)-(1026270304) 2.pdf", "=>", "../data/GAN/txts/2015-CP-28(null)-(2377-2385)-(null)-(1026270304) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-28(null)-(2377-2385)-(null)-(1026270304).pdf", "=>", "../data/GAN/txts/2015-CP-28(null)-(2377-2385)-(null)-(1026270304).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-28(null)-(2755-2763)-(null)-(2182361439) 2.pdf", "=>", "../data/GAN/txts/2015-CP-28(null)-(2755-2763)-(null)-(2182361439) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-28(null)-(2755-2763)-(null)-(2182361439).pdf", "=>", "../data/GAN/txts/2015-CP-28(null)-(2755-2763)-(null)-(2182361439).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1-9)-(CVPR.2015.7298594)-(2097117768) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1-9)-(CVPR.2015.7298594)-(2097117768) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1-9)-(CVPR.2015.7298594)-(2097117768).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1-9)-(CVPR.2015.7298594)-(2097117768).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1155-1164)-(2783258.2783295)-(1985697265) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1155-1164)-(2783258.2783295)-(1985697265) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1155-1164)-(2783258.2783295)-(1985697265).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1155-1164)-(2783258.2783295)-(1985697265).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1225-1237)-(APSIPA.2015.7415532)-(2963522845) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1225-1237)-(APSIPA.2015.7415532)-(2963522845) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1225-1237)-(APSIPA.2015.7415532)-(2963522845).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1225-1237)-(APSIPA.2015.7415532)-(2963522845).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1310-1321)-(2810103.2813687)-(2053637704) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1310-1321)-(2810103.2813687)-(2053637704) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1310-1321)-(2810103.2813687)-(2053637704).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1310-1321)-(2810103.2813687)-(2053637704).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1340-1346)-(null)-(2217066517) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1340-1346)-(null)-(2217066517) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1340-1346)-(null)-(2217066517).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1340-1346)-(null)-(2217066517).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1395-1403)-(ICCV.2015.164)-(845365781) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1395-1403)-(ICCV.2015.164)-(845365781) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1395-1403)-(ICCV.2015.164)-(845365781).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1395-1403)-(ICCV.2015.164)-(845365781).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1413-1421)-(ICCV.2015.166)-(2198618282) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1413-1421)-(ICCV.2015.166)-(2198618282) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1413-1421)-(ICCV.2015.166)-(2198618282).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1413-1421)-(ICCV.2015.166)-(2198618282).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1718-1727)-(null)-(1487641199) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1718-1727)-(null)-(1487641199) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1718-1727)-(null)-(1487641199).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1718-1727)-(null)-(1487641199).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1990-1998)-(null)-(809122546) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1990-1998)-(null)-(809122546) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(1990-1998)-(null)-(809122546).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(1990-1998)-(null)-(809122546).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(2302-2310)-(null)-(277886906) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(2302-2310)-(null)-(277886906) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(2302-2310)-(null)-(277886906).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(2302-2310)-(null)-(277886906).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(2927-2936)-(CVPR.2015.7298911)-(2044913453) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(2927-2936)-(CVPR.2015.7298911)-(2044913453) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(2927-2936)-(CVPR.2015.7298911)-(2044913453).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(2927-2936)-(CVPR.2015.7298911)-(2044913453).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(3128-3137)-(CVPR.2015.7298932)-(1905882502) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(3128-3137)-(CVPR.2015.7298932)-(1905882502) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(3128-3137)-(CVPR.2015.7298932)-(1905882502).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(3128-3137)-(CVPR.2015.7298932)-(1905882502).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(3202-3212)-(CVPR.2015.7298940)-(2078238240) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(3202-3212)-(CVPR.2015.7298940)-(2078238240) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(3202-3212)-(CVPR.2015.7298940)-(2078238240).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(3202-3212)-(CVPR.2015.7298940)-(2078238240).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(334-345)-(MSR.2015.38)-(2018389835) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(334-345)-(MSR.2015.38)-(2018389835) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(334-345)-(MSR.2015.38)-(2018389835).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(334-345)-(MSR.2015.38)-(2018389835).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(3431-3440)-(CVPR.2015.7298965)-(1903029394) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(3431-3440)-(CVPR.2015.7298965)-(1903029394) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(3431-3440)-(CVPR.2015.7298965)-(1903029394).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(3431-3440)-(CVPR.2015.7298965)-(1903029394).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(4566-4575)-(CVPR.2015.7299087)-(1956340063) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(4566-4575)-(CVPR.2015.7299087)-(1956340063) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(4566-4575)-(CVPR.2015.7299087)-(1956340063).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(4566-4575)-(CVPR.2015.7299087)-(1956340063).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(507-516)-(2783258.2783365)-(2042954874) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(507-516)-(2783258.2783365)-(2042954874) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(507-516)-(2783258.2783365)-(2042954874).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(507-516)-(2783258.2783365)-(2042954874).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(556-560)-(ICSM.2015.7332513)-(2118548380) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(556-560)-(ICSM.2015.7332513)-(2118548380) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(556-560)-(ICSM.2015.7332513)-(2118548380).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(556-560)-(ICSM.2015.7332513)-(2118548380).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(562-570)-(null)-(2963606038) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(562-570)-(null)-(2963606038) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(562-570)-(null)-(2963606038).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(562-570)-(null)-(2963606038).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(625-635)-(2736277.2741627)-(1570098300) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(625-635)-(2736277.2741627)-(1570098300) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(625-635)-(2736277.2741627)-(1570098300).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(625-635)-(2736277.2741627)-(1570098300).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(881-889)-(null)-(1866230956) 2.pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(881-889)-(null)-(1866230956) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-CP-null(null)-(881-889)-(null)-(1866230956).pdf", "=>", "../data/GAN/txts/2015-CP-null(null)-(881-889)-(null)-(1866230956).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-JA-61(null)-(85-117)-(J.NEUNET.2014.09.003)-(2076063813) 2.pdf", "=>", "../data/GAN/txts/2015-JA-61(null)-(85-117)-(J.NEUNET.2014.09.003)-(2076063813) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-JA-61(null)-(85-117)-(J.NEUNET.2014.09.003)-(2076063813).pdf", "=>", "../data/GAN/txts/2015-JA-61(null)-(85-117)-(J.NEUNET.2014.09.003)-(2076063813).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-JA-null(null)-(143-171)-(B978-0-12-802806-3.00008-7)-(2147062276) 2.pdf", "=>", "../data/GAN/txts/2015-JA-null(null)-(143-171)-(B978-0-12-802806-3.00008-7)-(2147062276) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-JA-null(null)-(143-171)-(B978-0-12-802806-3.00008-7)-(2147062276).pdf", "=>", "../data/GAN/txts/2015-JA-null(null)-(143-171)-(B978-0-12-802806-3.00008-7)-(2147062276).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2167085024) 2.pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2167085024) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2167085024).pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2167085024).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2189246496) 2.pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2189246496) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2189246496).pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2189246496).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2278264165) 2.pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2278264165) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2278264165).pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2278264165).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2950891598) 2.pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2950891598) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2950891598).pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2950891598).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2952729433) 2.pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2952729433) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2952729433).pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2952729433).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2953259386) 2.pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2953259386) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2015-RE-null(null)-(null-null)-(null)-(2953259386).pdf", "=>", "../data/GAN/txts/2015-RE-null(null)-(null-null)-(null)-(2953259386).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-29(null)-(3738-3746)-(null)-(2963135265) 2.pdf", "=>", "../data/GAN/txts/2016-CP-29(null)-(3738-3746)-(null)-(2963135265) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-29(null)-(3738-3746)-(null)-(2963135265).pdf", "=>", "../data/GAN/txts/2016-CP-29(null)-(3738-3746)-(null)-(2963135265).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(165-174)-(2983323.2983702)-(2507839313) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(165-174)-(2983323.2983702)-(2507839313) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(165-174)-(2983323.2983702)-(2507839313).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(165-174)-(2983323.2983702)-(2507839313).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(1727-1736)-(null)-(2963773425) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(1727-1736)-(null)-(2963773425) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(1727-1736)-(null)-(2963773425).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(1727-1736)-(null)-(2963773425).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(2793-2799)-(null)-(2286300105) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(2793-2799)-(null)-(2286300105) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(2793-2799)-(null)-(2286300105).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(2793-2799)-(null)-(2286300105).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(3-19)-(978-3-319-46493-0_1)-(2332488709) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(3-19)-(978-3-319-46493-0_1)-(2332488709) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(3-19)-(978-3-319-46493-0_1)-(2332488709).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(3-19)-(978-3-319-46493-0_1)-(2332488709).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(4594-4602)-(CVPR.2016.497)-(1573040851) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(4594-4602)-(CVPR.2016.497)-(1573040851) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(4594-4602)-(CVPR.2016.497)-(1573040851).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(4594-4602)-(CVPR.2016.497)-(1573040851).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(49-58)-(CVPR.2016.13)-(2398118205) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(49-58)-(CVPR.2016.13)-(2398118205) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(49-58)-(CVPR.2016.13)-(2398118205).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(49-58)-(CVPR.2016.13)-(2398118205).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(499-515)-(978-3-319-46478-7_31)-(2520774990) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(499-515)-(978-3-319-46478-7_31)-(2520774990) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(499-515)-(978-3-319-46478-7_31)-(2520774990).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(499-515)-(978-3-319-46478-7_31)-(2520774990).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(5337-5346)-(CVPR.2016.576)-(2963325024) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(5337-5346)-(CVPR.2016.576)-(2963325024) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(5337-5346)-(CVPR.2016.576)-(2963325024).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(5337-5346)-(CVPR.2016.576)-(2963325024).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(577-593)-(978-3-319-46493-0_35)-(2308529009) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(577-593)-(978-3-319-46493-0_35)-(2308529009) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(577-593)-(978-3-319-46493-0_35)-(2308529009).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(577-593)-(978-3-319-46493-0_35)-(2308529009).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(601-618)-(null)-(2964318098) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(601-618)-(null)-(2964318098) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(601-618)-(null)-(2964318098).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(601-618)-(null)-(2964318098).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(613-621)-(M26GIH-TNYZ)-(2520707650) 2.pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(613-621)-(M26GIH-TNYZ)-(2520707650) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-CP-null(null)-(613-621)-(M26GIH-TNYZ)-(2520707650).pdf", "=>", "../data/GAN/txts/2016-CP-null(null)-(613-621)-(M26GIH-TNYZ)-(2520707650).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-JA-3(1)-(9-null)-(S40537-016-0043-6)-(2395579298) 2.pdf", "=>", "../data/GAN/txts/2016-JA-3(1)-(9-null)-(S40537-016-0043-6)-(2395579298) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-JA-3(1)-(9-null)-(S40537-016-0043-6)-(2395579298).pdf", "=>", "../data/GAN/txts/2016-JA-3(1)-(9-null)-(S40537-016-0043-6)-(2395579298).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-JA-3(null)-(null-null)-(FENVS.2015.00080)-(2189911347) 2.pdf", "=>", "../data/GAN/txts/2016-JA-3(null)-(null-null)-(FENVS.2015.00080)-(2189911347) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-JA-3(null)-(null-null)-(FENVS.2015.00080)-(2189911347).pdf", "=>", "../data/GAN/txts/2016-JA-3(null)-(null-null)-(FENVS.2015.00080)-(2189911347).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-JA-64(17)-(4504-4518)-(TSP.2016.2557301)-(1857867064) 2.pdf", "=>", "../data/GAN/txts/2016-JA-64(17)-(4504-4518)-(TSP.2016.2557301)-(1857867064) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-JA-64(17)-(4504-4518)-(TSP.2016.2557301)-(1857867064).pdf", "=>", "../data/GAN/txts/2016-JA-64(17)-(4504-4518)-(TSP.2016.2557301)-(1857867064).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2259472270) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2259472270) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2259472270).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2259472270).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2366141641) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2366141641) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2366141641).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2366141641).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2399306074) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2399306074) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2399306074).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2399306074).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2409550820) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2409550820) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2409550820).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2409550820).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2411541852) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2411541852) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2411541852).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2411541852).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2412320034) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2412320034) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2412320034).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2412320034).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2461943168) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2461943168) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2461943168).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2461943168).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2471149695) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2471149695) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2471149695).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2471149695).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2554863749) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2554863749) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2554863749).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2554863749).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2949099979) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2949099979) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2949099979).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2949099979).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2951055789) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2951055789) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2951055789).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2951055789).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2951708950) 2.pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2951708950) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-RE-null(null)-(null-null)-(null)-(2951708950).pdf", "=>", "../data/GAN/txts/2016-RE-null(null)-(null-null)-(null)-(2951708950).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-UN-104(1)-(148-175)-(JPROC.2015.2494218)-(2192203593) 2.pdf", "=>", "../data/GAN/txts/2016-UN-104(1)-(148-175)-(JPROC.2015.2494218)-(2192203593) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-UN-104(1)-(148-175)-(JPROC.2015.2494218)-(2192203593).pdf", "=>", "../data/GAN/txts/2016-UN-104(1)-(148-175)-(JPROC.2015.2494218)-(2192203593).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-UN-104(1)-(34-57)-(JPROC.2015.2487976)-(2963213486) 2.pdf", "=>", "../data/GAN/txts/2016-UN-104(1)-(34-57)-(JPROC.2015.2487976)-(2963213486) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2016-UN-104(1)-(34-57)-(JPROC.2015.2487976)-(2963213486).pdf", "=>", "../data/GAN/txts/2016-UN-104(1)-(34-57)-(JPROC.2015.2487976)-(2963213486).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-10772(null)-(1403-1406)-(3077136.3082062)-(2964304677) 2.pdf", "=>", "../data/GAN/txts/2017-CP-10772(null)-(1403-1406)-(3077136.3082062)-(2964304677) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-10772(null)-(1403-1406)-(3077136.3082062)-(2964304677).pdf", "=>", "../data/GAN/txts/2017-CP-10772(null)-(1403-1406)-(3077136.3082062)-(2964304677).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-2017(null)-(5533-5542)-(CVPR.2017.587)-(2964189064) 2.pdf", "=>", "../data/GAN/txts/2017-CP-2017(null)-(5533-5542)-(CVPR.2017.587)-(2964189064) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-2017(null)-(5533-5542)-(CVPR.2017.587)-(2964189064).pdf", "=>", "../data/GAN/txts/2017-CP-2017(null)-(5533-5542)-(CVPR.2017.587)-(2964189064).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(1-18)-(3132747.3132785)-(2616028256) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(1-18)-(3132747.3132785)-(2616028256) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(1-18)-(3132747.3132785)-(2616028256).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(1-18)-(3132747.3132785)-(2616028256).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(2206-2214)-(CVPR.2017.237)-(2613997951) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(2206-2214)-(CVPR.2017.237)-(2613997951) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(2206-2214)-(CVPR.2017.237)-(2613997951).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(2206-2214)-(CVPR.2017.237)-(2613997951).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(2261-2269)-(CVPR.2017.243)-(2963446712) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(2261-2269)-(CVPR.2017.243)-(2963446712) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(2261-2269)-(CVPR.2017.243)-(2963446712).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(2261-2269)-(CVPR.2017.243)-(2963446712).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(257-266)-(3132847.3132914)-(2766284073) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(257-266)-(3132847.3132914)-(2766284073) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(257-266)-(3132847.3132914)-(2766284073).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(257-266)-(3132847.3132914)-(2766284073).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(380-389)-(null)-(2964231305) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(380-389)-(null)-(2964231305) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(380-389)-(null)-(2964231305).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(380-389)-(null)-(2964231305).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(4006-4015)-(null)-(2964017345) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(4006-4015)-(null)-(2964017345) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(4006-4015)-(null)-(2964017345).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(4006-4015)-(null)-(2964017345).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(475-484)-(3077136.3080838)-(2741497758) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(475-484)-(3077136.3080838)-(2741497758) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(475-484)-(3077136.3080838)-(2741497758).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(475-484)-(3077136.3080838)-(2741497758).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(49-60)-(3106237.3106256)-(2593675739) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(49-60)-(3106237.3106256)-(2593675739) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(49-60)-(3106237.3106256)-(2593675739).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(49-60)-(3106237.3106256)-(2593675739).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(4904-4912)-(ICCV.2017.524)-(2552161745) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(4904-4912)-(ICCV.2017.524)-(2552161745) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(4904-4912)-(ICCV.2017.524)-(2552161745).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(4904-4912)-(ICCV.2017.524)-(2552161745).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(65-74)-(3077136.3080832)-(2610935556) 2.pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(65-74)-(3077136.3080832)-(2610935556) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-CP-null(null)-(65-74)-(3077136.3080832)-(2610935556).pdf", "=>", "../data/GAN/txts/2017-CP-null(null)-(65-74)-(3077136.3080832)-(2610935556).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-28(10)-(2222-2232)-(TNNLS.2016.2582924)-(1689711448) 2.pdf", "=>", "../data/GAN/txts/2017-JA-28(10)-(2222-2232)-(TNNLS.2016.2582924)-(1689711448) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-28(10)-(2222-2232)-(TNNLS.2016.2582924)-(1689711448).pdf", "=>", "../data/GAN/txts/2017-JA-28(10)-(2222-2232)-(TNNLS.2016.2582924)-(1689711448).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-34(4)-(18-42)-(MSP.2017.2693418)-(2558748708) 2.pdf", "=>", "../data/GAN/txts/2017-JA-34(4)-(18-42)-(MSP.2017.2693418)-(2558748708) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-34(4)-(18-42)-(MSP.2017.2693418)-(2558748708).pdf", "=>", "../data/GAN/txts/2017-JA-34(4)-(18-42)-(MSP.2017.2693418)-(2558748708).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-4(1)-(1-42)-(S40537-017-0089-0)-(2758375579) 2.pdf", "=>", "../data/GAN/txts/2017-JA-4(1)-(1-42)-(S40537-017-0089-0)-(2758375579) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-4(1)-(1-42)-(S40537-017-0089-0)-(2758375579).pdf", "=>", "../data/GAN/txts/2017-JA-4(1)-(1-42)-(S40537-017-0089-0)-(2758375579).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-4(3)-(161-175)-(J.DCAN.2017.10.002)-(2762644836) 2.pdf", "=>", "../data/GAN/txts/2017-JA-4(3)-(161-175)-(J.DCAN.2017.10.002)-(2762644836) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-4(3)-(161-175)-(J.DCAN.2017.10.002)-(2762644836).pdf", "=>", "../data/GAN/txts/2017-JA-4(3)-(161-175)-(J.DCAN.2017.10.002)-(2762644836).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-42(null)-(60-88)-(J.MEDIA.2017.07.005)-(2592929672) 2.pdf", "=>", "../data/GAN/txts/2017-JA-42(null)-(60-88)-(J.MEDIA.2017.07.005)-(2592929672) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-JA-42(null)-(60-88)-(J.MEDIA.2017.07.005)-(2592929672).pdf", "=>", "../data/GAN/txts/2017-JA-42(null)-(60-88)-(J.MEDIA.2017.07.005)-(2592929672).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-PT-null(null)-(null-null)-(null)-(2770298516) 2.pdf", "=>", "../data/GAN/txts/2017-PT-null(null)-(null-null)-(null)-(2770298516) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-PT-null(null)-(null-null)-(null)-(2770298516).pdf", "=>", "../data/GAN/txts/2017-PT-null(null)-(null-null)-(null)-(2770298516).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2586544230) 2.pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2586544230) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2586544230).pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2586544230).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2586811659) 2.pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2586811659) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2586811659).pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2586811659).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2590953969) 2.pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2590953969) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2590953969).pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2590953969).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2611099133) 2.pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2611099133) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2611099133).pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2611099133).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2619890685) 2.pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2619890685) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2619890685).pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2619890685).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2626967530) 2.pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2626967530) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2626967530).pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2626967530).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2743563068) 2.pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2743563068) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2743563068).pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2743563068).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2767002384) 2.pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2767002384) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2767002384).pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2767002384).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2769989147) 2.pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2769989147) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2017-RE-null(null)-(null-null)-(null)-(2769989147).pdf", "=>", "../data/GAN/txts/2017-RE-null(null)-(null-null)-(null)-(2769989147).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(100-111)-(ISSRE.2018.00021)-(2799640043) 2.pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(100-111)-(ISSRE.2018.00021)-(2799640043) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(100-111)-(ISSRE.2018.00021)-(2799640043).pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(100-111)-(ISSRE.2018.00021)-(2799640043).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(4367-4375)-(CVPR.2018.00459)-(2798836702) 2.pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(4367-4375)-(CVPR.2018.00459)-(2798836702) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(4367-4375)-(CVPR.2018.00459)-(2798836702).pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(4367-4375)-(CVPR.2018.00459)-(2798836702).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(451-466)-(978-3-030-01246-5_27)-(2963115079) 2.pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(451-466)-(978-3-030-01246-5_27)-(2963115079) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(451-466)-(978-3-030-01246-5_27)-(2963115079).pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(451-466)-(978-3-030-01246-5_27)-(2963115079).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(5505-5514)-(CVPR.2018.00577)-(3043547428) 2.pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(5505-5514)-(CVPR.2018.00577)-(3043547428) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(5505-5514)-(CVPR.2018.00577)-(3043547428).pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(5505-5514)-(CVPR.2018.00577)-(3043547428).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(7986-7994)-(CVPR.2018.00833)-(2964216930) 2.pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(7986-7994)-(CVPR.2018.00833)-(2964216930) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(7986-7994)-(CVPR.2018.00833)-(2964216930).pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(7986-7994)-(CVPR.2018.00833)-(2964216930).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(8697-8710)-(CVPR.2018.00907)-(2964081807) 2.pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(8697-8710)-(CVPR.2018.00907)-(2964081807) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(8697-8710)-(CVPR.2018.00907)-(2964081807).pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(8697-8710)-(CVPR.2018.00907)-(2964081807).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(9368-9377)-(CVPR.2018.00976)-(2798820905) 2.pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(9368-9377)-(CVPR.2018.00976)-(2798820905) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-CP-null(null)-(9368-9377)-(CVPR.2018.00976)-(2798820905).pdf", "=>", "../data/GAN/txts/2018-CP-null(null)-(9368-9377)-(CVPR.2018.00976)-(2798820905).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-10(4)-(354-364)-(TG.2018.2799997)-(2769575776) 2.pdf", "=>", "../data/GAN/txts/2018-JA-10(4)-(354-364)-(TG.2018.2799997)-(2769575776) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-10(4)-(354-364)-(TG.2018.2799997)-(2769575776).pdf", "=>", "../data/GAN/txts/2018-JA-10(4)-(354-364)-(TG.2018.2799997)-(2769575776).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-158(null)-(113-122)-(J.CMPB.2018.01.025)-(2755930428) 2.pdf", "=>", "../data/GAN/txts/2018-JA-158(null)-(113-122)-(J.CMPB.2018.01.025)-(2755930428) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-158(null)-(113-122)-(J.CMPB.2018.01.025)-(2755930428).pdf", "=>", "../data/GAN/txts/2018-JA-158(null)-(113-122)-(J.CMPB.2018.01.025)-(2755930428).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-24(15)-(3492-3499)-(1078-0432.CCR-18-0385)-(2789242863) 2.pdf", "=>", "../data/GAN/txts/2018-JA-24(15)-(3492-3499)-(1078-0432.CCR-18-0385)-(2789242863) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-24(15)-(3492-3499)-(1078-0432.CCR-18-0385)-(2789242863).pdf", "=>", "../data/GAN/txts/2018-JA-24(15)-(3492-3499)-(1078-0432.CCR-18-0385)-(2789242863).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-27(5)-(2368-2378)-(TIP.2017.2787612)-(2612135493) 2.pdf", "=>", "../data/GAN/txts/2018-JA-27(5)-(2368-2378)-(TIP.2017.2787612)-(2612135493) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-27(5)-(2368-2378)-(TIP.2017.2787612)-(2612135493).pdf", "=>", "../data/GAN/txts/2018-JA-27(5)-(2368-2378)-(TIP.2017.2787612)-(2612135493).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-37(2)-(384-395)-(TMI.2017.2743464)-(2620296437) 2.pdf", "=>", "../data/GAN/txts/2018-JA-37(2)-(384-395)-(TMI.2017.2743464)-(2620296437) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-37(2)-(384-395)-(TMI.2017.2743464)-(2620296437).pdf", "=>", "../data/GAN/txts/2018-JA-37(2)-(384-395)-(TMI.2017.2743464)-(2620296437).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-9(2)-(513-530)-(C7SC02664A)-(2594183968) 2.pdf", "=>", "../data/GAN/txts/2018-JA-9(2)-(513-530)-(C7SC02664A)-(2594183968) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-9(2)-(513-530)-(C7SC02664A)-(2594183968).pdf", "=>", "../data/GAN/txts/2018-JA-9(2)-(513-530)-(C7SC02664A)-(2594183968).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-null(null)-(19-28)-(3206098.3206111)-(2802022891) 2.pdf", "=>", "../data/GAN/txts/2018-JA-null(null)-(19-28)-(3206098.3206111)-(2802022891) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-JA-null(null)-(19-28)-(3206098.3206111)-(2802022891).pdf", "=>", "../data/GAN/txts/2018-JA-null(null)-(19-28)-(3206098.3206111)-(2802022891).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2786808285) 2.pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2786808285) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2786808285).pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2786808285).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2792738181) 2.pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2792738181) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2792738181).pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2792738181).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2795783309) 2.pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2795783309) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2795783309).pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2795783309).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2842511635) 2.pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2842511635) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2842511635).pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2842511635).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2965236084) 2.pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2965236084) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2965236084).pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2965236084).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2971325325) 2.pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2971325325) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2018-RE-null(null)-(null-null)-(null)-(2971325325).pdf", "=>", "../data/GAN/txts/2018-RE-null(null)-(null-null)-(null)-(2971325325).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-CP-null(null)-(1861-1870)-(CVPR.2019.00196)-(2953271441) 2.pdf", "=>", "../data/GAN/txts/2019-CP-null(null)-(1861-1870)-(CVPR.2019.00196)-(2953271441) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-CP-null(null)-(1861-1870)-(CVPR.2019.00196)-(2953271441).pdf", "=>", "../data/GAN/txts/2019-CP-null(null)-(1861-1870)-(CVPR.2019.00196)-(2953271441).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-CP-null(null)-(6210-6219)-(CVPR.2019.00637)-(2979579363) 2.pdf", "=>", "../data/GAN/txts/2019-CP-null(null)-(6210-6219)-(CVPR.2019.00637)-(2979579363) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-CP-null(null)-(6210-6219)-(CVPR.2019.00637)-(2979579363).pdf", "=>", "../data/GAN/txts/2019-CP-null(null)-(6210-6219)-(CVPR.2019.00637)-(2979579363).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-CP-null(null)-(692-702)-(ICCV.2019.00078)-(2982232682) 2.pdf", "=>", "../data/GAN/txts/2019-CP-null(null)-(692-702)-(ICCV.2019.00078)-(2982232682) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-CP-null(null)-(692-702)-(ICCV.2019.00078)-(2982232682).pdf", "=>", "../data/GAN/txts/2019-CP-null(null)-(692-702)-(ICCV.2019.00078)-(2982232682).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-CP-null(null)-(9865-9874)-(ICCV.2019.00996)-(2990500698) 2.pdf", "=>", "../data/GAN/txts/2019-CP-null(null)-(9865-9874)-(ICCV.2019.00996)-(2990500698) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-CP-null(null)-(9865-9874)-(ICCV.2019.00996)-(2990500698).pdf", "=>", "../data/GAN/txts/2019-CP-null(null)-(9865-9874)-(ICCV.2019.00996)-(2990500698).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-10(4)-(150-null)-(INFO10040150)-(2937423263) 2.pdf", "=>", "../data/GAN/txts/2019-JA-10(4)-(150-null)-(INFO10040150)-(2937423263) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-10(4)-(150-null)-(INFO10040150)-(2937423263).pdf", "=>", "../data/GAN/txts/2019-JA-10(4)-(150-null)-(INFO10040150)-(2937423263).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-111(null)-(47-63)-(J.NEUNET.2018.12.002)-(2798878556) 2.pdf", "=>", "../data/GAN/txts/2019-JA-111(null)-(47-63)-(J.NEUNET.2018.12.002)-(2798878556) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-111(null)-(47-63)-(J.NEUNET.2018.12.002)-(2798878556).pdf", "=>", "../data/GAN/txts/2019-JA-111(null)-(47-63)-(J.NEUNET.2018.12.002)-(2798878556).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-116(44)-(22071-22080)-(PNAS.1900654116)-(2910705748) 2.pdf", "=>", "../data/GAN/txts/2019-JA-116(44)-(22071-22080)-(PNAS.1900654116)-(2910705748) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-116(44)-(22071-22080)-(PNAS.1900654116)-(2910705748).pdf", "=>", "../data/GAN/txts/2019-JA-116(44)-(22071-22080)-(PNAS.1900654116)-(2910705748).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-41(4)-(801-814)-(TPAMI.2018.2814042)-(2312004824) 2.pdf", "=>", "../data/GAN/txts/2019-JA-41(4)-(801-814)-(TPAMI.2018.2814042)-(2312004824) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-41(4)-(801-814)-(TPAMI.2018.2814042)-(2312004824).pdf", "=>", "../data/GAN/txts/2019-JA-41(4)-(801-814)-(TPAMI.2018.2814042)-(2312004824).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-41(9)-(2251-2265)-(TPAMI.2018.2857768)-(2963499153) 2.pdf", "=>", "../data/GAN/txts/2019-JA-41(9)-(2251-2265)-(TPAMI.2018.2857768)-(2963499153) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-41(9)-(2251-2265)-(TPAMI.2018.2857768)-(2963499153).pdf", "=>", "../data/GAN/txts/2019-JA-41(9)-(2251-2265)-(TPAMI.2018.2857768)-(2963499153).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-null(null)-(369-378)-(3287560.3287595)-(2899682268) 2.pdf", "=>", "../data/GAN/txts/2019-JA-null(null)-(369-378)-(3287560.3287595)-(2899682268) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-JA-null(null)-(369-378)-(3287560.3287595)-(2899682268).pdf", "=>", "../data/GAN/txts/2019-JA-null(null)-(369-378)-(3287560.3287595)-(2899682268).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-RE-null(null)-(null-null)-(null)-(2933502442) 2.pdf", "=>", "../data/GAN/txts/2019-RE-null(null)-(null-null)-(null)-(2933502442) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-RE-null(null)-(null-null)-(null)-(2933502442).pdf", "=>", "../data/GAN/txts/2019-RE-null(null)-(null-null)-(null)-(2933502442).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-RE-null(null)-(null-null)-(null)-(2938830017) 2.pdf", "=>", "../data/GAN/txts/2019-RE-null(null)-(null-null)-(null)-(2938830017) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-RE-null(null)-(null-null)-(null)-(2938830017).pdf", "=>", "../data/GAN/txts/2019-RE-null(null)-(null-null)-(null)-(2938830017).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-RE-null(null)-(null-null)-(null)-(2943530662) 2.pdf", "=>", "../data/GAN/txts/2019-RE-null(null)-(null-null)-(null)-(2943530662) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-RE-null(null)-(null-null)-(null)-(2943530662).pdf", "=>", "../data/GAN/txts/2019-RE-null(null)-(null-null)-(null)-(2943530662).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-RE-null(null)-(null-null)-(null)-(2965373594) 2.pdf", "=>", "../data/GAN/txts/2019-RE-null(null)-(null-null)-(null)-(2965373594) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2019-RE-null(null)-(null-null)-(null)-(2965373594).pdf", "=>", "../data/GAN/txts/2019-RE-null(null)-(null-null)-(null)-(2965373594).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-CP-null(null)-(null-null)-(null)-(2996403597) 2.pdf", "=>", "../data/GAN/txts/2020-CP-null(null)-(null-null)-(null)-(2996403597) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-CP-null(null)-(null-null)-(null)-(2996403597).pdf", "=>", "../data/GAN/txts/2020-CP-null(null)-(null-null)-(null)-(2996403597).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-JA-50(9)-(3840-3854)-(TCYB.2020.2983860)-(2887063112) 2.pdf", "=>", "../data/GAN/txts/2020-JA-50(9)-(3840-3854)-(TCYB.2020.2983860)-(2887063112) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-JA-50(9)-(3840-3854)-(TCYB.2020.2983860)-(2887063112).pdf", "=>", "../data/GAN/txts/2020-JA-50(9)-(3840-3854)-(TCYB.2020.2983860)-(2887063112).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-JA-6(1)-(3-28)-(TBDATA.2018.2850013)-(2963512530) 2.pdf", "=>", "../data/GAN/txts/2020-JA-6(1)-(3-28)-(TBDATA.2018.2850013)-(2963512530) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-JA-6(1)-(3-28)-(TBDATA.2018.2850013)-(2963512530).pdf", "=>", "../data/GAN/txts/2020-JA-6(1)-(3-28)-(TBDATA.2018.2850013)-(2963512530).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-RE-null(null)-(null-null)-(null)-(3006528745) 2.pdf", "=>", "../data/GAN/txts/2020-RE-null(null)-(null-null)-(null)-(3006528745) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-RE-null(null)-(null-null)-(null)-(3006528745).pdf", "=>", "../data/GAN/txts/2020-RE-null(null)-(null-null)-(null)-(3006528745).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-RE-null(null)-(null-null)-(null)-(3021450295) 2.pdf", "=>", "../data/GAN/txts/2020-RE-null(null)-(null-null)-(null)-(3021450295) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-RE-null(null)-(null-null)-(null)-(3021450295).pdf", "=>", "../data/GAN/txts/2020-RE-null(null)-(null-null)-(null)-(3021450295).txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-RE-null(null)-(null-null)-(null)-(3035001721) 2.pdf", "=>", "../data/GAN/txts/2020-RE-null(null)-(null-null)-(null)-(3035001721) 2.txt"]
+"pdf_to_text_pymupdf"
+["../data/GAN/pdfs", "/", "2020-RE-null(null)-(null-null)-(null)-(3035001721).pdf", "=>", "../data/GAN/txts/2020-RE-null(null)-(null-null)-(null)-(3035001721).txt"]
+"pdf_to_text_pymupdf"
+["finished"]
+["time", 51.56174898147583]
+["used RAM(bytes)=", 47005696]

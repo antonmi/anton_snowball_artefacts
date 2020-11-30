@@ -1,0 +1,324 @@
+What is an object ?
+Bogdan Alexe, Thomas Deselaers, Vittorio Ferrari
+Computer Vision Laboratory, ETH Zurich
+{bogdan, deselaers, ferrari}@vision.ee.ethz.ch
+Abstract
+We present a generic objectness measure, quantifying how likely it is for an image window to contain an object of any class. We explicitly train it to distinguish objects with a well-defined boundary in space, such as cows and telephones, from amorphous background elements, such as grass and road.
+The measure combines in a Bayesian framework several image cues measuring characteristics of objects, such as appearing different from their surroundings and having a closed boundary. This includes an innovative cue measuring the closed boundary characteristic. In experiments on the challenging PASCAL VOC 07 dataset, we show this new cue to outperform a state-of-the-art saliency measure, and the combined measure to perform better than any cue alone. Finally, we show how to sample windows from an image according to their objectness distribution and give an algorithm to employ them as location priors for modern class-specific object detectors. In experiments on PASCAL VOC 07 we show this greatly reduces the number of windows evaluated by class-specific object detectors.
+1. Introduction
+In recent years object class detection has become a major research area.
+Although a variety of approaches exist, most state-of-the-art detectors follow the sliding-window paradigm. A classifier is first trained to distinguish windows containing instances of a given class from all other windows. The classifier is then used to score every window in a test image. Local maxima of the score localize instances of the class.
+While object detectors are specialized for one object class, such as cars or swans, in this paper we define and train a measure of objectness generic over classes. It quantifies how likely it is for an image window to cover an object of any class. Objects are standalone things with a welldefined boundary and center, such as cows, cars, and telephones, as opposed to amorphous background stuff, such as sky, grass, and road (as in the 'things vs. stuff' distinction of ). Fig. 1 illustrates the desired behavior of an objectness measure. It should score highest windows fitting an object tight (green), score lower windows covering partly an object and partly the background (blue), and score lowest windows containing only stuff (red).(a)(b)(c)
+Fig. 1: Desired behavior of an objectness measure. The desired objectness measure should score the blue windows, partially covering the objects, lower than the ground truth windows (green), and score even lower the red windows containing only stuff or small parts of objects.
+We argue that any object has at least one of three distinctive characteristics: (a) a well-defined closed boundary in space; (b) a different appearance from their surroundings ; (c) sometimes it is unique within the image and stands out as salient. Many objects have several of these characteristics at the same time (fig. 2-4).
+This paper makes three contributions: (a) We design an objectness measure and explicitly train it to distinguish windows containing an object from background windows. This measure combines in a Bayesian framework several image cues based on the above characteristics. (b) We present a new cue (sec. 2.4) and demonstrate it outperforms traditional saliency for detecting objects in the challenging PASCAL VOC 07 dataset. We also show that the combined objectness measure performs better than any cue alone. (c) We show how to use objectness as a location prior for modern class-specific object detectors.
+We demonstrate an algorithm to greatly reduce the number of evaluated windows with only minor loss in detection performance. Different from ESS, our method imposes no restriction on the class model used to score a window.
+In addition to speeding up detectors, the objectness measure can act as a focus of attention mechanism in other applications. It can facilitate learning new classes in a weakly supervised scenario, where the location of object instances is unknown. Similarly, it can help object tracking in video, e.g. incorporated as a likelihood term in a CONDENSATION framework.
+The source code for the objectness measure is available from http://www.vision.ee.ethz.ch/˜calvin.
+1.1. Related work
+This paper is related to several research strands, which differ in how they define 'saliency'.
+Interest points.
+Interest point detectors (IPs) respond to local textured image neighborhoods and are widely used for finding image correspondences and recognizing specific objects. IPs focus on individual points, while our approach is trained to respond to entire objects.
+Moreover, IPs are designed for repeatable detection in spite of changing imaging conditions, while our objectness measure is trained to distinguish objects from backgrounds. In sec. 5, we experimentally evaluate IPs on our task.
+Class-specific saliency.
+A few works define as salient the visual characteristics that best distinguish a particular object class (e.g. cars) from others. This classspecific saliency is very different from the class-generic task we tackle here.
+Generic saliency.
+Since, numerous works appeared to measure the saliency of pixels, as the degree of uniqueness of their neighborhood w.r.t. the entire image or the surrounding area. Salient pixels form blobs that 'stand out' from the image.
+Liu et al. find a single dominant salient object in an image. It combines pixel-based saliency measurements in a CRF and derives a binary segmentation separating the object from the background. Analogously, finds the region with the highest sum of pixel-saliency. These approaches do not seem suitable for the PASCAL VOC dataset where many objects are present in an image and they are not always dominant (fig. 10, 11).
+This paper is most related to the above works, as we are looking for generic objects. We incorporate a state-ofthe-art saliency detector as one cue into our objectness measure. However, we also include other cues than 'stand out' saliency and demonstrate that our combined measure performs better at finding objects (sec. 5).
+Our work differs from the above also in other respects.
+The unit of analysis is not a pixel, as possibly belonging to an object, but a window, as possibly containing an entire object. This enables scoring all windows in an image and sampling any desired number of windows according to their scores. These can then directly be fed as useful location priors to object class learning and detection algorithms, rather than making hard decisions early on. We experimentally demonstrate this with an application to speed up object detection (sec. 6).
+Analyzing windows also enables evaluating more complex measures of objectness. In sec. 2.4, we propose a new image cue, and demonstrate it performs better than traditional saliency cues at finding entire objects.
+Finally, to the best of our knowledge, we are the first to evaluate on a dataset as varied and challenging as PASCAL
+VOC 07, where most images contain many objects and they appear over a wide range of scales. We explicitly train our objectness measure to satisfy the strict PASCAL-overlap criterion, and evaluate its performance using it. This matters because it is the standard criterion for evaluating the intended clients of our objectness measure, i.e. object detection algorithms.(a)(b)(c)(d)(e)(f)
+Fig. 2: MS success and failure. Success: the large giraffe in the original image (a) appears as a blob in the saliency map for a high scale (b), while the tiny airplane in the map for a low scale (c).
+Having multi-scale saliency maps is important for finding more objects in challenging datasets. Interestingly, at the low scale the head of the giraffe is salient, rather than the whole giraffe. Failure: the numerous cars in the original image (d) are not salient at any scale. We show the saliency maps for 2 scales in (e) and (f).
+The contour of the building appears more salient than the cars.
+1.2. Plan of the paper.
+Sec. 2 describes the image cues composing our objectness measure. Sec. 3 and 4 show how to learn the cue parameters and how to combine them in a Bayesian framework.
+We present extensive experiments in sec. 5 and show applications of the objectness measure to aid class-specific object detectors in sec. 6.
+2. Image cues
+As mentioned in sec. 1, objects in an image are characterized by a closed boundary in 3D space, a different appearance from their immediate surrounding and sometimes by uniqueness. These characteristics suggested the four image cues we use in the objectness measure: multi-scale saliency, color contrast, edge density and straddleness.
+2.1. Multi-scale Saliency (MS).
+Hou et al. proposed a global saliency measure based on the spectral residual of the FFT, which favors regions with an unique appearance within the entire image. As it prefers objects at a certain scale, we extend it to multiple scales(fig. 2). Moreover, as suggests, we process the color channels independently as separate images.
+For each scale s, we use to obtain a saliency map
+Is
+MS(p) defining the saliency for every pixel p. Based on this, we define the saliency of a window w at scale s as:
+MS(w, θs
+MS) =
+X
+{p∈w|Is
+MS(p)≥θs}
+Is
+MS(p) × |{p ∈ w|Is
+MS(p) ≥ θs}|
+|w|(1) where the scale-specific thresholds θs
+MS are parameters to be learned (sec. 3). Saliency is higher for windows with higher density of salient pixels (second factor), with a bias towards larger windows (first factor). Density alone would score highest windows comprising just a few very salient pixels. Instead, our measure is designed to score highest windows around entire blobs of salient pixels, which correspond better to whole objects (fig. 2). The need for multiple(a)(b)(c)
+Fig. 3: CC success and failure. Success: the windows containing the objects (cyan) have high color contrast with their surrounding ring (yellow) in images (a) and (b). Failure: the color contrast for windows in cyan in image (c) is much lower. scales is evident in fig. 2 as the windows covering the two objects in the image (airplane, giraffe) score highest at different scales. This MS cue measures the uniqueness characteristic of objects.
+2.2. Color Contrast (CC).
+The CC cue is a local measure of the dissimilarity of a window to its immediate surrounding area. The surrounding
+Surr(w, θCC) of a window w is a rectangular ring obtained by enlarging the window by a factor θCC in all directions, so that |Surr(w,θCC)|
+|w|
+= θ2
+CC−1 (fig. 3a-f). The CC between a window and its surrounding is computed as the Chi-square distance between their LAB histograms h:
+CC
+` w, θCC) = χ2(h(w), h(Surr(w, θCC))
+´
+CC is a useful cue because objects tend to have a different appearance (color distribution) than the background behind them. In fig. 3a, windows on the grass score lower than windows half on a sheep and half on the grass. Windows fitting a sheep tightly score highest. This cue measures the different appearance characteristic of objects.
+CC is related to the center-surround histogram cue of.
+However, computes a center-surround histogram centered at a pixel, whereas CC scores a whole window as whether it contains an entire object. The latter seems a more appropriate level of analysis.
+2.3. Edge Density (ED).
+The ED cue measures the density of edges near the window borders. The inner ring Inn(w, θED) of a window w is obtained by shrinking it by a factor θED in all directions, so that |Inn(w,θED)|
+|w|
+= 1/θ2
+ED. The ED is computed as the density of edgels in the inner ring:
+ED(w, θED) =
+P p∈Inn(w,θED) IED(p)
+Len(Inn(w, θED))
+The binary edgemap IED(p) ∈ {0, 1} is obtained using the Canny detector, and Len(·) measures the perimeter 1. The ED cue captures the closed boundary characteristic of objects, as they tend to have many edgels in the inner ring(fig. 4d-e).
+2.4. Superpixels Straddling (SS).
+A different way to capture the closed boundary characteristic of objects rests on using superpixels as features.
+1The expected number of boundary edgels grows proportionally to the perimeter, not the area, because edgels have constant thickness of 1 pixel.(a)(b)(c)(d)(e)(f)
+Fig. 4: ED success and failure. Success: given images (a) and (b) the cyan windows covering the bus and the aeroplane score high as the density of edges is concentrated in these regions. Failure: in image (c) the cyan window along with many other windows covering the water score high determining a high rate of false positives.
+In particular the windows covering the boats have a low score. We show the Canny edge maps in (d), (e) and (f).
+Superpixels segment an image into small regions of uniform color or texture. A key property of superpixels is to preserve object boundaries: all pixels in a superpixel belong to the same object. Hence, an object is typically oversegmented into several superpixels, but none straddles its boundaries (fig. 5). Based on this property, we propose here a cue to estimate whether a window covers an object.
+A superpixel s straddles a window w if it contains at least one pixel inside and at least one outside w. Most of the surface of an object window is covered by superpixels contained entirely inside it (w1 in fig. 5c). Instead, most of the surface of a 'bad' window is covered by superpixels straddling it (i.e. superpixels continuing outside the window, w2 in fig. 5c). The SS cue measures for all superpixels s the degree by which they straddle w:
+SS(w, θSS) = 1 −
+X s∈S(θSS) min(|s \ w|, |s T w|)
+|w|(4) where S(θSS) is the set of superpixels obtained using with a segmentation scale θSS.
+For each superpixel s, eq. (4) computes its area |s � w| inside w and its area |s\w| outside w. The minimum of the two is the degree by which s straddles w and is its contribution to the sum in eq. (4).
+Superpixels entirely inside or outside w contribute 0 to the sum. For a straddling superpixel s, the contribution is lower when it is contained either mostly inside w, as part of the object, or mostly outside w, as part of the background(fig. 5c). Therefore, SS(w, θSS) is highest for windows w fitting tightly around an object, as desired.
+To the best of our knowledge, no earlier work has proposed a cue similar to SS. In sec. 5 we show that SS outperforms all other cues we consider (including MS and its original form ).
+2.5. Implementation details.
+MS.
+For every scale s ∈ {16, 24, 32, 48, 64} and channel c we rescale the image to s × s and compute the score
+MS(w, θs) using one integral image.(a)(b)(c)
+Fig. 5: The SS cue. Given the segmentation (b) of image (a), for a window w we compute SS(w, θSS) (eq. 4). In (c), most of the surface of w1 is covered by superpixels contained almost entirely inside it. Instead, all superpixels passing by w2 continue largely outside it. Therefore, w1 has a higher SS score than w2. The window w3 has an even higher score as it fits the object tightly.
+CC.
+We process the image in the quantized LAB space
+8 × 16 × 16 and compute CC(w, θCC) using one integral images per quantized color.
+ED.
+We rescale the image to 200×200 pixels and compute
+ED(w, θED) using one integral image.
+SS.
+We obtain superpixels S(θSS) using the algorithm of with segmentation scale θSS. We efficiently compute SS(w, θSS) using the following procedure. For each superpixel s we build an integral image Is(x, y) giving the number of pixels of s in the rectangle (0, 0) → (x, y).
+Based on Is(x, y), we can rapidly compute the number
+|s � w| of pixels of s contained in any window w (fig. 6).
+The area |s \ w| outside w is readily obtained as |s \ w| =
+|s| − |s � w|. Therefore, we can efficiently compute all elements of SS(w, θSS) (eq. 4).
+3. Learning cue parameters
+We learn the parameters of the objectness cues from a training dataset T consisting of 50 images randomly sampled from several well-known datasets, including INRIA Person, Pascal VOC 06, and Caltech 101.
+These images contain a total of 291 instances of 48 diverse classes including a variety of objects such as sheep, buildings and keyboards. For training, we use annotated object windows O, but not their class labels as our aim is to learn a measure generic over classes.
+There are 8 parameters to be learned: θCC, θED, θSS and θs
+MS (for 5 scales s). We can learn from a rather small training set thanks to the low number of parameters and to the ability to produce many training examples from every image (fig. 8).
+CC, ED, SS.
+We learn θCC, θED and θSS in a Bayesian framework. As all three are learned in the same manner, we restrict the explanation to θ = θCC. For every image in T we generate 100000 random windows uniformly distributed over the entire image. Windows covering 2 an annotated
+2We follow the widespread PASCAL criterion, and consider a window w to cover an object o if |w T o|/|w S o| > 0.5.
+Fig. 6: Efficiently computing eq. (4). Window w2 from fig. 5c is straddled by three superpixels. The individual superpixel contributions min(|s\w2|,|s T w2|)
+|w2| are computed based on the three integral images Is. We show the integral images Is in gray value. object are considered positive examples (Wobj), the others negative (Wbg) (fig. 8).
+For any value of θ we can build the likelihoods for the positive pθ(CC(w, θ)|obj) and negative classes pθ(CC(w, θ)|bg), as histograms over the positive/negative training windows. Note how these histograms depend on θ.
+We now find the optimal θ∗ by maximizing the posterior probability that object windows are classified as positives θ∗ = arg max θ
+Y w∈Wobj pθ(obj|CC(w, θ)) =
+= arg max θ
+Y w∈Wobj pθ(CC(w, θ)|obj) · p(obj)
+P c∈{obj,bg} pθ(CC(w, θ)|c) · p(c) where the priors are set by relative frequency: p(obj) = |Wobj|/(|Wobj| + |Wbg|), p(bg) = 1 − p(obj).
+The advantage of this procedure is that the distribution of training samples is close to what the method will see when a new test image is presented, as opposed to just using the ground-truth and a few negative samples. Moreover, it is likely to generalize well, as it is trained from many variants of the annotated windows in Wobj (i.e. all those passing the PASCAL criterion, which is also how the method will be evaluated on test images, sec. 5).
+For a window w, the learned parameters θCC and θED define the outer ring Surr(w, θCC) and the inner ring
+Inn(w, θED). The learned parameter θSS defines the superpixel segmentation scale.
+MS.
+We learn each threshold θs
+MS independently, by optimizing the localization accuracy of the training objects O at each scale s. For every training image I and scale s, we compute the saliency map Is
+MS and the MS score of every possible window. Running non-maximum suppression on this 4D score space 3 gives a set of local maxima windows
+Wmax s. We find the optimal θs∗
+MS by maximizing θs∗
+MS = arg max θs
+MS
+X o∈O max w∈Wmax s
+|w T o|
+|w S o|(6) i.e. we seek for the threshold θs∗
+MS that leads to local maxima of MS most accurately covering the annotated objects
+O (according to the PASCAL criterion). Notice how this procedure is discriminative, as maximizing (6) implicitly entails also minimizing the score of windows without annotated objects.
+3This is implemented efficiently by the method of (a)(b)(c)(d)(e)(f)
+Fig. 7: SS success and failure. Success: The cyan windows in (a) and (b) have high SS score computed from segmentations (d) and(e). Failure: Segmentation produces superpixels (f) not preserving the boundaries of the small objects in (c), resulting in low SS.
+4. Bayesian cue integration
+Since the four cues are quite complementary, using several of them at the same time appears promising. MS gives only a rough indication of where an object is as it is designed to find blob-like things (fig. 2). Instead, CC provides more accurate windows, but sometimes misses objects entirely(fig. 3). ED provides many false positives on textured areas(fig. 4). SS is very distinctive but depends on good superpixels, which are fragile for small objects (fig. 7).
+To combine cues we train a Bayesian classifier to distinguish between positive and negative quadruplets of values (MS, CC, ED, SS). For each training image, we sample
+100000 windows from the distribution given by the MS cue(thus biasing towards better locations), and then compute the other cues for them. Windows covering an annotated object are considered as positive examples Wobj, all others as negative Wbg.
+A natural way to combine our cues is to model them jointly.
+Unfortunately, it would require an enormous number of samples to estimate the joint likelihood p(cue1,..., cuen|obj), where cuei
+∈
+C
+=
+{MS, CC, ED, SS}, 1 ≤ i ≤ n, n = 4. Therefore, we choose a Naive Bayes approach here. We have also tried a linear discriminant, but it performed worse in our experiments, probably because it combines cues in a too simplistic manner (i.e. just a weighted sum).
+In the Naive Bayes model, the cues are independent, so training consists of estimating the priors p(obj), p(bg), which we set by relative frequency, and the individual cue likelihoods p(cue|c), for cue ∈ C and c ∈ {obj, bg}, from the large sets of training windows Wobj, Wbg.
+After training, when a test image is given, we can sample any desired number T of windows from MS and then compute the other cues for them (as done above for obtaining training windows). Considering a subset of cues A ⊆ C, the posterior probability of one of these test windows w is p(obj|A) = p(A|obj)p(obj) p(A)
+= p(obj) Q cue∈A p(cue|obj)
+P c∈{obj,bg} p(c) Q cue∈A p(cue|c)
+Fig. 8: Obtaining positive and negative examples. Given an image we generate 100000 uniformly distributed windows and label them as positive or negative according to the PASCAL criterion.
+We show the annotated object window (green), a positive (blue) and two negative (red) examples.
+This posterior constitutes the final objectness score of w.
+The T test windows and their scores (7) form a distribution from which we can sample any desired final number F of windows. Note how eq. (7) allows us to combine any subset
+A of cues, e.g. pairs of cues A = {MS, CC}, triplets A =
+{MS, CC, SS} or all cues A = C = {MS, CC, ED, SS}.
+Function (7) can combine any subset rapidly without recomputing the likelihoods.
+Sampling procedure.
+T window scores form a multinomial distribution D. Naively sampling F windows from D requires T · F operations, so we use an efficient sampling procedure. From the T scores we build the cumulative sum score vector v. Note how the elements of v are sorted in ascending order and the last vector element v(T) is the sum of all scores. To sample a window we first generate a random number u uniformly distributed in [0, v(T)]. Then we do a binary search in v to retrieve the interval [vi−1, vi] containing u. The chosen sample i has score vi. Hence, sampling
+F windows only costs F · log2T operations. We always use this procedure to sample from a multinomial in this paper.
+5. Experiments
+We evaluate the performance of our objectness measure on the popular PASCAL VOC 07 dataset, which is commonly used to evaluate class-specific object detectors. In PASCAL VOC 07 each image is annotated with ground-truth bounding-boxes of objects from twenty categories (boat, bicycle, horse, etc.). Thus, it is very suitable for our evaluation, as we want to find all objects in the image, irrespective of their category. We evaluate on all
+4952 images in the official test set where objects appear against heavily cluttered backgrounds and vary greatly in location, scale, appearance, viewpoint and illumination.
+Evaluation setup.
+As there are billions of windows in an image it is expensive to compute each cue for all windows.
+Moreover, our measure is intended as a focus of attention mechanism for later applications, so it is useful to output a reasonable number of windows likely to cover objects.
+For SS, MS and ED, we build a distribution D by scoring all the T windows on a regular 4D grid. Computing
+CC is more expensive due to the large number of integral images involved, so we build a distribution D by scoring
+T = 100000 windows uniformly distributed over the image. Each cue is evaluated below on F = 1000 windows per image sampled from D.
+STN
+DR
+Hou−Direct − 0.004
+Itti−Direct − 0.002
+Hou−Sampled − 0.119
+MS − 0.137
+STN
+DR
+CC − 0.064
+ED − 0.083
+MS − 0.137
+SS − 0.193
+RC − 0.025
+OD − 0.035
+IP − 0.069
+STN
+DR
+SS − 0.193
+MS+CC − 0.206
+MS+SS − 0.204
+MS+CC+ED+SS − 0.223
+MS+CC+SS − 0.251(a)(b)(c)
+Fig. 9: DR/STN plots. (a) MS vs ; (b) single cues vs baselines; (c) cue combinations vs SS. We report the ALC for each curve.
+For a cue combination, to build D we sample T
+=
+100000 windows from the distribution given by MS, compute the other cues for them and score them with eq. (7).
+Each cue combination is evaluated below on F = 1000 samples from D. Therefore, each single cue and cue combination is evaluated uniformly on 1000 windows per image.
+DR-STN curves.
+The performance of a method is evaluated with detection-rate/signal-to-noise (DR/STN) curves.
+DR is the percentage of ground-truth objects covered by a window output by the method. An object is only considered covered by a window if the strict PASCAL-overall criterion is satisfied (intersection-over-union > 0.5). STN is the percentage of windows covering a ground-truth object. We summarize a DR/STN curve with a single value: the area to the left of the curve (ALC), and use it to compare methods.
+MS vs 
+We compare our MS cue to and (fig. 9a). The Hou-Direct curve refers to as originally proposed. A single saliency map at scale s = 64 is thresholded at its average intensity4. Each connected component in the resulting binary map is output as an object.
+The
+Itti-Direct curve refers to as originally proposed. The saliency map is computed and the most salient objects are extracted from it using Itti's procedure 5.
+Both procedures make hard decisions and output only few windows per image (about 5-10). As the curves show, both methods fail on the challenging PASCAL VOC 07 dataset. Hou-Direct performs better than Itti-Direct, but still reaches only about 0.18 DR and 0.08 STN.
+For a fair comparison to our method, the Hou-Sampled curve reports performance when inserting into our framework: we use their saliency map in our window score(eq. 1) and learn the threshold θ64 from our training set as in eq. (6). Finally, the MS curve uses all color channels and multiple scales, with separate scale-specific learned thresholds. DR/STN performance curves improve steadily as we progress towards our MS cue, showing that all the components we propose contribute to its success.
+Baselines.
+In the following we compare our objectness measure to three baselines (fig 9b): random chance (RC), interest points (IP), and a histogram of oriented gradients
+4this gives better results than the threshold of, i.e. 3× the average
+5using software fromhttp://www.saliencytoolbox.net/(HOG) detector (OD). For RC we generate 1000 random windows with random scores. For IP we extract interest points and score every window in a 4D regular grid as IP(w) =
+√
+|w|
+�
+{p∈w} cornerness(p). For evaluation we sample 1000 windows from this grid according to their scores. HOG was shown to perform well in classspecific detection. Here we train it to detect objects of arbitrary classes: for OD we train a single HOG detector from all objects in the same 50 images used to train our method(sec. 3). From all detections, we sample 1000 windows according to their scores.
+Single cues.
+Fig. 9b reports performance for our single cues and for the baselines. All our cues perform far above chance (RC). All cues but CC outperform IP, with MS and SS leading by a wide margin. This shows that finding entire objects cannot simply be reduced to interest point detection. Moreover, our newly proposed SS cue performs best, substantially above the second best cue MS (and therefore also above ). This demonstrates SS is a powerful alternative to traditional 'stand out' saliency cues. Finally, note how OD performs very poorly, which confirms that generic object detection is different from class-specific detection. We believe OD fails because no single pattern of gradients within a window is characteristic for objects in general, whereas our cues are designed to capture this.
+Cue combinations.
+Combining cues in our Bayesian framework improves results for all cue combinations but those including both SS and ED (fig. 9c). Adding CC to a combination of the best two single cues MS + SS further raises performance and leads to the best cue combination
+MS + CC + SS. This shows they are complementary cues, all necessary for finding objects in highly challenging images. Combining cues raises STN, as it makes the objectness measure more distinctive. 23% of the 1000 windows sampled from MS + CC + SS cover an object. This high
+STN is valuable for algorithms taking sampled objectness windows as input, such as class-specific object detectors(next section).
+6. Speeding up class-specific detectors
+Many state-of-the-art class-specific object detectors are based on sliding windows. In sec. 6.1 we give a general algorithm for using our objectness measure as a loHou-Direct
+MS
+MS + CC + SS
+MS + CC + SS
+MS + CC + SS
+MS + CC + SS
+MS + CC + SS
+Fig. 10: Pascal VOC 07 examples.
+First 3 columns: example output of Hou-Direct, and 10 windows sampled from MS and MS + CC + SS. We mark in yellow windows correctly covering ground-truth object (cyan); if there is more than one correct window, the best one is shown; all other windows are in red. Hou-Direct output windows rarely correctly cover an object. MS finds some of the objects, whereas MS + SS + CC is more accurate and finds more objects. The last four columns show 10 windows sampled from our final objectness measure MS + CC + SS. It can find many of the objects in these highly challenging images.
+Algorithm 1 Using objectness for class-specific detectors.
+Input: F, D, c
+Output: Det
+1: I = {w1,..., wF }, wi ⇝ D, ∀i
+2: Is = {(w1, sw1),..., (wF, swF )}, swi = c(wi), ∀i.
+3: Ps = NMS(Is) = {(wn1, swn1 ),..., (wnP, swnP )}
+4: LM = {wlm n1,..., wlm nP }, wlm nj = maxw∈Vwnj sw
+5: Det = NMS(LM) cation prior for any sliding window detector. In sec. 6.2-6.4 we detail how this algorithm works for three particular detectors. Using objectness greatly reduces the number of windows evaluated by the detectors (sec. 6.5).
+6.1. General algorithm
+The general scheme for using our objectness measure as a location prior for object detectors is algorithm 1. The algorithm inputs the class-specific confidence function c which the detector employs to score a window.
+We build an initial set I of F = 1000 windows sampled from the distribution D of windows scored by our objectness measure MS + CC + SS (line 1). We use c to score each window in I (line 2). We then run the non-maxima suppression of to remove every window overlapping more than 50% with a higher scored window. This results in a set Ps of promising windows (line 3). For every window wp ∈ Ps, we iteratively move to the local maximum of c in its neighborhood Vwp, resulting in window wlm p(line 4).
+Finally, we run NMS on the local maxima windows LM and obtain detections Det (line 5).
+In order to use this algorithm one has to specify a window scoring function c, which is specific to a particular detector and object class, and a window neighborhood V.
+6.2. Speeding up 
+The detector of models a class by a single window filter c on HOG features. In this filter is applied at all positions(x, y) and scales s on a grid over image. In our algorithm instead, we only apply c to the sampled windows wi ∈ I.
+Next, we search for a local maximum in the neighborhood
+Vwi on the grid, for up to 5 iterations.
+6.3. Speeding up 
+The detector of models a class with a mixtures of multiscale deformable part models. More complex than, the model includes a root filter and a collection of part filters and associated deformation models. The score of a window at location (x, y, s) combines the score of the root filter, the parts and a deformation cost measuring the deviation of the part from its ideal location.
+In our algorithm, we score only the sampled windows wi ∈ I and apply the neighborhood search as in sec. 6.2.
+6.4. Speeding up Bag-of-words detectors
+The window scoring function c can also be a Bag-of-visualwords classifier, which represents a window with a histogram of local features quantized over a precomputed codebook. Here we follow the setup of and use as c a linear SVM classifier.
+We score only the sampled windows wi ∈ I and set the neighborhood Vwi to all windows obtained by translating wi by 2 pixels and/or scaling wi by factor 1.1. We iterate local search until convergence (usually about 10 iterations).
+Since for this type of window scoring function it is possible to apply the branch-and-bound technique ESS, we compare to ESS rather than to traditional sliding-windows on a grid.
+6.5. Quantitative evaluation
+We compare the 3 object detectors to our algorithm 1 on the entire PASCAL VOC 07 test set (20 object classes over 4952 images) using the standard PASCAL
+VOC protocol.
+Our algorithm uses the same window scoring function c used by the corresponding detector. We train it for using their source code6. For we train with only the root filter (no parts). For we obtained image features and SVM hyperplanes from the authors. For detection, we use the source code of for both and, and the source code of ESS 7 for.
+6http://people.cs.uchicago.edu/˜pff/latent/
+7http://sites.google.com/site/christophlampert/software
+Table 1: For each detector we report its performance(left column) and that of our algorithm 1 using the same window scoring function (right column). We show the average number of windows evaluated per image #win and the detection performance as the mean average precision (mAP) over all 20 classes.
+ OBJ- 
+ OBJ- 
+ESS-BOW OBJ-BOW mAP
+#win
+Fig. 11: Class-specific detections. We show the output of three object detectors in yellow (first row -, second row -, third row -ESS). We show in red the output of our algorithm using the same window scoring function as the corresponding detector. Note how often the yellow and the red windows are identical. Groundtruth objects are in cyan.
+As tab. 1 shows, our algorithm evaluates 10x-40x fewer windows than sliding-windows. Interestingly, it also evaluates 50x fewer windows than ESS (notice that the implicit search space of is larger than that of as it contains all windows, not just a grid). Moreover, our algorithm's mAP is only slightly below the original detectors (−0.026 on average), showing this massive speedup 8 comes with little compromise on performance. Finally, our algorithm is general, as it supports any window scoring function. ESS instead requires a (tight) bound on the best score in a contiguous set of windows (for example, for the scoring functions of no bound is currently known and ESS is not applicable).
+7. Conclusions
+We presented an objectness measure trained to distinguish object windows from background ones. It combines several image cues, including the innovative SS cue. We demonstrated that this cue outperforms traditional saliency and that the combined objectness measure performs better than any cue alone. Moreover, we have given an algorithm to employ objectness to greatly reduce the number of windows evaluated by class-specific detectors. Objectness can be useful also in other applications, such as to help learning object classes in a weakly supervised scenario, where object locations are unknown, and for tracking objects in video.
+8The additional cost to compute objectness and sample 1000 windows
+I is negligible as it is done only once per image. The same windows I are reused for all 20 classes, and can in fact be reused for any class.
+References
+ J. Arpit, R. Saiprasad, and M. Anurag. Multi-stage contour based detection of deformable objects. In ECCV, 2008.
+ N. Bruce and J. Tsotsos. Saliency based on information maximization. In NIPS, 2005.
+ F. Crow. Summed-area tables for texture mapping. In SIGGRAPH, N. Dalal and B. Triggs. Histogram of Oriented Gradients for Human
+Detection. In CVPR, 2005.
+ C. Desai, D. Ramanan, and C. Folkess. Discriminative models for multi-class object layout. In ICCV, 2009.
+ T. Deselaers, B. Alexe, and V. Ferrari. Localizing objects while learning their appearance. Technical report, ETH Zurich, 2010.
+ M. Everingham, L. Van Gool, C. Williams, J. Winn, and A. Zisserman. The PASCAL Visual Object Classes Challenge 2007.
+ M. Everingham, L. Van Gool, C. K. I. Williams, and A. Zisserman.
+The PASCAL Visual Object Classes Challenge 2006.
+ L. Fei-Fei, R. Fergus, and P. Perona. Learning generative visual models from few training examples: An incremental Bayesian approach tested on 101 object categories. In CVPR Workshop of Generative
+Model Based Vision, 2004.
+ P. F. Felzenszwalb, R. B. Girshick, D. McAllester, and D. Ramanan.
+Object detection with discriminatively trained part based models.
+PAMI, 2009. in press.
+ P. F. Felzenszwalb and D. P. Huttenlocher. Efficient graph-based image segmentation. IJCV, 59(2):167–181, Sep 2004.
+ R. Fergus, P. Perona, and A. Zisserman. Object class recognition by unsupervised scale-invariant learning. In CVPR, 2003.
+ D. Gao and N. Vasconcelos. Bottom-up saliency is a discriminant process. In ICCV, 2007.
+ J. Harel, C. Koch, and P. Perona. Graph-based visual saliency. In
+NIPS, 2007.
+ H. Harzallah, F. Jurie, and C. Schmid. Combining efficient object localization and image classification. In ICCV, 2009.
+ G. Heitz and D. Koller. Learning spatial context: Using stuff to find things. In ECCV, 2008.
+ X. Hou and L. Zhang. Saliency detection: A spectral residual approach. In CVPR, 2007.
+ M. Isard and A. Blake. Condensation - conditional density propagation for visual tracking. IJCV, 29(1):5–28, 1998.
+ L. Itti, C. Koch, and E. Niebur. A model of saliency-based visual attention for rapid scene analysis. PAMI, 20(11):1254–1259, 1998.
+ T. Kadir, A. Zisserman, and M. Brady. An affine invariant salient region detector. In ECCV, 2004.
+ C. H. Lampert, M. B. Blaschko, and T. Hofmann. Beyond sliding windows: Object localization by efficient subwindow search.
+In
+CVPR, 2008.
+ B. Leibe and B. Schiele. Scale-invariant object categorization using a scale-adaptive mean-shift search. In DAGM, 2004.
+ T. Liu, J. Sun, N. Zheng, X. Tang, and H. Shum. Learning to detect a salient object. In CVPR, 2007.
+ D. Lowe. Object recognition from local scale-invariant features. In
+ICCV, pages 1150–1157, Sep 1999.
+ Y. F. Ma and H. J. Zhang. Contrast-based image attention analysis by using fuzzy growing. In ICMM, 2003.
+ L. Marchesotti, C. Cifarelli, G. Csurka.
+A framework for visual saliency detection with applications to image thumbnailing.
+In
+ICCV, 2009.
+ K. Mikolajczyk and C. Schmid. Scale & affine invariant interest point detectors. IJCV, 1(60):63–86, 2004.
+ F. Moosmann, D. Larlus, and F. Jurie. Learning saliency maps for object categorization. In ECCV, 2006.
+ A. Neubeck and L. Van Gool. Efficient non-maximum suppression.
+In ICPR, 2006.
+ B. C. Russell, A. A. Efros, J. Sivic, W. T. Freeman, and A. Zisserman.
+Using multiple segmentations to discover objects and their extent in image collections. In CVPR, 2006.
+ R. Valenti, N. Sebe, and T. Gevers. Image saliency by isocentric curvedness and color. In ICCV, 2009.
+ A. Vedaldi, V. Gulshan, M. Varma, and A. Zisserman. Multiple kernels for object detection. In ICCV, 2009.
+ G. Wang and D. Forsyth. Joint learning of visual attributes, object classes and visual saliency. In ICCV, 2009.
+ J. Winn and N. Jojic. Locus: Learning object classes with unsupervised segmentation. In ICCV, pages 756–763, 2005.
